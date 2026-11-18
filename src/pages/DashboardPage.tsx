@@ -2,7 +2,6 @@ import { ArrowRight, Eye } from 'lucide-react';
 import type { AppPageId, TracecoState } from '../types/traceco';
 import {
   POINTS_PER_ECOBRICK,
-  computeActiveContributorBreakdown,
   computeContributorStats,
   computePlatformMetrics,
   computeVerifiedInventory,
@@ -14,7 +13,6 @@ import { PrimaryButton, SecondaryButton } from '../components/ui/Button';
 import { MetricStrip } from '../components/ui/Metric';
 import { PageHeader, SectionHeader } from '../components/ui/PageHeader';
 import {
-  ActiveContributorsChart,
   ContributionTrendChart,
   DistributionUtilizationChart,
   VerificationStatusChart,
@@ -23,7 +21,7 @@ import { RoleTag, StatusTag } from '../components/ui/StatusBadge';
 
 interface DashboardPageProps {
   state: TracecoState;
-  onNavigate: (page: AppPageId) => void;
+  onNavigate: (page: AppPageId, subTab?: string) => void;
   onInspectTarget: (targetId: string) => void;
   onOpenTraceDetail: (targetId: string) => void;
 }
@@ -43,12 +41,8 @@ export function DashboardPage({
 
   const actorId = state.activeActorIdByRole[state.activeRole];
   const activeActor = state.contributors.find((c) => c.id === actorId);
-  const verificationMap = new Map(
-    state.verification_records.map((v) => [v.submissionId, v])
-  );
-  const contributorMap = new Map(state.contributors.map((c) => [c.id, c]));
 
-  // 1. Role Group: Penyerah Ecobrick (Santri, Warga, Keluarga Rentan)
+  // 1. KONTRIBUTOR OVERVIEW (Focused Summary Only)
   if (isPenyerahRole(state.activeRole)) {
     const mySubmissions = state.ecobrick_submissions
       .filter((s) => s.contributorId === actorId)
@@ -58,293 +52,191 @@ export function DashboardPage({
       stats.submittedUnits > 0
         ? Math.round((stats.verifiedUnits / stats.submittedUnits) * 100)
         : 0;
+    const latest = stats.latestSubmission;
 
     return (
-      <div className="space-y-7">
+      <div className="space-y-6">
         <PageHeader
-          title={`Dashboard Saya · ${activeActor?.name ?? 'Kontributor'}`}
-          description="Pantau perkembangan kontribusi ecobrick, hasil verifikasi, dan saldo Green Points Anda."
+          title={`Overview · ${activeActor?.name ?? 'Kontributor'}`}
+          description="Ringkasan status kontribusi ecobrick, saldo Green Points, dan langkah berikutnya."
           actions={
             <div className="flex flex-wrap items-center gap-2">
-              <RoleTag role={state.activeRole} />
+              <RoleTag role={activeActor?.segment ?? state.activeRole} />
               <PrimaryButton
                 size="sm"
-                onClick={() => onNavigate('contribution')}
+                onClick={() => onNavigate('contribution', 'submit')}
               >
-                <span>Submit Ecobrick</span>
+                <span>Kirim Ecobrick</span>
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </PrimaryButton>
             </div>
           }
         />
 
-        {/* Primary 4 KPIs */}
         <MetricStrip
           columns={4}
           items={[
             {
-              label: 'Total Ecobrick Diserahkan',
+              label: 'Total Ecobrick',
               value: `${stats.submittedUnits} unit`,
-              hint: `${mySubmissions.length} catatan kontribusi`,
+              hint: `${mySubmissions.length} kontribusi tercatat`,
             },
             {
-              label: 'Total Terverifikasi',
+              label: 'Terverifikasi',
               value: `${stats.verifiedUnits} unit`,
-              hint: `${verifiedRatioPct}% lolos inspeksi fisik`,
+              hint: `${verifiedRatioPct}% lolos inspeksi`,
               accent: 'primary',
             },
             {
-              label: 'Menunggu Verifikasi (Pending)',
+              label: 'Saldo Green Points',
+              value: `${stats.pointsBalance.toLocaleString('id-ID')} GP`,
+              hint: `+${POINTS_PER_ECOBRICK} GP / unit terverifikasi`,
+              accent: 'primary',
+            },
+            {
+              label: 'Menunggu Verifikasi',
               value: `${stats.pendingUnits} unit`,
-              hint:
-                stats.rejectedUnits > 0
-                  ? `${stats.rejectedUnits} unit ditolak`
-                  : 'Antrean pos Eco-Hub',
-              accent: 'muted',
-            },
-            {
-              label: 'Green Points Balance',
-              value: `${stats.pointsBalance} pts`,
-              hint: `Total diperoleh ${stats.pointsEarned} pts (+${POINTS_PER_ECOBRICK} pts/unit)`,
-              accent: 'primary',
-            },
-          ]}
-        />
-
-        {/* Secondary contributor quick summary */}
-        <MetricStrip
-          columns={4}
-          items={[
-            {
-              label: 'Kontribusi Bulan Ini',
-              value: `${stats.monthUnits} unit`,
-              hint: 'Periode November 2026',
-            },
-            {
-              label: 'Rewards Redeemed',
-              value: `${stats.rewardsRedeemedCount} penukaran`,
-              hint: `${stats.pointsRedeemed} pts telah ditukar`,
-            },
-            {
-              label: 'Kontribusi Terakhir',
-              value: stats.latestSubmission?.submissionId ?? '-',
-              hint: stats.latestSubmission
-                ? `${stats.latestSubmission.date} · ${stats.latestSubmission.status}`
+              hint: latest
+                ? `Terakhir: ${latest.submissionId}`
                 : 'Belum ada penyerahan',
-            },
-            {
-              label: 'Progress Verifikasi',
-              value: `${stats.verifiedUnits} / ${stats.submittedUnits} unit`,
-              hint: `${verifiedRatioPct}% terverifikasi menjadi batch`,
+              accent: stats.pendingUnits > 0 ? 'muted' : 'default',
             },
           ]}
         />
 
-        {/* Chart + Verification Progress */}
+        {/* Active / Latest Contribution + Quick Next Steps */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-8">
+          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-7">
             <ContributionTrendChart
               submissions={mySubmissions}
-              title="Kontribusi Ecobrick Saya"
-              subtitle="Jumlah unit ecobrick diserahkan dan lolos verifikasi sesuai periode waktu."
+              title="Tren Kontribusi Ecobrick Saya"
+              subtitle="Jumlah unit diserahkan dan lolos verifikasi."
               defaultRange="3m"
             />
           </section>
 
-          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4 lg:col-span-4">
-            <div className="space-y-1">
-              <h3 className="text-[14px] font-semibold text-[#252B28]">
-                Ringkasan Progress & Aksi
-              </h3>
-              <p className="text-[11px] text-[#6B756F]">
-                Rasio ecobrick terverifikasi terhadap total penyerahan Anda.
-              </p>
-            </div>
+          <section className="space-y-4 lg:col-span-5">
+            <div className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-3.5">
+              <SectionHeader
+                title="Kontribusi Aktif / Terbaru"
+                rightSlot={
+                  <SecondaryButton
+                    size="sm"
+                    onClick={() => onNavigate('contribution', 'history')}
+                  >
+                    Riwayat
+                  </SecondaryButton>
+                }
+              />
 
-            <div className="space-y-2 rounded border border-[#E3E8E4] bg-[#F7F9F7] p-3.5">
-              <div className="flex items-baseline justify-between text-xs">
-                <span className="font-medium text-[#252B28]">
-                  Verified / Submitted
-                </span>
-                <span className="font-mono font-semibold text-[#245C45] tabular-nums">
-                  {stats.verifiedUnits} / {stats.submittedUnits} ({verifiedRatioPct}
-                  %)
-                </span>
-              </div>
-              <div className="h-2.5 w-full overflow-hidden rounded bg-[#E3E8E4]">
-                <div
-                  className="h-full rounded bg-[#245C45]"
-                  style={{ width: `${verifiedRatioPct}%` }}
-                />
-              </div>
-            </div>
+              {latest ? (
+                <div className="rounded border border-[#E3E8E4] bg-[#F7F9F7] p-3.5 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-mono text-xs font-semibold text-[#245C45]">
+                      {latest.submissionId}
+                    </span>
+                    <StatusTag status={latest.status} />
+                  </div>
+                  <p className="text-xs text-[#252B28]">
+                    {latest.quantitySubmitted} unit · {latest.dropoffPointName}
+                  </p>
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <span className="font-mono text-[11px] text-[#6B756F]">
+                      {latest.date}
+                    </span>
+                    <SecondaryButton
+                      size="sm"
+                      onClick={() => onOpenTraceDetail(latest.submissionId)}
+                    >
+                      <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>Lacak Status</span>
+                    </SecondaryButton>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-[#6B756F]">
+                  Belum ada kontribusi tercatat. Mulai dengan mengirim ecobrick pertama Anda.
+                </p>
+              )}
 
-            <div className="divide-y divide-[#EEF2EF] rounded border border-[#E3E8E4]">
-              <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs">
-                <span className="text-[#252B28]">Serahkan Ecobrick Baru</span>
-                <SecondaryButton
-                  size="sm"
-                  onClick={() => onNavigate('contribution')}
-                >
-                  Submit
-                </SecondaryButton>
+              <div className="divide-y divide-[#EEF2EF] rounded border border-[#E3E8E4]">
+                <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs">
+                  <span className="text-[#252B28]">Tukar poin di Green Marketplace</span>
+                  <SecondaryButton
+                    size="sm"
+                    onClick={() => onNavigate('marketplace', 'catalog')}
+                  >
+                    Buka
+                  </SecondaryButton>
+                </div>
+                <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs">
+                  <span className="text-[#252B28]">Cek mutasi Transaksi & Saldo</span>
+                  <SecondaryButton
+                    size="sm"
+                    onClick={() => onNavigate('transactions', 'balance')}
+                  >
+                    Saldo
+                  </SecondaryButton>
+                </div>
               </div>
-              <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs">
-                <span className="text-[#252B28]">Tukar Green Points</span>
-                <SecondaryButton size="sm" onClick={() => onNavigate('reward')}>
-                  Katalog
-                </SecondaryButton>
-              </div>
-              <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs">
-                <span className="text-[#252B28]">Lacak Status Batch & QR</span>
-                <SecondaryButton
-                  size="sm"
-                  onClick={() => onNavigate('traceability')}
-                >
-                  Traceability
-                </SecondaryButton>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {/* Recent Contributions & Activity Feed */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <section className="space-y-3 lg:col-span-8">
-            <SectionHeader
-              title="Recent Contributions"
-              rightSlot={
-                <SecondaryButton
-                  size="sm"
-                  onClick={() => onNavigate('contribution')}
-                >
-                  Lihat Semua
-                </SecondaryButton>
-              }
-            />
-
-            <div className="overflow-x-auto rounded-md border border-[#E3E8E4] bg-white">
-              <table className="w-full border-collapse text-left text-[13px]">
-                <thead>
-                  <tr className="border-b border-[#E3E8E4] bg-[#F7F9F7] text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
-                    <th className="px-4 py-2.5">ID</th>
-                    <th className="px-4 py-2.5">Tanggal</th>
-                    <th className="px-4 py-2.5 text-right">Jumlah</th>
-                    <th className="px-4 py-2.5 text-right">Berat</th>
-                    <th className="px-4 py-2.5">Status</th>
-                    <th className="px-4 py-2.5 text-right">Reward</th>
-                    <th className="px-4 py-2.5 text-right">Detail</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#EEF2EF]">
-                  {mySubmissions.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="px-4 py-8 text-center text-xs text-[#6B756F]"
-                      >
-                        Belum ada penyerahan ecobrick tercatat atas akun ini.
-                      </td>
-                    </tr>
-                  ) : (
-                    mySubmissions.slice(0, 5).map((sub) => {
-                      const ver = verificationMap.get(sub.submissionId);
-                      const earnedPts = sub.verifiedQuantity * POINTS_PER_ECOBRICK;
-                      return (
-                        <tr key={sub.submissionId} className="hover:bg-[#FAFBF9]">
-                          <td className="px-4 py-3 align-top">
-                            <button
-                              type="button"
-                              onClick={() => onOpenTraceDetail(sub.submissionId)}
-                              className="font-mono text-xs font-semibold text-[#245C45] hover:underline"
-                            >
-                              {sub.submissionId}
-                            </button>
-                            {ver?.batchId && (
-                              <p className="font-mono text-[11px] text-[#6B756F]">
-                                {ver.batchId}
-                              </p>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 align-top font-mono text-xs text-[#6B756F] tabular-nums whitespace-nowrap">
-                            {sub.date}
-                          </td>
-                          <td className="px-4 py-3 align-top text-right font-mono text-xs tabular-nums whitespace-nowrap">
-                            {sub.quantitySubmitted} unit
-                          </td>
-                          <td className="px-4 py-3 align-top text-right font-mono text-xs text-[#6B756F] tabular-nums whitespace-nowrap">
-                            {sub.weightKg ? `${sub.weightKg.toFixed(1)} kg` : '-'}
-                          </td>
-                          <td className="px-4 py-3 align-top">
-                            <StatusTag status={sub.status} />
-                            {ver?.rejectionReason && (
-                              <p className="mt-1 max-w-[200px] text-[11px] text-[#991B1B]">
-                                {ver.rejectionReason}
-                              </p>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 align-top text-right font-mono text-xs font-semibold text-[#245C45] tabular-nums whitespace-nowrap">
-                            {earnedPts > 0 ? `+${earnedPts} pts` : '-'}
-                          </td>
-                          <td className="px-4 py-3 align-top text-right">
-                            <button
-                              type="button"
-                              onClick={() => onOpenTraceDetail(sub.submissionId)}
-                              className="inline-flex items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2 py-1 text-[11px] font-medium text-[#245C45] hover:bg-[#E7F0E8] transition-colors whitespace-nowrap"
-                            >
-                              <Eye className="h-3 w-3" aria-hidden="true" />
-                              <span>Detail</span>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="space-y-3 lg:col-span-4">
-            <SectionHeader title="Activity Feed" />
-            <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white p-4">
-              {state.recent_activities.slice(0, 5).map((act) => (
-                <ActivityItem
-                  key={act.id}
-                  item={act}
-                  onInspectBatch={(id) => onOpenTraceDetail(id)}
-                />
-              ))}
             </div>
           </section>
         </div>
+
+        {/* Concise Latest Activity */}
+        <section className="space-y-3">
+          <SectionHeader
+            title="Aktivitas Terbaru"
+            rightSlot={
+              <SecondaryButton
+                size="sm"
+                onClick={() => onNavigate('activities', 'feed')}
+              >
+                Semua Aktivitas
+              </SecondaryButton>
+            }
+          />
+          <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white p-4 sm:px-5">
+            {state.recent_activities.slice(0, 3).map((act) => (
+              <ActivityItem
+                key={act.id}
+                item={act}
+                onInspectBatch={(id) => onOpenTraceDetail(id)}
+              />
+            ))}
+          </div>
+        </section>
       </div>
     );
   }
 
-  // 2. Role: Mitra
+  // 2. MITRA OVERVIEW (Partner-focused summary without internal admin data)
   if (isMitraRole(state.activeRole)) {
     const availableBatches = inventory.filter((i) => i.availableCount > 0);
     const partnerRequests = state.distribution_requests.filter(
       (r) =>
-        r.requesterId === actorId ||
-        r.requesterType === 'Mitra Pemanfaat' ||
-        r.status !== 'Rejected'
+        r.requesterId === actorId || r.requesterType === 'Mitra Pemanfaat'
     );
+    const activeRequestsCount = partnerRequests.filter(
+      (r) => r.status === 'Pending Review' || r.status === 'Approved'
+    ).length;
+    const activeDistributionsCount = partnerRequests.filter(
+      (r) => r.status === 'Handed Over'
+    ).length;
 
     return (
-      <div className="space-y-7">
+      <div className="space-y-6">
         <PageHeader
-          title={`Dashboard Mitra · ${activeActor?.name ?? 'Mitra'}`}
-          description="Pantau stok ecobrick terverifikasi yang tersedia, ajukan permintaan pemanfaatan, dan dokumentasikan proyek nyata."
+          title={`Overview Mitra · ${activeActor?.name ?? 'Mitra'}`}
+          description="Pantau ketersediaan ecobrick terverifikasi, pengajuan permintaan, dan distribusi aktif Anda."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <RoleTag role={state.activeRole} />
               <PrimaryButton
                 size="sm"
-                onClick={() => onNavigate('distribution')}
+                onClick={() => onNavigate('requests', 'new')}
               >
-                <span>Request Ecobrick</span>
+                <span>Pengajuan Baru</span>
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
               </PrimaryButton>
             </div>
@@ -355,25 +247,26 @@ export function DashboardPage({
           columns={4}
           items={[
             {
-              label: 'Available Inventory',
+              label: 'Ecobrick Tersedia',
               value: `${metrics.inventoryAvailableCount} unit`,
-              hint: `${availableBatches.length} batch siap dimanfaatkan`,
+              hint: `${availableBatches.length} batch siap diajukan`,
               accent: 'primary',
             },
             {
-              label: 'Reserved (Approved)',
-              value: `${metrics.ecobricksReservedCount} unit`,
-              hint: 'Menunggu jadwal serah terima',
+              label: 'Pengajuan Aktif',
+              value: `${activeRequestsCount} pengajuan`,
+              hint: 'Menunggu review / disetujui',
             },
             {
-              label: 'Distributed / Handed Over',
-              value: `${metrics.ecobricksDistributedCount} unit`,
-              hint: 'Sudah diserahterimakan',
+              label: 'Distribusi Berjalan',
+              value: `${activeDistributionsCount} pengiriman`,
+              hint: 'Siap konfirmasi pemanfaatan',
+              accent: activeDistributionsCount > 0 ? 'muted' : 'default',
             },
             {
-              label: 'Ecobrick Utilized',
+              label: 'Telah Dimanfaatkan',
               value: `${metrics.ecobricksUtilizedCount} unit`,
-              hint: `${state.utilization_records.length} catatan selesai`,
+              hint: `${state.utilization_records.length} proyek tercatat`,
               accent: 'primary',
             },
           ]}
@@ -382,91 +275,67 @@ export function DashboardPage({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
           <section className="space-y-3 lg:col-span-7">
             <SectionHeader
-              title="Batch Terverifikasi Siap Dimanfaatkan"
+              title="Permintaan Terbaru Anda"
               rightSlot={
                 <SecondaryButton
                   size="sm"
-                  onClick={() => onNavigate('distribution')}
+                  onClick={() => onNavigate('requests', 'history')}
                 >
-                  Ajukan Batch
+                  Riwayat Pengajuan
                 </SecondaryButton>
               }
             />
-            <div className="overflow-x-auto rounded-md border border-[#E3E8E4] bg-white">
-              <table className="w-full border-collapse text-left text-[13px]">
-                <thead>
-                  <tr className="border-b border-[#E3E8E4] bg-[#F7F9F7] text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
-                    <th className="px-4 py-2.5">Batch ID</th>
-                    <th className="px-4 py-2.5">Ukuran Botol</th>
-                    <th className="px-4 py-2.5 text-right">Available</th>
-                    <th className="px-4 py-2.5">Status</th>
-                    <th className="px-4 py-2.5 text-right">Lacak</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#EEF2EF]">
-                  {availableBatches.map((item) => (
-                    <tr key={item.batchId} className="hover:bg-[#FAFBF9]">
-                      <td className="px-4 py-3 font-mono text-xs font-semibold text-[#245C45]">
-                        {item.batchId}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-[#252B28]">
-                        {item.bottleSize}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-xs font-semibold tabular-nums">
-                        {item.availableCount} unit
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusTag status={item.inventoryStatus} />
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => onInspectTarget(item.batchId)}
-                          className="inline-flex items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2 py-1 text-[11px] font-medium text-[#245C45] hover:bg-[#E7F0E8] transition-colors"
-                        >
-                          <Eye className="h-3 w-3" aria-hidden="true" />
-                          <span>Trace</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
+              {partnerRequests.length === 0 ? (
+                <p className="p-6 text-center text-xs text-[#6B756F]">
+                  Belum ada pengajuan permintaan ecobrick tercatat.
+                </p>
+              ) : (
+                partnerRequests.slice(0, 4).map((req) => (
+                  <div
+                    key={req.id}
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-[#245C45]">
+                          {req.id} · {req.batchId}
+                        </span>
+                        <StatusTag status={req.status} />
+                      </div>
+                      <p className="text-xs text-[#252B28]">
+                        {req.requestedCount} unit ·{' '}
+                        {req.location ?? req.utilizationCategory}
+                      </p>
+                    </div>
+                    <SecondaryButton
+                      size="sm"
+                      onClick={() => onInspectTarget(req.batchId)}
+                    >
+                      <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>Lacak</span>
+                    </SecondaryButton>
+                  </div>
+                ))
+              )}
             </div>
           </section>
 
-          <section className="space-y-5 lg:col-span-5">
-            <div className="rounded-md border border-[#E3E8E4] bg-white p-5">
-              <DistributionUtilizationChart metrics={metrics} />
-            </div>
-
-            <div className="space-y-3">
-              <SectionHeader
-                title="Permintaan Terbaru"
-                rightSlot={
-                  <SecondaryButton
-                    size="sm"
-                    onClick={() => onNavigate('my_requests')}
-                  >
-                    My Requests
-                  </SecondaryButton>
-                }
-              />
-              <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
-                {partnerRequests.slice(0, 3).map((req) => (
-                  <div key={req.id} className="p-3.5 space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-xs font-semibold text-[#245C45]">
-                        {req.id} · {req.batchId}
-                      </span>
-                      <StatusTag status={req.status} />
-                    </div>
-                    <p className="text-xs font-medium text-[#252B28]">
-                      {req.requestedCount} unit · {req.location ?? req.utilizationCategory}
-                    </p>
-                  </div>
-                ))}
-              </div>
+          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4 lg:col-span-5">
+            <DistributionUtilizationChart metrics={metrics} />
+            <div className="flex flex-wrap gap-2 border-t border-[#EEF2EF] pt-3">
+              <PrimaryButton
+                size="sm"
+                onClick={() => onNavigate('requests', 'new')}
+              >
+                Ajukan Permintaan
+              </PrimaryButton>
+              <SecondaryButton
+                size="sm"
+                onClick={() => onNavigate('distribution', 'active')}
+              >
+                Distribusi Aktif
+              </SecondaryButton>
             </div>
           </section>
         </div>
@@ -474,192 +343,150 @@ export function DashboardPage({
     );
   }
 
-  // 3. Role: Admin (Full Ecosystem Overview + 8 KPIs + 4 Data-Driven Charts)
-  const contributorBreakdown = computeActiveContributorBreakdown(state);
-
+  // 3. ADMIN OVERVIEW (Calm High-Level Operational Summary)
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       <PageHeader
-        title={`Overview Ekosistem TRACECO · ${activeActor?.name ?? 'Admin'}`}
-        description="Kondisi operasional menyeluruh: kontribusi ecobrick, tingkat verifikasi, Green Points, inventori, dan pemanfaatan."
+        title={`Overview Operasional · ${activeActor?.name ?? 'Admin'}`}
+        description="Ringkasan status ekosistem TRACECO dan antrean yang memerlukan tindak lanjut."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <RoleTag role={state.activeRole} />
-            <SecondaryButton size="sm" onClick={() => onNavigate('inventory')}>
-              Inventory
-            </SecondaryButton>
             <PrimaryButton
               size="sm"
-              onClick={() => onNavigate('verification')}
+              onClick={() => onNavigate('contribution', 'verify')}
             >
-              <span>Antrean Verifikasi ({metrics.pendingSubmissionsCount})</span>
+              <span>Verifikasi ({metrics.pendingSubmissionsCount})</span>
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </PrimaryButton>
           </div>
         }
       />
 
-      {/* Top KPI Row */}
       <MetricStrip
         columns={4}
         items={[
           {
-            label: 'Total Submitted',
+            label: 'Total Ecobrick Masuk',
             value: `${metrics.ecobricksSubmittedCount} unit`,
-            hint: `${metrics.totalSubmissionsCount} berkas penyerahan`,
+            hint: `${metrics.totalSubmissionsCount} penyerahan tercatat`,
           },
           {
-            label: 'Total Verified',
+            label: 'Terverifikasi',
             value: `${metrics.ecobricksVerifiedCount} unit`,
-            hint: `${state.ecobrick_batches.length} batch resmi diterbitkan`,
+            hint: `${metrics.verificationRatePercent}% tingkat lolos`,
             accent: 'primary',
           },
           {
-            label: 'Verification Rate',
-            value: `${metrics.verificationRatePercent}%`,
-            hint: `${metrics.ecobricksRejectedCount} unit ditolak`,
+            label: 'Inventori Tersedia',
+            value: `${metrics.inventoryAvailableCount} unit`,
+            hint: `${metrics.ecobricksUtilizedCount} unit dimanfaatkan`,
             accent: 'primary',
           },
           {
-            label: 'Active Contributors',
+            label: 'Kontributor Aktif',
             value: `${metrics.activeContributorsCount} / ${metrics.totalContributorsCount}`,
             hint: `${metrics.activeSantriCount} santri · ${metrics.activeWargaCount} warga · ${metrics.vulnerableFamilyCount} keluarga rentan`,
           },
         ]}
       />
 
-      {/* Second KPI Row */}
-      <MetricStrip
-        columns={4}
-        items={[
-          {
-            label: 'Green Points Distributed',
-            value: `${metrics.totalPointsDistributed} pts`,
-            hint: `${metrics.totalPointsRedeemed} pts ditukarkan (${metrics.totalRedemptionsCount} kali)`,
-            accent: 'primary',
-          },
-          {
-            label: 'Available Inventory',
-            value: `${metrics.inventoryAvailableCount} unit`,
-            hint: `${metrics.ecobricksReservedCount} unit berstatus reserved`,
-          },
-          {
-            label: 'Distributed / Utilized',
-            value: `${metrics.ecobricksDistributedCount} / ${metrics.ecobricksUtilizedCount}`,
-            hint: `${state.utilization_records.length} proyek terpasang`,
-          },
-          {
-            label: 'Pending Verification',
-            value: `${metrics.ecobricksPendingCount} unit`,
-            hint: `${metrics.pendingSubmissionsCount} berkas · ${metrics.pendingDistributionRequestsCount} req distribusi`,
-            accent: 'muted',
-          },
-        ]}
-      />
-
-      {/* 4 Useful Data-Driven Charts (2x2 Grid) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      {/* Actionable Queues + Key Trend */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
         <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-7">
           <ContributionTrendChart
             submissions={state.ecobrick_submissions}
-            title="1. Ecobrick Contribution Trend"
-            subtitle="Tren penyerahan dan verifikasi seluruh ekosistem Pesantren Al-Amanah."
+            title="Tren Kontribusi Ekosistem"
+            subtitle="Perbandingan ecobrick diserahkan dan lolos verifikasi."
             defaultRange="3m"
           />
         </section>
 
-        <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-5">
-          <VerificationStatusChart metrics={metrics} />
-        </section>
-
-        <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-6">
-          <ActiveContributorsChart breakdown={contributorBreakdown} />
-        </section>
-
-        <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-6">
-          <DistributionUtilizationChart metrics={metrics} />
-        </section>
-      </div>
-
-      {/* Bottom Row: Operational Queue + Activity Feed */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <section className="space-y-3 lg:col-span-5">
-          <SectionHeader title="Tindak Lanjut Operasional" />
-          <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
-            <div className="flex items-center justify-between gap-3 px-4 py-3.5">
-              <div>
-                <p className="text-[13px] font-medium text-[#252B28]">
-                  Antrean Verifikasi Fisik
-                </p>
-                <p className="text-xs text-[#6B756F]">
-                  {metrics.pendingSubmissionsCount} submission (
-                  {metrics.ecobricksPendingCount} unit) menunggu periksa
-                </p>
+        <section className="space-y-4 lg:col-span-5">
+          <div className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-3">
+            <SectionHeader title="Perlu Tindak Lanjut" />
+            <div className="divide-y divide-[#EEF2EF] rounded border border-[#E3E8E4]">
+              <div className="flex items-center justify-between gap-3 px-3.5 py-3">
+                <div>
+                  <p className="text-xs font-semibold text-[#252B28]">
+                    Antrean Verifikasi Fisik
+                  </p>
+                  <p className="text-[11px] text-[#6B756F]">
+                    {metrics.pendingSubmissionsCount} berkas (
+                    {metrics.ecobricksPendingCount} unit)
+                  </p>
+                </div>
+                <SecondaryButton
+                  size="sm"
+                  onClick={() => onNavigate('contribution', 'verify')}
+                >
+                  Periksa
+                </SecondaryButton>
               </div>
-              <SecondaryButton
-                size="sm"
-                onClick={() => onNavigate('verification')}
-              >
-                Periksa
-              </SecondaryButton>
-            </div>
-            <div className="flex items-center justify-between gap-3 px-4 py-3.5">
-              <div>
-                <p className="text-[13px] font-medium text-[#252B28]">
-                  Permintaan Distribusi & Handover
-                </p>
-                <p className="text-xs text-[#6B756F]">
-                  {metrics.pendingDistributionRequestsCount} permintaan menunggu
-                  persetujuan
-                </p>
+              <div className="flex items-center justify-between gap-3 px-3.5 py-3">
+                <div>
+                  <p className="text-xs font-semibold text-[#252B28]">
+                    Pengajuan Distribusi Mitra
+                  </p>
+                  <p className="text-[11px] text-[#6B756F]">
+                    {metrics.pendingDistributionRequestsCount} pengajuan menunggu
+                  </p>
+                </div>
+                <SecondaryButton
+                  size="sm"
+                  onClick={() => onNavigate('distribution', 'requests')}
+                >
+                  Tinjau
+                </SecondaryButton>
               </div>
-              <SecondaryButton
-                size="sm"
-                onClick={() => onNavigate('distribution')}
-              >
-                Tinjau
-              </SecondaryButton>
-            </div>
-            <div className="flex items-center justify-between gap-3 px-4 py-3.5">
-              <div>
-                <p className="text-[13px] font-medium text-[#252B28]">
-                  Penukaran Green Reward
-                </p>
-                <p className="text-xs text-[#6B756F]">
-                  {metrics.pendingRedemptionsCount} penukaran menunggu proses
-                </p>
+              <div className="flex items-center justify-between gap-3 px-3.5 py-3">
+                <div>
+                  <p className="text-xs font-semibold text-[#252B28]">
+                    Penukaran Reward Kontributor
+                  </p>
+                  <p className="text-[11px] text-[#6B756F]">
+                    {metrics.pendingRedemptionsCount} penukaran menunggu
+                  </p>
+                </div>
+                <SecondaryButton
+                  size="sm"
+                  onClick={() => onNavigate('reward', 'points')}
+                >
+                  Proses
+                </SecondaryButton>
               </div>
-              <SecondaryButton size="sm" onClick={() => onNavigate('reward')}>
-                Proses
-              </SecondaryButton>
             </div>
           </div>
-        </section>
 
-        <section className="space-y-3 lg:col-span-7">
-          <SectionHeader
-            title="Aktivitas Terbaru Ekosistem"
-            rightSlot={
-              <button
-                type="button"
-                onClick={() => onNavigate('notifications')}
-                className="text-xs font-medium text-[#245C45] hover:underline"
-              >
-                Lihat Notifikasi
-              </button>
-            }
-          />
-          <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white p-4 sm:p-5">
-            {state.recent_activities.slice(0, 5).map((act) => (
-              <ActivityItem
-                key={act.id}
-                item={act}
-                onInspectBatch={(id) => onInspectTarget(id)}
-              />
-            ))}
+          <div className="rounded-md border border-[#E3E8E4] bg-white p-5">
+            <VerificationStatusChart metrics={metrics} />
           </div>
         </section>
       </div>
+
+      {/* Latest Activity Feed */}
+      <section className="space-y-3">
+        <SectionHeader
+          title="Aktivitas Ekosistem Terbaru"
+          rightSlot={
+            <SecondaryButton
+              size="sm"
+              onClick={() => onNavigate('monitor', 'trends')}
+            >
+              Buka Monitoring
+            </SecondaryButton>
+          }
+        />
+        <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white p-4 sm:px-5">
+          {state.recent_activities.slice(0, 4).map((act) => (
+            <ActivityItem
+              key={act.id}
+              item={act}
+              onInspectBatch={(id) => onInspectTarget(id)}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

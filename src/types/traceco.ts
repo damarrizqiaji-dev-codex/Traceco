@@ -1,6 +1,9 @@
 export type AppPageId =
   | 'dashboard'
   | 'contribution'
+  | 'marketplace'
+  | 'transactions'
+  | 'activities'
   | 'verification'
   | 'verified_list'
   | 'history'
@@ -8,6 +11,7 @@ export type AppPageId =
   | 'traceability'
   | 'inventory'
   | 'distribution'
+  | 'requests'
   | 'my_requests'
   | 'utilization'
   | 'monitor'

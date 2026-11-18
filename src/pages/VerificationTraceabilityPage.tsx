@@ -34,6 +34,7 @@ import { RoleTag, StatusTag } from '../components/ui/StatusBadge';
 interface VerificationTraceabilityPageProps {
   state: TracecoState;
   viewMode?: 'queue' | 'verified_list' | 'history';
+  embedded?: boolean;
   onVerifySubmission: (params: {
     submissionId: string;
     verifierId: string;
@@ -73,19 +74,31 @@ type QueueFilter = 'Semua' | SubmissionStatus;
 export function VerificationTraceabilityPage({
   state,
   viewMode = 'queue',
+  embedded = false,
   onVerifySubmission,
   onInspectTarget,
   onOpenTraceDetail,
 }: VerificationTraceabilityPageProps) {
+  const hasPending = state.ecobrick_submissions.some(
+    (s) => s.status === 'Pending'
+  );
   const [filter, setFilter] = useState<QueueFilter>(
-    viewMode === 'verified_list' ? 'Verified' : 'Semua'
+    viewMode === 'verified_list'
+      ? 'Verified'
+      : viewMode === 'queue' && hasPending
+        ? 'Pending'
+        : 'Semua'
   );
 
   useEffect(() => {
     if (viewMode === 'verified_list') {
       setFilter('Verified');
     } else if (viewMode === 'queue') {
-      setFilter('Semua');
+      setFilter(
+        state.ecobrick_submissions.some((s) => s.status === 'Pending')
+          ? 'Pending'
+          : 'Semua'
+      );
     }
   }, [viewMode]);
 
@@ -216,7 +229,7 @@ export function VerificationTraceabilityPage({
         align: 'right',
         render: (v) => (
           <span className="font-mono text-xs tabular-nums whitespace-nowrap">
-            <span className="text-[#245C45] font-semibold">
+            <span className="font-semibold text-[#245C45]">
               {v.verifiedCount}
             </span>{' '}
             / <span className="text-[#991B1B]">{v.rejectedCount}</span>
@@ -239,7 +252,7 @@ export function VerificationTraceabilityPage({
       },
       {
         key: 'detail',
-        header: 'Trace',
+        header: 'Lacak',
         align: 'right',
         render: (v) => (
           <button
@@ -255,17 +268,77 @@ export function VerificationTraceabilityPage({
     ];
 
     return (
-      <div className="space-y-7">
-        <PageHeader
-          title="Verification History"
-          description="Rekam jejak seluruh inspeksi fisik ecobrick, alasan penolakan, dan penerbitan batch."
-        />
-        <DataTable
-          columns={historyColumns}
-          rows={state.verification_records}
-          rowKey={(v) => v.id}
-          emptyMessage="Belum ada riwayat pemeriksaan tercatat."
-        />
+      <div className="space-y-6">
+        {!embedded && (
+          <PageHeader
+            title="Riwayat Verifikasi"
+            description="Rekam jejak seluruh inspeksi fisik ecobrick, alasan penolakan, dan penerbitan batch."
+          />
+        )}
+
+        {/* Mobile Cards (< md) */}
+        <div className="space-y-3 md:hidden">
+          {state.verification_records.length === 0 ? (
+            <div className="rounded-md border border-[#E3E8E4] bg-white p-6 text-center text-xs text-[#6B756F]">
+              Belum ada riwayat pemeriksaan tercatat.
+            </div>
+          ) : (
+            state.verification_records.map((v) => (
+              <div
+                key={v.id}
+                className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-mono text-xs font-semibold text-[#245C45]">
+                      {v.submissionId}
+                    </p>
+                    <p className="font-mono text-[11px] text-[#6B756F]">
+                      {v.id}
+                      {v.batchId ? ` · Batch ${v.batchId}` : ''}
+                    </p>
+                  </div>
+                  <StatusTag status={v.decision} />
+                </div>
+
+                <div className="flex items-center justify-between border-t border-[#EEF2EF] pt-2 text-xs">
+                  <span className="text-[#6B756F]">{v.verifierName}</span>
+                  <span className="font-mono tabular-nums">
+                    <strong className="text-[#245C45]">
+                      {v.verifiedCount}
+                    </strong>{' '}
+                    / <span className="text-[#991B1B]">{v.rejectedCount}</span>
+                  </span>
+                </div>
+
+                {v.rejectionReason && (
+                  <p className="text-[11px] text-[#991B1B]">
+                    Alasan: {v.rejectionReason}
+                  </p>
+                )}
+
+                <SecondaryButton
+                  size="sm"
+                  onClick={() => openDetail(v.submissionId)}
+                  className="w-full"
+                >
+                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Lihat Traceability</span>
+                </SecondaryButton>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table (md+) */}
+        <div className="hidden md:block">
+          <DataTable
+            columns={historyColumns}
+            rows={state.verification_records}
+            rowKey={(v) => v.id}
+            emptyMessage="Belum ada riwayat pemeriksaan tercatat."
+          />
+        </div>
       </div>
     );
   }
@@ -357,11 +430,11 @@ export function VerificationTraceabilityPage({
       );
     } else if (parsedVerifiedCount > 0 && computedRejectedCount > 0) {
       setFeedbackMessage(
-        `${selectedSubmission.submissionId} diverifikasi sebagian: ${parsedVerifiedCount} unit Verified (Batch ${res.batchId}, +${parsedVerifiedCount * POINTS_PER_ECOBRICK} Green Points) dan ${computedRejectedCount} unit Rejected.`
+        `${selectedSubmission.submissionId} diverifikasi sebagian: ${parsedVerifiedCount} unit Terverifikasi (Batch ${res.batchId}, +${parsedVerifiedCount * POINTS_PER_ECOBRICK} Green Points) dan ${computedRejectedCount} unit Ditolak.`
       );
     } else {
       setFeedbackMessage(
-        `${selectedSubmission.submissionId} ditolak seluruhnya (${computedRejectedCount} unit Rejected) dengan alasan penolakan tercatat.`
+        `${selectedSubmission.submissionId} ditolak seluruhnya (${computedRejectedCount} unit Ditolak) dengan alasan penolakan tercatat.`
       );
     }
   };
@@ -452,19 +525,21 @@ export function VerificationTraceabilityPage({
   ];
 
   return (
-    <div className="space-y-7">
-      <PageHeader
-        title={
-          viewMode === 'verified_list'
-            ? 'Verified Contributions'
-            : 'Verification & Quality Inspection'
-        }
-        description={
-          viewMode === 'verified_list'
-            ? 'Daftar kontribusi ecobrick yang telah lolos verifikasi fisik dan masuk batch inventori.'
-            : 'Pemeriksaan fisik 8 kriteria sebelum ecobrick jadi masuk inventori dan memperoleh Green Points.'
-        }
-      />
+    <div className="space-y-6">
+      {!embedded && (
+        <PageHeader
+          title={
+            viewMode === 'verified_list'
+              ? 'Kontribusi Terverifikasi'
+              : 'Verifikasi & Pemeriksaan Fisik'
+          }
+          description={
+            viewMode === 'verified_list'
+              ? 'Daftar kontribusi ecobrick yang telah lolos verifikasi fisik dan masuk batch inventori.'
+              : 'Pemeriksaan fisik 8 kriteria sebelum ecobrick jadi masuk inventori dan memperoleh Green Points.'
+          }
+        />
+      )}
 
       {feedbackMessage && (
         <div
@@ -483,7 +558,7 @@ export function VerificationTraceabilityPage({
             title={
               viewMode === 'verified_list'
                 ? 'Kontribusi Terverifikasi'
-                : '1. Antrean Verifikasi'
+                : 'Daftar Kontribusi untuk Verifikasi'
             }
           />
           {viewMode === 'queue' && (
@@ -493,50 +568,119 @@ export function VerificationTraceabilityPage({
               onChange={setFilter}
               options={[
                 {
-                  value: 'Semua',
-                  label: 'Semua',
-                  count: state.ecobrick_submissions.length,
-                },
-                {
                   value: 'Pending',
-                  label: 'Pending',
+                  label: 'Perlu Diverifikasi',
                   count: state.ecobrick_submissions.filter(
                     (s) => s.status === 'Pending'
                   ).length,
                 },
                 {
-                  value: 'Verified',
-                  label: 'Verified',
-                  count: state.ecobrick_submissions.filter(
-                    (s) => s.status === 'Verified'
-                  ).length,
-                },
-                {
                   value: 'Partially Verified',
-                  label: 'Partially Verified',
+                  label: 'Sebagian',
                   count: state.ecobrick_submissions.filter(
                     (s) => s.status === 'Partially Verified'
                   ).length,
                 },
                 {
+                  value: 'Verified',
+                  label: 'Terverifikasi',
+                  count: state.ecobrick_submissions.filter(
+                    (s) => s.status === 'Verified'
+                  ).length,
+                },
+                {
                   value: 'Rejected',
-                  label: 'Rejected',
+                  label: 'Ditolak',
                   count: state.ecobrick_submissions.filter(
                     (s) => s.status === 'Rejected'
                   ).length,
+                },
+                {
+                  value: 'Semua',
+                  label: 'Semua',
+                  count: state.ecobrick_submissions.length,
                 },
               ]}
             />
           )}
         </div>
 
-        <DataTable
-          columns={queueColumns}
-          rows={filteredSubmissions}
-          rowKey={(s) => s.submissionId}
-          selectedRowKey={selectedSubmission?.submissionId}
-          emptyMessage="Tidak ada submission pada kategori filter ini."
-        />
+        {/* Mobile Cards (< md) */}
+        <div className="space-y-3 md:hidden">
+          {filteredSubmissions.length === 0 ? (
+            <div className="rounded-md border border-[#E3E8E4] bg-white p-6 text-center text-xs text-[#6B756F]">
+              Tidak ada submission pada kategori filter ini.
+            </div>
+          ) : (
+            filteredSubmissions.map((s) => {
+              const ctr = contributorMap.get(s.contributorId);
+              const isSelected =
+                selectedSubmission?.submissionId === s.submissionId;
+              return (
+                <div
+                  key={s.submissionId}
+                  className={`rounded-md border p-4 space-y-2.5 ${
+                    isSelected
+                      ? 'border-[#245C45] bg-[#E7F0E8]/25'
+                      : 'border-[#E3E8E4] bg-white'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-mono text-xs font-semibold text-[#245C45]">
+                        {s.submissionId}
+                      </p>
+                      <p className="text-xs font-medium text-[#252B28]">
+                        {ctr?.name ?? '-'}
+                      </p>
+                      <p className="font-mono text-[11px] text-[#6B756F]">
+                        {s.date} · {s.dropoffPointName}
+                      </p>
+                    </div>
+                    <StatusTag status={s.status} />
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-[#EEF2EF] pt-2 text-xs">
+                    <span className="font-mono font-medium text-[#252B28]">
+                      {s.quantitySubmitted} unit
+                      {s.weightKg ? ` · ${s.weightKg.toFixed(2)} kg` : ''}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <SecondaryButton
+                        size="sm"
+                        onClick={() => {
+                          setSelectedSubmissionId(s.submissionId);
+                          setFeedbackMessage(null);
+                        }}
+                      >
+                        {s.status === 'Pending' ? 'Periksa' : 'Detail'}
+                      </SecondaryButton>
+                      <button
+                        type="button"
+                        onClick={() => openDetail(s.submissionId)}
+                        aria-label={`Trace ${s.submissionId}`}
+                        className="rounded border border-[#CFD8D2] bg-white p-1.5 text-[#245C45]"
+                      >
+                        <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table (md+) */}
+        <div className="hidden md:block">
+          <DataTable
+            columns={queueColumns}
+            rows={filteredSubmissions}
+            rowKey={(s) => s.submissionId}
+            selectedRowKey={selectedSubmission?.submissionId}
+            emptyMessage="Tidak ada submission pada kategori filter ini."
+          />
+        </div>
       </section>
 
       {/* 2. Physical Inspection Panel */}
@@ -559,8 +703,13 @@ export function VerificationTraceabilityPage({
                 {selectedSubmission.dropoffPointName} ·{' '}
                 {selectedSubmission.bottleSize}
               </p>
+              {selectedSubmission.notes && (
+                <p className="text-xs text-[#252B28]">
+                  Catatan: {selectedSubmission.notes}
+                </p>
+              )}
               {selectedSubmission.iotSimulatedWeightKg !== undefined && (
-                <p className="text-[11px] font-mono text-[#245C45]">
+                <p className="font-mono text-[11px] text-[#245C45]">
                   Simulated IoT Data (timbangan pos saat drop-off):{' '}
                   {selectedSubmission.iotSimulatedWeightKg} kg
                 </p>
@@ -605,13 +754,13 @@ export function VerificationTraceabilityPage({
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[#6B756F]">Unit Lolos (Verified)</span>
+                    <span className="text-[#6B756F]">Unit Lolos</span>
                     <span className="font-mono font-semibold text-[#245C45] tabular-nums">
                       {existingVerification.verifiedCount} unit
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[#6B756F]">Unit Ditolak (Rejected)</span>
+                    <span className="text-[#6B756F]">Unit Ditolak</span>
                     <span className="font-mono font-semibold text-[#991B1B] tabular-nums">
                       {existingVerification.rejectedCount} unit
                     </span>
@@ -769,7 +918,7 @@ export function VerificationTraceabilityPage({
                   <div className="grid grid-cols-2 gap-3">
                     <FormField
                       id="verified-count-input"
-                      label={`Unit Verified (0–${selectedSubmission.quantitySubmitted})`}
+                      label={`Unit Lolos (0–${selectedSubmission.quantitySubmitted})`}
                     >
                       <input
                         id="verified-count-input"
@@ -785,7 +934,7 @@ export function VerificationTraceabilityPage({
 
                     <div className="space-y-1">
                       <span className="block text-xs font-medium text-[#252B28]">
-                        Unit Rejected
+                        Unit Ditolak
                       </span>
                       <div className="rounded border border-[#E3E8E4] bg-white px-3 py-2 font-mono text-[13px] font-semibold text-[#991B1B] tabular-nums">
                         {computedRejectedCount} unit
@@ -878,26 +1027,20 @@ export function VerificationTraceabilityPage({
                     />
                   </FormField>
 
-                  <div className="rounded border border-[#E3E8E4] bg-white p-3 text-[11px] text-[#6B756F]">
-                    {parsedVerifiedCount > 0 ? (
-                      <span>
-                        Dampak otomatis: Batch baru berisi{' '}
-                        <strong className="font-mono text-[#245C45]">
-                          {parsedVerifiedCount} unit
-                        </strong>{' '}
-                        masuk inventori dan{' '}
-                        <strong className="font-mono text-[#245C45]">
-                          +{parsedVerifiedCount * POINTS_PER_ECOBRICK} Green
-                          Points
-                        </strong>{' '}
-                        ke kontributor.
+                  <div className="rounded border border-[#E3E8E4] bg-white p-3 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#6B756F]">
+                        Green Points Otomatis (Read-Only)
                       </span>
-                    ) : (
-                      <span className="text-[#991B1B]">
-                        Seluruh unit ditolak: tidak ada batch atau Green Points
-                        diterbitkan.
+                      <span className="font-mono font-semibold text-[#245C45]">
+                        +{parsedVerifiedCount * POINTS_PER_ECOBRICK} GP
                       </span>
-                    )}
+                    </div>
+                    <p className="text-[11px] text-[#6B756F]">
+                      {parsedVerifiedCount > 0
+                        ? `Batch baru berisi ${parsedVerifiedCount} unit akan masuk inventori setelah disimpan.`
+                        : 'Seluruh unit ditolak: tidak ada batch atau Green Points diterbitkan.'}
+                    </p>
                   </div>
 
                   <div className="pt-1">
@@ -910,8 +1053,8 @@ export function VerificationTraceabilityPage({
                         <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                         <span>
                           {computedRejectedCount > 0
-                            ? `Simpan Verifikasi Sebagian (${parsedVerifiedCount} Verified, ${computedRejectedCount} Rejected)`
-                            : `Setujui & Terbitkan Batch (${parsedVerifiedCount} Verified)`}
+                            ? `Verifikasi Sebagian (${parsedVerifiedCount} Lolos)`
+                            : `Verifikasi & Terbitkan Batch`}
                         </span>
                       </PrimaryButton>
                     ) : (
@@ -921,8 +1064,7 @@ export function VerificationTraceabilityPage({
                         className="w-full"
                       >
                         <span>
-                          Tolak Seluruh Submission ({computedRejectedCount}{' '}
-                          Rejected)
+                          Tolak Submission ({computedRejectedCount} Ditolak)
                         </span>
                       </DangerButton>
                     )}
@@ -935,24 +1077,24 @@ export function VerificationTraceabilityPage({
       )}
 
       {/* 3. Concise Future IoT & Audit Layer Architecture */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <section className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-1.5">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#245C45]">
             <Cpu className="h-4 w-4" aria-hidden="true" />
             <span>Future IoT Integration · Simulated IoT Data</span>
           </div>
-          <p className="font-mono text-[11px] text-[#252B28]">
-            Load Cell → HX711 → ESP32 → Platform (data timbangan saat ini
-            berstatus simulasi)
+          <p className="font-mono text-[11px] text-[#6B756F]">
+            Load Cell → HX711 → ESP32 → Platform (data timbangan berstatus
+            simulasi)
           </p>
         </section>
 
-        <section className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2">
+        <section className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-1.5">
           <div className="flex items-center gap-2 text-xs font-semibold text-[#245C45]">
             <ShieldCheck className="h-4 w-4" aria-hidden="true" />
             <span>Conceptual Audit Layer (Non-Crypto)</span>
           </div>
-          <p className="font-mono text-[11px] text-[#252B28]">
+          <p className="font-mono text-[11px] text-[#6B756F]">
             Submission → Verification → Reward → Inventory → Distribution
           </p>
         </section>

@@ -1,24 +1,22 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   LayoutDashboard,
   PackagePlus,
-  ShieldCheck,
-  CheckSquare,
-  History,
   Award,
-  QrCode,
+  Wallet,
+  Activity,
+  User,
   Boxes,
   Send,
-  ClipboardList,
-  Hammer,
   BarChart3,
-  Users,
-  User,
-  Bell,
   Settings,
+  ClipboardList,
+  Bell,
   LogOut,
   Menu,
   X,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import type {
   AppPageId,
@@ -29,9 +27,166 @@ import type {
 import { ALL_ROLES } from '../../utils/tracecoLogic';
 import { TracecoLogo } from '../ui/TracecoLogo';
 
+export interface NavChildSpec {
+  subId: string;
+  label: string;
+}
+
+export interface NavGroupSpec {
+  page: AppPageId;
+  label: string;
+  icon: typeof LayoutDashboard;
+  defaultSub?: string;
+  children?: NavChildSpec[];
+}
+
+export function getNavGroupsForRole(role: UserRole): NavGroupSpec[] {
+  if (role === 'Kontributor') {
+    return [
+      { page: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+      {
+        page: 'contribution',
+        label: 'Kontribusi',
+        icon: PackagePlus,
+        defaultSub: 'submit',
+        children: [
+          { subId: 'submit', label: 'Kirim Ecobrick' },
+          { subId: 'history', label: 'Riwayat Kontribusi' },
+          { subId: 'trace', label: 'Lacak Kontribusi' },
+        ],
+      },
+      {
+        page: 'marketplace',
+        label: 'Green Marketplace',
+        icon: Award,
+        defaultSub: 'catalog',
+        children: [
+          { subId: 'catalog', label: 'Marketplace' },
+          { subId: 'detail', label: 'Detail Reward' },
+        ],
+      },
+      {
+        page: 'transactions',
+        label: 'Transaksi & Saldo',
+        icon: Wallet,
+        defaultSub: 'balance',
+        children: [
+          { subId: 'balance', label: 'Saldo' },
+          { subId: 'ledger', label: 'Riwayat Transaksi' },
+        ],
+      },
+      {
+        page: 'activities',
+        label: 'Aktivitas',
+        icon: Activity,
+        defaultSub: 'feed',
+      },
+      { page: 'profile', label: 'Profil', icon: User },
+    ];
+  }
+
+  if (role === 'Mitra') {
+    return [
+      { page: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+      {
+        page: 'requests',
+        label: 'Permintaan',
+        icon: ClipboardList,
+        defaultSub: 'new',
+        children: [
+          { subId: 'new', label: 'Pengajuan Baru' },
+          { subId: 'history', label: 'Riwayat Pengajuan' },
+        ],
+      },
+      {
+        page: 'distribution',
+        label: 'Distribusi',
+        icon: Send,
+        defaultSub: 'active',
+        children: [
+          { subId: 'active', label: 'Distribusi Aktif' },
+          { subId: 'history', label: 'Riwayat Distribusi' },
+        ],
+      },
+      { page: 'profile', label: 'Profil', icon: User },
+    ];
+  }
+
+  // Admin
+  return [
+    { page: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+    {
+      page: 'contribution',
+      label: 'Kontribusi',
+      icon: PackagePlus,
+      defaultSub: 'all',
+      children: [
+        { subId: 'all', label: 'Semua Kontribusi' },
+        { subId: 'verify', label: 'Verifikasi' },
+        { subId: 'verify_history', label: 'Riwayat' },
+      ],
+    },
+    {
+      page: 'reward',
+      label: 'Reward',
+      icon: Award,
+      defaultSub: 'points',
+      children: [
+        { subId: 'points', label: 'Green Points' },
+        { subId: 'policy', label: 'Kebijakan Reward' },
+        { subId: 'history', label: 'Riwayat Reward' },
+      ],
+    },
+    {
+      page: 'inventory',
+      label: 'Inventori',
+      icon: Boxes,
+      defaultSub: 'available',
+      children: [
+        { subId: 'available', label: 'Ecobrick Tersedia' },
+        { subId: 'movement', label: 'Pergerakan Inventori' },
+      ],
+    },
+    {
+      page: 'distribution',
+      label: 'Distribusi',
+      icon: Send,
+      defaultSub: 'requests',
+      children: [
+        { subId: 'requests', label: 'Pengajuan' },
+        { subId: 'active', label: 'Distribusi Berjalan' },
+        { subId: 'history', label: 'Riwayat Distribusi' },
+      ],
+    },
+    {
+      page: 'monitor',
+      label: 'Monitoring',
+      icon: BarChart3,
+      defaultSub: 'trends',
+      children: [
+        { subId: 'trends', label: 'Tren Kontribusi' },
+        { subId: 'users', label: 'Aktivitas Pengguna' },
+        { subId: 'utilization', label: 'Pemanfaatan Ecobrick' },
+      ],
+    },
+    {
+      page: 'settings',
+      label: 'Pengaturan',
+      icon: Settings,
+      defaultSub: 'users',
+      children: [
+        { subId: 'users', label: 'Pengguna' },
+        { subId: 'hub', label: 'Profil Pesantren' },
+        { subId: 'system', label: 'Pengaturan Sistem' },
+      ],
+    },
+  ];
+}
+
 interface AppShellProps {
   activePage: AppPageId;
-  onNavigate: (page: AppPageId) => void;
+  activeSubTab?: string;
+  onNavigate: (page: AppPageId, subTab?: string) => void;
   onPreviewRoleChange: (role: UserRole) => void;
   onLogout: () => void;
   currentUser: UserAccount;
@@ -39,96 +194,9 @@ interface AppShellProps {
   children: ReactNode;
 }
 
-const NAV_BY_ROLE: Record<UserRole, AppPageId[]> = {
-  Kontributor: [
-    'dashboard',
-    'contribution',
-    'reward',
-    'traceability',
-    'community',
-    'profile',
-  ],
-  Admin: [
-    'dashboard',
-    'contribution',
-    'verification',
-    'reward',
-    'inventory',
-    'distribution',
-    'monitor',
-    'community',
-    'settings',
-  ],
-  Mitra: [
-    'dashboard',
-    'distribution',
-    'my_requests',
-    'utilization',
-    'community',
-    'profile',
-  ],
-};
-
-function getNavMeta(
-  page: AppPageId,
-  role: UserRole
-): { label: string; icon: typeof LayoutDashboard } {
-  switch (page) {
-    case 'dashboard':
-      return {
-        label: role === 'Admin' ? 'Overview' : 'Dashboard',
-        icon: LayoutDashboard,
-      };
-    case 'contribution':
-      return {
-        label: role === 'Admin' ? 'Contributions' : 'My Contributions',
-        icon: PackagePlus,
-      };
-    case 'verification':
-      return {
-        label: 'Verification',
-        icon: ShieldCheck,
-      };
-    case 'verified_list':
-      return { label: 'Verified Contributions', icon: CheckSquare };
-    case 'history':
-      return { label: 'History', icon: History };
-    case 'reward':
-      return {
-        label: 'Rewards',
-        icon: Award,
-      };
-    case 'traceability':
-      return { label: 'Traceability', icon: QrCode };
-    case 'inventory':
-      return { label: 'Inventory', icon: Boxes };
-    case 'distribution':
-      return {
-        label: role === 'Mitra' ? 'Request Ecobrick' : 'Distribution',
-        icon: Send,
-      };
-    case 'my_requests':
-      return { label: 'My Requests', icon: ClipboardList };
-    case 'utilization':
-      return { label: 'Utilization', icon: Hammer };
-    case 'monitor':
-      return { label: 'Monitoring', icon: BarChart3 };
-    case 'community':
-      return {
-        label: role === 'Admin' ? 'Community Hub' : 'Community',
-        icon: Users,
-      };
-    case 'profile':
-      return { label: 'Profile', icon: User };
-    case 'notifications':
-      return { label: 'Notifications', icon: Bell };
-    case 'settings':
-      return { label: 'Settings', icon: Settings };
-  }
-}
-
 export function AppShell({
   activePage,
+  activeSubTab,
   onNavigate,
   onPreviewRoleChange,
   onLogout,
@@ -137,40 +205,118 @@ export function AppShell({
   children,
 }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    contribution: true,
+    marketplace: false,
+    transactions: false,
+    requests: true,
+    distribution: false,
+    reward: false,
+    inventory: false,
+    monitor: false,
+    settings: false,
+  });
+
+  useEffect(() => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [activePage]: true,
+    }));
+  }, [activePage]);
 
   const unreadCount = state.notifications.filter((n) => !n.read).length;
-  const navItems = NAV_BY_ROLE[state.activeRole] ?? NAV_BY_ROLE.Admin;
-  const currentMeta = getNavMeta(activePage, state.activeRole);
+  const navGroups = getNavGroupsForRole(state.activeRole);
+  const activeGroup = navGroups.find((g) => g.page === activePage);
+  const activeChild = activeGroup?.children?.find(
+    (c) => c.subId === (activeSubTab ?? activeGroup.defaultSub)
+  );
 
-  const handleSelectPage = (page: AppPageId) => {
-    onNavigate(page);
+  const pageLabel =
+    activePage === 'notifications'
+      ? 'Notifikasi'
+      : activeGroup?.label ?? 'Overview';
+
+  const handleSelectRoute = (page: AppPageId, subTab?: string) => {
+    onNavigate(page, subTab);
     setMobileMenuOpen(false);
   };
 
-  const renderNavButton = (id: AppPageId) => {
-    const meta = getNavMeta(id, state.activeRole);
-    const Icon = meta.icon;
-    const isActive = activePage === id;
+  const toggleGroupExpand = (page: AppPageId) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [page]: !prev[page],
+    }));
+  };
+
+  const renderNavGroup = (group: NavGroupSpec) => {
+    const Icon = group.icon;
+    const isParentActive = activePage === group.page;
+    const hasChildren = Boolean(group.children && group.children.length > 0);
+    const isExpanded = Boolean(expandedGroups[group.page]);
+
     return (
-      <button
-        key={id}
-        type="button"
-        onClick={() => handleSelectPage(id)}
-        className={`flex w-full items-center gap-2.5 rounded px-3 py-1.5 text-left text-[13px] transition-colors whitespace-nowrap ${
-          isActive
-            ? 'bg-[#E7F0E8] font-medium text-[#245C45]'
-            : 'font-normal text-[#252B28] hover:bg-[#F4F7F5]'
-        }`}
-      >
-        <Icon
-          className={`h-4 w-4 shrink-0 ${
-            isActive ? 'text-[#245C45]' : 'text-[#6B756F]'
-          }`}
-          strokeWidth={1.75}
-          aria-hidden="true"
-        />
-        <span className="truncate">{meta.label}</span>
-      </button>
+      <div key={group.page} className="space-y-0.5">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => handleSelectRoute(group.page, group.defaultSub)}
+            className={`flex flex-1 items-center gap-2.5 rounded px-3 py-2 text-left text-[13px] transition-colors whitespace-nowrap ${
+              isParentActive
+                ? 'bg-[#E7F0E8] font-medium text-[#245C45]'
+                : 'font-normal text-[#252B28] hover:bg-[#F4F7F5]'
+            }`}
+          >
+            <Icon
+              className={`h-4 w-4 shrink-0 ${
+                isParentActive ? 'text-[#245C45]' : 'text-[#6B756F]'
+              }`}
+              strokeWidth={1.75}
+              aria-hidden="true"
+            />
+            <span className="truncate">{group.label}</span>
+          </button>
+
+          {hasChildren && (
+            <button
+              type="button"
+              onClick={() => toggleGroupExpand(group.page)}
+              aria-expanded={isExpanded}
+              aria-label={`Toggle submenu ${group.label}`}
+              className="rounded p-1.5 text-[#6B756F] hover:bg-[#F4F7F5] hover:text-[#252B28] transition-colors"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+            </button>
+          )}
+        </div>
+
+        {hasChildren && isExpanded && (
+          <div className="ml-5 space-y-0.5 border-l border-[#DCE4DE] pl-2.5 py-0.5">
+            {group.children!.map((child) => {
+              const currentSub = activeSubTab ?? group.defaultSub;
+              const isChildActive =
+                isParentActive && currentSub === child.subId;
+              return (
+                <button
+                  key={child.subId}
+                  type="button"
+                  onClick={() => handleSelectRoute(group.page, child.subId)}
+                  className={`flex w-full items-center rounded px-2.5 py-1.5 text-left text-xs transition-colors whitespace-nowrap ${
+                    isChildActive
+                      ? 'bg-[#F2F7F3] font-semibold text-[#245C45]'
+                      : 'text-[#6B756F] hover:bg-[#F7F9F7] hover:text-[#252B28]'
+                  }`}
+                >
+                  <span className="truncate">{child.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -181,7 +327,7 @@ export function AppShell({
           <div className="flex items-center justify-between gap-2">
             <button
               type="button"
-              onClick={() => handleSelectPage('dashboard')}
+              onClick={() => handleSelectRoute('dashboard')}
               className="flex items-center gap-2.5 text-left focus:outline-none"
             >
               <TracecoLogo size="md" />
@@ -209,11 +355,10 @@ export function AppShell({
           <p className="px-3 pb-1 text-[10px] font-semibold tracking-widest text-[#6B756F] uppercase">
             Menu · {state.activeRole}
           </p>
-          {navItems.map(renderNavButton)}
+          {navGroups.map(renderNavGroup)}
         </nav>
       </div>
 
-      {/* Community Hub Context + Logout */}
       <div className="border-t border-[#E3E8E4] bg-[#F7F9F7] px-5 py-3.5 space-y-2.5">
         <div className="space-y-0.5">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[#6B756F]">
@@ -266,7 +411,7 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="border-b border-[#E3E8E4] bg-white px-4 py-2.5 sm:px-8">
           <div className="mx-auto flex max-w-[1360px] flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
@@ -277,25 +422,35 @@ export function AppShell({
               </button>
               <TracecoLogo size="sm" className="lg:hidden" />
               <div className="flex items-center gap-1.5 text-xs text-[#6B756F] min-w-0">
-                <span>TRACECO</span>
-                <span aria-hidden="true">/</span>
-                <span className="truncate font-medium text-[#252B28]">
-                  {currentMeta.label}
+                <span className="hidden sm:inline">TRACECO</span>
+                <span className="hidden sm:inline" aria-hidden="true">
+                  /
                 </span>
+                <span className="truncate font-medium text-[#252B28]">
+                  {pageLabel}
+                </span>
+                {activeChild && (
+                  <>
+                    <span aria-hidden="true">/</span>
+                    <span className="truncate text-[#245C45] font-medium">
+                      {activeChild.label}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              {/* Prototype Role Preview Switcher */}
-              <div className="inline-flex items-center gap-2 rounded border border-[#E3E8E4] bg-[#F7F9F7] px-2.5 py-1 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 rounded border border-[#E3E8E4] bg-[#F7F9F7] px-2 py-1 text-xs">
                 <label
                   htmlFor="prototype-role-preview"
-                  className="text-[#6B756F] whitespace-nowrap"
+                  className="hidden sm:inline text-[#6B756F] whitespace-nowrap"
                 >
                   Prototype Role Preview:
                 </label>
                 <select
                   id="prototype-role-preview"
+                  aria-label="Prototype Role Preview"
                   value={state.activeRole}
                   onChange={(e) =>
                     onPreviewRoleChange(e.target.value as UserRole)
@@ -312,7 +467,7 @@ export function AppShell({
 
               <button
                 type="button"
-                onClick={() => handleSelectPage('notifications')}
+                onClick={() => handleSelectRoute('notifications')}
                 aria-label={`Notifikasi (${unreadCount} belum dibaca)`}
                 className={`relative rounded border p-1.5 transition-colors ${
                   activePage === 'notifications'
@@ -330,8 +485,12 @@ export function AppShell({
 
               <button
                 type="button"
-                onClick={() => handleSelectPage('profile')}
-                className="hidden sm:inline-flex items-center gap-1.5 rounded border border-[#E3E8E4] bg-white px-2.5 py-1 text-xs font-medium text-[#252B28] hover:bg-[#F7F9F7] transition-colors whitespace-nowrap"
+                onClick={() =>
+                  handleSelectRoute(
+                    state.activeRole === 'Admin' ? 'settings' : 'profile'
+                  )
+                }
+                className="hidden md:inline-flex items-center gap-1.5 rounded border border-[#E3E8E4] bg-white px-2.5 py-1 text-xs font-medium text-[#252B28] hover:bg-[#F7F9F7] transition-colors whitespace-nowrap"
               >
                 <User className="h-3.5 w-3.5 text-[#245C45]" aria-hidden="true" />
                 <span>{currentUser.name}</span>
@@ -340,16 +499,17 @@ export function AppShell({
               <button
                 type="button"
                 onClick={onLogout}
+                aria-label="Keluar Akun"
                 className="inline-flex items-center gap-1.5 rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-xs font-medium text-[#252B28] hover:bg-[#FEF2F2] hover:border-[#E2B4B4] hover:text-[#991B1B] transition-colors whitespace-nowrap"
               >
                 <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Keluar</span>
+                <span className="hidden sm:inline">Keluar</span>
               </button>
             </div>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1360px] flex-1 px-4 py-6 sm:px-8 sm:py-7">
+        <main className="mx-auto w-full max-w-[1360px] flex-1 px-4 py-5 sm:px-8 sm:py-7">
           {children}
         </main>
       </div>

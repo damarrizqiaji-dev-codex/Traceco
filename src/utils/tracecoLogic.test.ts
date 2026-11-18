@@ -9,6 +9,7 @@ import {
   computeContributionTimeSeries,
   computeContributorPointsBalance,
   computeContributorStats,
+  computeContributorTransactionsWithBalance,
   computePlatformMetrics,
   computeVerifiedInventory,
   createCollaborationProposalInState,
@@ -17,6 +18,7 @@ import {
   createDistributionRequestInState,
   generateNextBatchId,
   generateNextSubmissionId,
+  getSubmissionStatusLabel,
   logoutUser,
   POINTS_PER_ECOBRICK,
   redeemRewardInState,
@@ -421,3 +423,28 @@ test('Community Hub supports persistent activity RSVP, agenda creation, forum Q&
     'Aktif'
   );
 });
+
+test('Contributor transaction ledger computes running balance after each entry and maps status labels', () => {
+  const rows = computeContributorTransactionsWithBalance(
+    INITIAL_TRACECO_STATE,
+    'CTR-SAN-01'
+  );
+  const summary = computeContributorPointsBalance(
+    INITIAL_TRACECO_STATE,
+    'CTR-SAN-01'
+  );
+  assert.ok(rows.length >= 2);
+  // Newest row balanceAfter must equal current points balance
+  assert.equal(rows[0].balanceAfter, summary.balance);
+  // Ensure signedPoints sign matches type
+  for (const row of rows) {
+    assert.equal(
+      row.signedPoints,
+      row.type === 'Earned' ? row.points : -row.points
+    );
+  }
+  assert.equal(getSubmissionStatusLabel('Pending'), 'Menunggu Verifikasi');
+  assert.equal(getSubmissionStatusLabel('Verified'), 'Terverifikasi');
+  assert.equal(getSubmissionStatusLabel('Rejected'), 'Ditolak');
+});
+

@@ -29,6 +29,7 @@ import { RoleTag, StatusTag } from '../components/ui/StatusBadge';
 
 interface CommunityHubPageProps {
   state: TracecoState;
+  embedded?: boolean;
   onNavigate: (page: AppPageId) => void;
   onToggleJoinActivity: (activityId: string) => {
     joined: boolean;
@@ -168,6 +169,7 @@ const POST_CATEGORIES: CommunityPostCategory[] = [
 
 export function CommunityHubPage({
   state,
+  embedded = false,
   onNavigate,
   onToggleJoinActivity,
   onCreateActivity,
@@ -538,30 +540,32 @@ export function CommunityHubPage({
   ];
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Community Hub"
-        description="Pusat koordinasi operasional Pesantren Al-Amanah: pendaftaran agenda komunitas, forum tanya-jawab lintas peran, uji kelayakan standar ecobrick, dan pengelolaan kemitraan."
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <RoleTag role={state.activeRole} />
-          </div>
-        }
-        footer={
-          <p className="text-xs text-[#6B756F]">
-            Partisipasi ekosistem:{' '}
-            <span className="text-[#252B28]">
-              Kontributor (Santri · Warga ·{' '}
-              <strong className="font-medium text-[#245C45]">
-                Keluarga Rentan
-              </strong>
-              )
-            </span>{' '}
-            · <span className="text-[#252B28]">Admin</span> ·{' '}
-            <span className="text-[#252B28]">Mitra</span>
-          </p>
-        }
-      />
+    <div className="space-y-6">
+      {!embedded && (
+        <PageHeader
+          title="Community Hub"
+          description="Pusat koordinasi operasional Pesantren Al-Amanah: pendaftaran agenda komunitas, forum tanya-jawab lintas peran, uji kelayakan standar ecobrick, dan pengelolaan kemitraan."
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <RoleTag role={state.activeRole} />
+            </div>
+          }
+          footer={
+            <p className="text-xs text-[#6B756F]">
+              Partisipasi ekosistem:{' '}
+              <span className="text-[#252B28]">
+                Kontributor (Santri · Warga ·{' '}
+                <strong className="font-medium text-[#245C45]">
+                  Keluarga Rentan
+                </strong>
+                )
+              </span>{' '}
+              · <span className="text-[#252B28]">Admin</span> ·{' '}
+              <span className="text-[#252B28]">Mitra</span>
+            </p>
+          }
+        />
+      )}
 
       <MetricStrip
         columns={4}

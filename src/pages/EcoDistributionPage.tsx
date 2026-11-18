@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { CheckCircle2, Eye, Send } from 'lucide-react';
+import { CheckCircle2, Eye, Plus, Send } from 'lucide-react';
 import type {
   DistributionRequest,
   DistributionStatus,
@@ -25,10 +25,13 @@ import { FormField, fieldInputClass } from '../components/ui/FormField';
 import { MetricStrip } from '../components/ui/Metric';
 import { PageHeader, SectionHeader } from '../components/ui/PageHeader';
 import { StatusTag } from '../components/ui/StatusBadge';
+import { SubNavTabs } from '../components/ui/SubNavTabs';
 
 interface EcoDistributionPageProps {
   state: TracecoState;
-  viewMode?: 'inventory' | 'distribution' | 'my_requests' | 'utilization';
+  pageMode?: 'inventory' | 'distribution' | 'requests';
+  activeSubTab?: string;
+  onChangeSubTab?: (sub: string) => void;
   onCreateDistributionRequest: (payload: {
     batchId: string;
     requesterId?: string;
@@ -66,7 +69,9 @@ const UTILIZATION_CATEGORIES: UtilizationCategory[] = [
 
 export function EcoDistributionPage({
   state,
-  viewMode = 'distribution',
+  pageMode = 'distribution',
+  activeSubTab = '',
+  onChangeSubTab = () => {},
   onCreateDistributionRequest,
   onUpdateDistributionStatus,
   onInspectTarget,
@@ -104,6 +109,7 @@ export function EcoDistributionPage({
   const [utilizationDetail, setUtilizationDetail] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [showAdminCreateForm, setShowAdminCreateForm] = useState(false);
 
   useEffect(() => {
     if (isMitra) {
@@ -116,6 +122,12 @@ export function EcoDistributionPage({
       setUtilizationCategory('Fasilitas Pesantren');
     }
   }, [isMitra, activeActor?.name]);
+
+  useEffect(() => {
+    if (!batchId && availableBatches[0]) {
+      setBatchId(availableBatches[0].batchId);
+    }
+  }, [availableBatches, batchId]);
 
   const selectedBatch = availableBatches.find((b) => b.batchId === batchId);
 
@@ -164,15 +176,40 @@ export function EcoDistributionPage({
     }
 
     setFormSuccess(
-      `Permintaan ${qty} unit dari batch ${batchId} berhasil dikirim (Pending Review).`
+      `Pengajuan ${qty} unit dari batch ${batchId} berhasil dikirim (Menunggu Review).`
     );
     setUtilizationDetail('');
     setLocation('');
+    setShowAdminCreateForm(false);
     if (selectedBatch) {
       const remaining = Math.max(1, selectedBatch.availableCount - qty);
       setRequestedCount(String(Math.min(5, remaining)));
     }
   };
+
+  // Filtered datasets
+  const mitraRequests = state.distribution_requests.filter(
+    (r) =>
+      r.requesterId === activeActorId ||
+      r.requesterType === 'Mitra Pemanfaat'
+  );
+  const scopedRequests = isMitra ? mitraRequests : state.distribution_requests;
+
+  const pendingRequests = scopedRequests.filter(
+    (r) => r.status === 'Pending Review'
+  );
+  const activeDistributions = scopedRequests.filter(
+    (r) => r.status === 'Approved' || r.status === 'Handed Over'
+  );
+  const historyRequests = scopedRequests.filter(
+    (r) => r.status === 'Utilized' || r.status === 'Rejected'
+  );
+
+  const scopedUtilizationRecords = isMitra
+    ? state.utilization_records.filter((u) =>
+        mitraRequests.some((r) => r.id === u.requestId)
+      )
+    : state.utilization_records;
 
   const inventoryColumns: DataTableColumn<InventoryItem>[] = [
     {
@@ -235,7 +272,7 @@ export function EcoDistributionPage({
     },
     {
       key: 'available',
-      header: 'Available',
+      header: 'Tersedia',
       align: 'right',
       render: (item) => (
         <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums whitespace-nowrap">
@@ -259,20 +296,11 @@ export function EcoDistributionPage({
           className="inline-flex items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-[11px] font-medium text-[#245C45] hover:bg-[#E7F0E8] transition-colors whitespace-nowrap"
         >
           <Eye className="h-3 w-3" aria-hidden="true" />
-          <span>Trace</span>
+          <span>Lacak</span>
         </button>
       ),
     },
   ];
-
-  const requestRows =
-    viewMode === 'my_requests' && isMitra
-      ? state.distribution_requests.filter(
-          (r) =>
-            r.requesterId === activeActorId ||
-            r.requesterType === 'Mitra Pemanfaat'
-        )
-      : state.distribution_requests;
 
   const requestColumns: DataTableColumn<DistributionRequest>[] = [
     {
@@ -325,7 +353,7 @@ export function EcoDistributionPage({
     },
     {
       key: 'actions',
-      header: 'Alur Persetujuan & Handover',
+      header: 'Aksi',
       align: 'right',
       render: (r) => {
         const isOwnMitraRequest =
@@ -382,15 +410,10 @@ export function EcoDistributionPage({
                   )
                 }
               >
-                Konfirmasi Utilized
+                Konfirmasi Dimanfaatkan
               </PrimaryButton>
             );
           }
-          return (
-            <span className="font-mono text-[11px] text-[#6B756F]">
-              {r.handoverDate ?? r.requestedAt}
-            </span>
-          );
         }
 
         if (isOwnMitraRequest && r.status === 'Handed Over') {
@@ -406,15 +429,20 @@ export function EcoDistributionPage({
                 )
               }
             >
-              Konfirmasi Utilized
+              Konfirmasi Dimanfaatkan
             </PrimaryButton>
           );
         }
 
         return (
-          <span className="font-mono text-[11px] text-[#6B756F]">
-            {r.handoverDate ? `Handover: ${r.handoverDate}` : r.requestedAt}
-          </span>
+          <button
+            type="button"
+            onClick={() => openDetail(r.batchId)}
+            className="inline-flex items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-[11px] font-medium text-[#245C45] hover:bg-[#E7F0E8] transition-colors whitespace-nowrap"
+          >
+            <Eye className="h-3 w-3" aria-hidden="true" />
+            <span>Lacak</span>
+          </button>
         );
       },
     },
@@ -434,9 +462,13 @@ export function EcoDistributionPage({
       key: 'batch',
       header: 'Batch / Request',
       render: (u) => (
-        <span className="font-mono text-xs text-[#6B756F] whitespace-nowrap">
+        <button
+          type="button"
+          onClick={() => openDetail(u.batchId)}
+          className="font-mono text-xs text-[#245C45] hover:underline whitespace-nowrap"
+        >
           {u.batchId} · {u.requestId}
-        </span>
+        </button>
       ),
     },
     {
@@ -464,7 +496,7 @@ export function EcoDistributionPage({
     },
     {
       key: 'qty',
-      header: 'Utilized',
+      header: 'Unit',
       align: 'right',
       render: (u) => (
         <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums whitespace-nowrap">
@@ -483,284 +515,640 @@ export function EcoDistributionPage({
     },
   ];
 
-  const pageTitle =
-    viewMode === 'inventory'
-      ? 'Verified Ecobrick Inventory'
-      : viewMode === 'my_requests'
-        ? 'My Ecobrick Requests'
-        : viewMode === 'utilization'
-          ? 'Utilization Documentation'
-          : isMitra
-            ? 'Request Ecobrick & Inventory'
-            : 'Distribution & Utilization';
+  const renderRequestForm = () => (
+    <section className="rounded-md border border-[#E3E8E4] bg-white p-5 sm:p-6 space-y-4">
+      <SectionHeader
+        title="Form Pengajuan Ecobrick"
+        description="Pilih batch ecobrick terverifikasi yang tersedia, jumlah unit, dan rencana pemanfaatan."
+      />
 
-  const pageDesc =
-    viewMode === 'inventory'
-      ? 'Stok ecobrick terverifikasi di Community Hub (hanya menghitung unit yang lolos inspeksi fisik).'
-      : viewMode === 'my_requests'
-        ? 'Pantau status permintaan ecobrick Anda mulai dari pengajuan hingga serah terima dan konfirmasi pemanfaatan.'
-        : viewMode === 'utilization'
-          ? 'Catatan resmi pemanfaatan aktual ecobrick di fasilitas pesantren, komunitas, dan proyek mitra.'
-          : 'Alur pengajuan, persetujuan Admin, serah terima, dan pemanfaatan ecobrick terverifikasi.';
+      {formError && (
+        <div
+          role="alert"
+          className="rounded border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-medium text-[#991B1B]"
+        >
+          {formError}
+        </div>
+      )}
 
-  const showInventory = viewMode === 'inventory' || viewMode === 'distribution';
-  const showRequestForm = viewMode === 'distribution';
-  const showRequestsTable =
-    viewMode === 'distribution' || viewMode === 'my_requests';
-  const showUtilizationTable =
-    viewMode === 'distribution' || viewMode === 'utilization';
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <FormField
+            id="dist-batch-select"
+            label="Batch Inventori Tersedia"
+            hint={
+              selectedBatch
+                ? `Stok: ${selectedBatch.availableCount} unit`
+                : undefined
+            }
+          >
+            <select
+              id="dist-batch-select"
+              value={batchId}
+              onChange={(e) => setBatchId(e.target.value)}
+              className={fieldInputClass}
+            >
+              {availableBatches.length === 0 ? (
+                <option value="">Tidak ada stok batch tersedia</option>
+              ) : (
+                availableBatches.map((item) => (
+                  <option key={item.batchId} value={item.batchId}>
+                    {item.batchId} · Tersedia {item.availableCount} unit (
+                    {item.bottleSize})
+                  </option>
+                ))
+              )}
+            </select>
+          </FormField>
+
+          <FormField id="requested-count" label="Jumlah (Unit)">
+            <input
+              id="requested-count"
+              type="number"
+              min={1}
+              max={selectedBatch?.availableCount ?? 999}
+              step={1}
+              required
+              value={requestedCount}
+              onChange={(e) => setRequestedCount(e.target.value)}
+              className={fieldInputClass}
+            />
+          </FormField>
+
+          <FormField id="needed-date" label="Tanggal Kebutuhan">
+            <input
+              id="needed-date"
+              type="date"
+              required
+              value={neededDate}
+              onChange={(e) => setNeededDate(e.target.value)}
+              className={fieldInputClass}
+            />
+          </FormField>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <FormField id="requester-name" label="Nama Pemohon / Lembaga">
+            <input
+              id="requester-name"
+              type="text"
+              required
+              value={requesterName}
+              onChange={(e) => setRequesterName(e.target.value)}
+              placeholder="Contoh: Sanggar Bambu Krajan"
+              className={fieldInputClass}
+            />
+          </FormField>
+
+          <FormField id="requester-type" label="Kategori Pemohon">
+            <select
+              id="requester-type"
+              value={requesterType}
+              onChange={(e) =>
+                setRequesterType(e.target.value as RequesterType)
+              }
+              className={fieldInputClass}
+            >
+              {REQUESTER_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <FormField id="utilization-category" label="Tujuan Penggunaan">
+            <select
+              id="utilization-category"
+              value={utilizationCategory}
+              onChange={(e) =>
+                setUtilizationCategory(e.target.value as UtilizationCategory)
+              }
+              className={fieldInputClass}
+            >
+              {UTILIZATION_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          <FormField id="utilization-location" label="Lokasi Pemanfaatan">
+            <input
+              id="utilization-location"
+              type="text"
+              required
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Contoh: Taman Baca RW 03"
+              className={fieldInputClass}
+            />
+          </FormField>
+        </div>
+
+        <FormField id="utilization-detail" label="Deskripsi Kegiatan">
+          <textarea
+            id="utilization-detail"
+            rows={2}
+            required
+            value={utilizationDetail}
+            onChange={(e) => setUtilizationDetail(e.target.value)}
+            placeholder="Contoh: Perakitan 2 modul meja baca komunitas dari ecobrick 600 ml."
+            className={fieldInputClass}
+          />
+        </FormField>
+
+        <div className="flex justify-end">
+          <PrimaryButton
+            type="submit"
+            disabled={availableBatches.length === 0}
+          >
+            <Send className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Kirim Pengajuan</span>
+          </PrimaryButton>
+        </div>
+      </form>
+    </section>
+  );
+
+  const renderRequestCardsAndTable = (
+    rows: DistributionRequest[],
+    emptyMsg: string
+  ) => (
+    <>
+      <div className="space-y-3 md:hidden">
+        {rows.length === 0 ? (
+          <div className="rounded-md border border-[#E3E8E4] bg-white p-6 text-center text-xs text-[#6B756F]">
+            {emptyMsg}
+          </div>
+        ) : (
+          rows.map((r) => {
+            const isOwnMitraRequest =
+              isMitra &&
+              (r.requesterId === activeActorId ||
+                r.requesterType === 'Mitra Pemanfaat');
+            return (
+              <div
+                key={r.id}
+                className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-mono text-xs font-semibold text-[#245C45]">
+                      {r.id} · {r.batchId}
+                    </p>
+                    <p className="text-xs font-medium text-[#252B28]">
+                      {r.requesterName}
+                    </p>
+                    <p className="text-[11px] text-[#4F8A68]">
+                      {r.utilizationCategory}
+                      {r.location ? ` · ${r.location}` : ''}
+                    </p>
+                  </div>
+                  <StatusTag status={r.status} />
+                </div>
+
+                <p className="text-xs text-[#6B756F]">{r.utilizationDetail}</p>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#EEF2EF] pt-2">
+                  <span className="font-mono text-xs font-semibold text-[#252B28]">
+                    {r.requestedCount} unit
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {isAdmin && r.status === 'Pending Review' && (
+                      <>
+                        <PrimaryButton
+                          size="sm"
+                          onClick={() =>
+                            onUpdateDistributionStatus(r.id, 'Approved')
+                          }
+                        >
+                          Setujui
+                        </PrimaryButton>
+                        <DangerButton
+                          size="sm"
+                          onClick={() =>
+                            onUpdateDistributionStatus(r.id, 'Rejected')
+                          }
+                        >
+                          Tolak
+                        </DangerButton>
+                      </>
+                    )}
+                    {isAdmin && r.status === 'Approved' && (
+                      <PrimaryButton
+                        size="sm"
+                        onClick={() =>
+                          onUpdateDistributionStatus(
+                            r.id,
+                            'Handed Over',
+                            r.requesterName,
+                            'Serah terima fisik dicatat oleh Admin.'
+                          )
+                        }
+                      >
+                        Catat Handover
+                      </PrimaryButton>
+                    )}
+                    {(isAdmin || isOwnMitraRequest) &&
+                      r.status === 'Handed Over' && (
+                        <PrimaryButton
+                          size="sm"
+                          onClick={() =>
+                            onUpdateDistributionStatus(
+                              r.id,
+                              'Utilized',
+                              r.receiverName ?? r.requesterName,
+                              `Pemanfaatan aktual (${r.utilizationDetail}) telah didokumentasikan.`
+                            )
+                          }
+                        >
+                          Konfirmasi Dimanfaatkan
+                        </PrimaryButton>
+                      )}
+                    <SecondaryButton
+                      size="sm"
+                      onClick={() => openDetail(r.batchId)}
+                    >
+                      <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>Lacak</span>
+                    </SecondaryButton>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="hidden md:block">
+        <DataTable
+          columns={requestColumns}
+          rows={rows}
+          rowKey={(r) => r.id}
+          emptyMessage={emptyMsg}
+        />
+      </div>
+    </>
+  );
+
+  // 1. ADMIN INVENTORI
+  if (pageMode === 'inventory') {
+    const invTab = activeSubTab === 'movement' ? 'movement' : 'available';
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Inventori"
+          description="Stok ecobrick terverifikasi di Community Hub (hanya menghitung unit yang lolos inspeksi fisik)."
+        />
+
+        <MetricStrip
+          columns={4}
+          items={[
+            {
+              label: 'Total Terverifikasi',
+              value: `${metrics.ecobricksVerifiedCount} unit`,
+              hint: `${state.ecobrick_batches.length} batch resmi`,
+            },
+            {
+              label: 'Tersedia',
+              value: `${metrics.inventoryAvailableCount} unit`,
+              hint: `${availableBatches.length} batch siap pakai`,
+              accent: 'primary',
+            },
+            {
+              label: 'Direservasi',
+              value: `${metrics.ecobricksReservedCount} unit`,
+              hint: 'Disetujui menunggu serah terima',
+            },
+            {
+              label: 'Didistribusikan',
+              value: `${metrics.ecobricksDistributedCount} unit`,
+              hint: `${metrics.ecobricksUtilizedCount} unit dimanfaatkan`,
+              accent: 'primary',
+            },
+          ]}
+        />
+
+        <SubNavTabs
+          ariaLabel="Submenu Inventori"
+          activeId={invTab}
+          onChange={onChangeSubTab}
+          items={[
+            {
+              id: 'available',
+              label: 'Ecobrick Tersedia',
+              badge: availableBatches.length,
+            },
+            {
+              id: 'movement',
+              label: 'Pergerakan Inventori',
+              badge: inventory.length,
+            },
+          ]}
+        />
+
+        <section className="space-y-3">
+          <SectionHeader
+            title={
+              invTab === 'available'
+                ? 'Batch Ecobrick Tersedia'
+                : 'Alokasi & Pergerakan per Batch'
+            }
+          />
+
+          {/* Mobile Cards (< md) */}
+          <div className="space-y-3 md:hidden">
+            {(invTab === 'available' ? availableBatches : inventory).map(
+              (item) => (
+                <div
+                  key={item.batchId}
+                  className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-mono text-xs font-semibold text-[#245C45]">
+                        {item.batchId}
+                      </p>
+                      <p className="text-xs font-medium text-[#252B28]">
+                        {item.contributorName} · {item.bottleSize}
+                      </p>
+                    </div>
+                    <StatusTag status={item.inventoryStatus} />
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#EEF2EF] pt-2 text-xs">
+                    <span className="font-mono text-[#245C45] font-semibold">
+                      Tersedia: {item.availableCount} / {item.totalVerifiedCount}{' '}
+                      unit
+                    </span>
+                    <SecondaryButton
+                      size="sm"
+                      onClick={() => openDetail(item.batchId)}
+                    >
+                      <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>Lacak</span>
+                    </SecondaryButton>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+
+          <div className="hidden md:block">
+            <DataTable
+              columns={inventoryColumns}
+              rows={invTab === 'available' ? availableBatches : inventory}
+              rowKey={(item) => item.batchId}
+              emptyMessage="Belum ada batch ecobrick terverifikasi."
+            />
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // 2. MITRA PERMINTAAN
+  if (pageMode === 'requests') {
+    const reqTab = activeSubTab === 'history' ? 'history' : 'new';
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Permintaan"
+          description="Ajukan permintaan ecobrick terverifikasi dari inventori Community Hub dan pantau progres persetujuan."
+        />
+
+        <MetricStrip
+          columns={3}
+          items={[
+            {
+              label: 'Batch Tersedia di Hub',
+              value: `${metrics.inventoryAvailableCount} unit`,
+              hint: `${availableBatches.length} batch siap diajukan`,
+              accent: 'primary',
+            },
+            {
+              label: 'Menunggu Review',
+              value: `${pendingRequests.length} pengajuan`,
+              hint: 'Ditinjau oleh Admin Community Hub',
+            },
+            {
+              label: 'Total Pengajuan Saya',
+              value: `${mitraRequests.length} berkas`,
+              hint: `${activeDistributions.length} dalam proses distribusi`,
+            },
+          ]}
+        />
+
+        <SubNavTabs
+          ariaLabel="Submenu Permintaan Mitra"
+          activeId={reqTab}
+          onChange={(t) => {
+            setFormSuccess(null);
+            onChangeSubTab(t);
+          }}
+          items={[
+            { id: 'new', label: 'Pengajuan Baru' },
+            {
+              id: 'history',
+              label: 'Riwayat Pengajuan',
+              badge: mitraRequests.length,
+            },
+          ]}
+        />
+
+        {formSuccess && (
+          <div
+            role="status"
+            className="flex items-start justify-between gap-2 rounded-md border border-[#C6DBC9] bg-[#E7F0E8] px-4 py-3 text-xs font-medium text-[#245C45]"
+          >
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{formSuccess}</span>
+            </div>
+            {reqTab === 'new' && (
+              <SecondaryButton
+                size="sm"
+                onClick={() => onChangeSubTab('history')}
+              >
+                Lihat Riwayat
+              </SecondaryButton>
+            )}
+          </div>
+        )}
+
+        {reqTab === 'new'
+          ? renderRequestForm()
+          : renderRequestCardsAndTable(
+              mitraRequests,
+              'Anda belum memiliki pengajuan permintaan ecobrick.'
+            )}
+      </div>
+    );
+  }
+
+  // 3. MITRA DISTRIBUSI
+  if (isMitra) {
+    const distTab = activeSubTab === 'history' ? 'history' : 'active';
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Distribusi"
+          description="Pantau pengiriman aktif dan dokumentasikan pemanfaatan nyata ecobrick di proyek mitra."
+        />
+
+        <SubNavTabs
+          ariaLabel="Submenu Distribusi Mitra"
+          activeId={distTab}
+          onChange={onChangeSubTab}
+          items={[
+            {
+              id: 'active',
+              label: 'Distribusi Aktif',
+              badge: activeDistributions.length,
+            },
+            {
+              id: 'history',
+              label: 'Riwayat Distribusi',
+              badge: scopedUtilizationRecords.length,
+            },
+          ]}
+        />
+
+        {distTab === 'active' ? (
+          <section className="space-y-3">
+            <SectionHeader
+              title="Distribusi Disetujui & Dalam Serah Terima"
+              description="Konfirmasi 'Dimanfaatkan' setelah ecobrick terpasang/digunakan di lokasi proyek."
+            />
+            {renderRequestCardsAndTable(
+              activeDistributions,
+              'Belum ada distribusi aktif saat ini.'
+            )}
+          </section>
+        ) : (
+          <section className="space-y-3">
+            <SectionHeader title="Dokumentasi Pemanfaatan Mitra" />
+            <DataTable
+              columns={utilizationColumns}
+              rows={scopedUtilizationRecords}
+              rowKey={(u) => u.id}
+              emptyMessage="Belum ada dokumentasi pemanfaatan mitra yang selesai."
+            />
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  // 4. ADMIN DISTRIBUSI
+  const adminDistTab =
+    activeSubTab === 'active' || activeSubTab === 'history'
+      ? activeSubTab
+      : 'requests';
 
   return (
-    <div className="space-y-7">
-      <PageHeader title={pageTitle} description={pageDesc} />
+    <div className="space-y-6">
+      <PageHeader
+        title="Distribusi"
+        description="Alur pengajuan, persetujuan, serah terima fisik, hingga dokumentasi pemanfaatan ecobrick."
+      />
 
-      <MetricStrip
-        columns={5}
+      <SubNavTabs
+        ariaLabel="Submenu Distribusi Admin"
+        activeId={adminDistTab}
+        onChange={onChangeSubTab}
         items={[
           {
-            label: 'Total Verified',
-            value: `${metrics.ecobricksVerifiedCount} unit`,
-            hint: `${state.ecobrick_batches.length} batch resmi`,
+            id: 'requests',
+            label: 'Pengajuan',
+            badge: pendingRequests.length,
           },
           {
-            label: 'Available',
-            value: `${metrics.inventoryAvailableCount} unit`,
-            hint: `${availableBatches.length} batch tersedia`,
-            accent: 'primary',
+            id: 'active',
+            label: 'Distribusi Berjalan',
+            badge: activeDistributions.length,
           },
           {
-            label: 'Reserved',
-            value: `${metrics.ecobricksReservedCount} unit`,
-            hint: 'Disetujui menunggu serah terima',
-          },
-          {
-            label: 'Distributed',
-            value: `${metrics.ecobricksDistributedCount} unit`,
-            hint: 'Sudah diserahterimakan',
-          },
-          {
-            label: 'Utilized',
-            value: `${metrics.ecobricksUtilizedCount} unit`,
-            hint: `${state.utilization_records.length} catatan selesai`,
-            accent: 'primary',
+            id: 'history',
+            label: 'Riwayat Distribusi',
+            badge: state.utilization_records.length,
           },
         ]}
       />
 
-      {showInventory && (
-        <section className="space-y-3">
-          <SectionHeader
-            title="Inventori Ecobrick Terverifikasi"
-            description="Stok inventori hanya bersumber dari unit yang lolos verifikasi fisik dan memiliki Batch ID."
-          />
-          <DataTable
-            columns={inventoryColumns}
-            rows={inventory}
-            rowKey={(item) => item.batchId}
-            emptyMessage="Belum ada batch ecobrick terverifikasi."
-          />
-        </section>
+      {formSuccess && (
+        <div
+          role="status"
+          className="flex items-start gap-2 rounded-md border border-[#C6DBC9] bg-[#E7F0E8] px-4 py-3 text-xs font-medium text-[#245C45]"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{formSuccess}</span>
+        </div>
       )}
 
-      {showRequestForm && (
-        <section className="rounded-md border border-[#E3E8E4] bg-white p-5 sm:p-6 space-y-4">
-          <SectionHeader
-            title="Form Pengajuan Permintaan Ecobrick (Request Ecobrick)"
-            description="Isi batch, jumlah unit, tujuan penggunaan, lokasi, tanggal kebutuhan, dan deskripsi kegiatan."
-          />
-
-          {formError && (
-            <div
-              role="alert"
-              className="rounded border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-medium text-[#991B1B]"
+      {adminDistTab === 'requests' && (
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <SectionHeader
+              title="Pengajuan Permintaan Ecobrick"
+              description="Tinjau permintaan masuk dari pesantren, komunitas, dan mitra."
+            />
+            <PrimaryButton
+              size="sm"
+              onClick={() => setShowAdminCreateForm((v) => !v)}
             >
-              {formError}
-            </div>
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>
+                {showAdminCreateForm ? 'Tutup Form' : 'Buat Pengajuan'}
+              </span>
+            </PrimaryButton>
+          </div>
+
+          {showAdminCreateForm && renderRequestForm()}
+
+          {renderRequestCardsAndTable(
+            pendingRequests,
+            'Tidak ada pengajuan baru yang menunggu review.'
           )}
-
-          {formSuccess && (
-            <div
-              role="status"
-              className="flex items-start gap-2 rounded border border-[#C6DBC9] bg-[#E7F0E8] px-3.5 py-2.5 text-xs font-medium text-[#245C45]"
-            >
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{formSuccess}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <FormField
-                id="dist-batch-select"
-                label="Batch Inventori Tersedia"
-                hint={
-                  selectedBatch
-                    ? `Stok: ${selectedBatch.availableCount} unit`
-                    : undefined
-                }
-              >
-                <select
-                  id="dist-batch-select"
-                  value={batchId}
-                  onChange={(e) => setBatchId(e.target.value)}
-                  className={fieldInputClass}
-                >
-                  {availableBatches.length === 0 ? (
-                    <option value="">Tidak ada stok batch tersedia</option>
-                  ) : (
-                    availableBatches.map((item) => (
-                      <option key={item.batchId} value={item.batchId}>
-                        {item.batchId} · Tersedia {item.availableCount} unit
-                      </option>
-                    ))
-                  )}
-                </select>
-              </FormField>
-
-              <FormField id="requested-count" label="Jumlah (Unit)">
-                <input
-                  id="requested-count"
-                  type="number"
-                  min={1}
-                  max={selectedBatch?.availableCount ?? 999}
-                  step={1}
-                  required
-                  value={requestedCount}
-                  onChange={(e) => setRequestedCount(e.target.value)}
-                  className={fieldInputClass}
-                />
-              </FormField>
-
-              <FormField id="needed-date" label="Tanggal Kebutuhan">
-                <input
-                  id="needed-date"
-                  type="date"
-                  required
-                  value={neededDate}
-                  onChange={(e) => setNeededDate(e.target.value)}
-                  className={fieldInputClass}
-                />
-              </FormField>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <FormField id="requester-name" label="Nama Pemohon / Lembaga">
-                <input
-                  id="requester-name"
-                  type="text"
-                  required
-                  value={requesterName}
-                  onChange={(e) => setRequesterName(e.target.value)}
-                  placeholder="Contoh: Sanggar Bambu Krajan"
-                  className={fieldInputClass}
-                />
-              </FormField>
-
-              <FormField id="requester-type" label="Kategori Pemohon">
-                <select
-                  id="requester-type"
-                  value={requesterType}
-                  onChange={(e) =>
-                    setRequesterType(e.target.value as RequesterType)
-                  }
-                  className={fieldInputClass}
-                >
-                  {REQUESTER_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-
-              <FormField id="utilization-category" label="Tujuan Penggunaan">
-                <select
-                  id="utilization-category"
-                  value={utilizationCategory}
-                  onChange={(e) =>
-                    setUtilizationCategory(
-                      e.target.value as UtilizationCategory
-                    )
-                  }
-                  className={fieldInputClass}
-                >
-                  {UTILIZATION_CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-
-              <FormField id="utilization-location" label="Lokasi Pemanfaatan">
-                <input
-                  id="utilization-location"
-                  type="text"
-                  required
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Contoh: Taman Baca RW 03"
-                  className={fieldInputClass}
-                />
-              </FormField>
-            </div>
-
-            <FormField id="utilization-detail" label="Deskripsi Kegiatan">
-              <textarea
-                id="utilization-detail"
-                rows={2}
-                required
-                value={utilizationDetail}
-                onChange={(e) => setUtilizationDetail(e.target.value)}
-                placeholder="Contoh: Perakitan 2 modul meja baca komunitas dari ecobrick 600 ml."
-                className={fieldInputClass}
-              />
-            </FormField>
-
-            <div className="flex justify-end">
-              <PrimaryButton
-                type="submit"
-                disabled={availableBatches.length === 0}
-              >
-                <Send className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Kirim Permintaan Ecobrick</span>
-              </PrimaryButton>
-            </div>
-          </form>
         </section>
       )}
 
-      {showRequestsTable && (
+      {adminDistTab === 'active' && (
         <section className="space-y-3">
           <SectionHeader
-            title={
-              viewMode === 'my_requests'
-                ? 'Daftar Permintaan Saya'
-                : 'Alur Permintaan Distribusi & Serah Terima'
-            }
-            description="Review -> Approve -> Handover -> Utilization Record."
+            title="Distribusi Berjalan"
+            description="Catat serah terima (Handover) dan konfirmasi saat ecobrick selesai dimanfaatkan."
           />
-          <DataTable
-            columns={requestColumns}
-            rows={requestRows}
-            rowKey={(r) => r.id}
-            emptyMessage="Belum ada permintaan distribusi tercatat."
-          />
+          {renderRequestCardsAndTable(
+            activeDistributions,
+            'Tidak ada distribusi berjalan saat ini.'
+          )}
         </section>
       )}
 
-      {showUtilizationTable && (
-        <section className="space-y-3">
-          <SectionHeader
-            title="Dokumentasi Pemanfaatan Aktual (Utilization Records)"
-          />
-          <DataTable
-            columns={utilizationColumns}
-            rows={state.utilization_records}
-            rowKey={(u) => u.id}
-            emptyMessage="Belum ada dokumentasi pemanfaatan yang selesai."
-          />
-        </section>
+      {adminDistTab === 'history' && (
+        <div className="space-y-6">
+          <section className="space-y-3">
+            <SectionHeader title="Dokumentasi Pemanfaatan Aktual" />
+            <DataTable
+              columns={utilizationColumns}
+              rows={state.utilization_records}
+              rowKey={(u) => u.id}
+              emptyMessage="Belum ada dokumentasi pemanfaatan yang selesai."
+            />
+          </section>
+
+          {historyRequests.length > 0 && (
+            <section className="space-y-3">
+              <SectionHeader title="Arsip Pengajuan Selesai / Ditolak" />
+              {renderRequestCardsAndTable(
+                historyRequests,
+                'Belum ada arsip pengajuan selesai atau ditolak.'
+              )}
+            </section>
+          )}
+        </div>
       )}
     </div>
   );

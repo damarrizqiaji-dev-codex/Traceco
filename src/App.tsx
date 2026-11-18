@@ -38,15 +38,15 @@ import {
 } from './utils/tracecoLogic';
 import { AppShell } from './components/layout/AppShell';
 import { TraceabilityModal } from './components/ui/TraceabilityModal';
+import { ActivitiesPage } from './pages/ActivitiesPage';
 import { AuthPages } from './pages/AuthPages';
 import { DashboardPage } from './pages/DashboardPage';
 import { EcobrickContributionPage } from './pages/EcobrickContributionPage';
-import { TraceabilityPage } from './pages/TraceabilityPage';
-import { VerificationTraceabilityPage } from './pages/VerificationTraceabilityPage';
-import { GreenRewardPage } from './pages/GreenRewardPage';
 import { EcoDistributionPage } from './pages/EcoDistributionPage';
 import { EcoMonitorPage } from './pages/EcoMonitorPage';
-import { CommunityHubPage } from './pages/CommunityHubPage';
+import { GreenMarketplacePage } from './pages/GreenMarketplacePage';
+import { GreenRewardPage } from './pages/GreenRewardPage';
+import { TransactionsBalancePage } from './pages/TransactionsBalancePage';
 import {
   NotificationsPage,
   ProfilePage,
@@ -61,41 +61,141 @@ const ALLOWED_PAGES_BY_ROLE: Record<UserRole, AppPageId[]> = {
   Kontributor: [
     'dashboard',
     'contribution',
-    'reward',
-    'traceability',
-    'community',
+    'marketplace',
+    'transactions',
+    'activities',
     'profile',
     'notifications',
-    'settings',
   ],
   Admin: [
     'dashboard',
     'contribution',
-    'verification',
-    'verified_list',
-    'history',
     'reward',
     'inventory',
     'distribution',
     'monitor',
-    'traceability',
-    'community',
-    'profile',
-    'notifications',
     'settings',
+    'notifications',
   ],
   Mitra: [
     'dashboard',
+    'requests',
     'distribution',
-    'my_requests',
-    'utilization',
-    'traceability',
-    'community',
     'profile',
     'notifications',
-    'settings',
   ],
 };
+
+function getDefaultSubTab(
+  role: UserRole,
+  page: AppPageId
+): string {
+  if (role === 'Kontributor') {
+    if (page === 'contribution') return 'submit';
+    if (page === 'marketplace') return 'catalog';
+    if (page === 'transactions') return 'balance';
+    if (page === 'activities') return 'feed';
+  }
+  if (role === 'Admin') {
+    if (page === 'contribution') return 'all';
+    if (page === 'reward') return 'points';
+    if (page === 'inventory') return 'available';
+    if (page === 'distribution') return 'requests';
+    if (page === 'monitor') return 'trends';
+    if (page === 'settings') return 'users';
+  }
+  if (role === 'Mitra') {
+    if (page === 'requests') return 'new';
+    if (page === 'distribution') return 'active';
+    if (page === 'profile') return 'profil';
+  }
+  return '';
+}
+
+function normalizeRoute(
+  role: UserRole,
+  page: AppPageId,
+  subTab?: string
+): { page: AppPageId; sub: string } {
+  let targetPage = page;
+  let targetSub = subTab;
+
+  // Map legacy notification/deep-link page IDs cleanly
+  if (page === 'verification') {
+    if (role === 'Admin') {
+      targetPage = 'contribution';
+      targetSub = 'verify';
+    } else {
+      targetPage = 'dashboard';
+    }
+  } else if (page === 'verified_list') {
+    if (role === 'Admin') {
+      targetPage = 'contribution';
+      targetSub = 'all';
+    } else {
+      targetPage = 'contribution';
+      targetSub = 'history';
+    }
+  } else if (page === 'history') {
+    if (role === 'Admin') {
+      targetPage = 'contribution';
+      targetSub = 'verify_history';
+    } else {
+      targetPage = 'contribution';
+      targetSub = 'history';
+    }
+  } else if (page === 'traceability') {
+    if (role === 'Kontributor') {
+      targetPage = 'contribution';
+      targetSub = 'trace';
+    } else {
+      targetPage = 'dashboard';
+    }
+  } else if (page === 'reward' && role === 'Kontributor') {
+    targetPage = 'marketplace';
+    targetSub = 'catalog';
+  } else if (page === 'my_requests') {
+    if (role === 'Mitra') {
+      targetPage = 'requests';
+      targetSub = 'history';
+    } else if (role === 'Admin') {
+      targetPage = 'distribution';
+      targetSub = 'requests';
+    }
+  } else if (page === 'utilization') {
+    if (role === 'Mitra' || role === 'Admin') {
+      targetPage = 'distribution';
+      targetSub = 'history';
+    }
+  } else if (page === 'community') {
+    if (role === 'Kontributor') {
+      targetPage = 'activities';
+      targetSub = 'community';
+    } else if (role === 'Admin') {
+      targetPage = 'monitor';
+      targetSub = 'users';
+    } else if (role === 'Mitra') {
+      targetPage = 'profile';
+      targetSub = 'community';
+    }
+  } else if (page === 'settings' && role !== 'Admin') {
+    targetPage = 'profile';
+    targetSub = getDefaultSubTab(role, 'profile');
+  } else if (page === 'profile' && role === 'Admin') {
+    targetPage = 'settings';
+    targetSub = 'system';
+  }
+
+  const allowed = ALLOWED_PAGES_BY_ROLE[role];
+  if (!allowed.includes(targetPage)) {
+    return { page: 'dashboard', sub: '' };
+  }
+
+  return {
+    page: targetPage,
+    sub: targetSub || getDefaultSubTab(role, targetPage),
+  };
+}
 
 function loadInitialState(): TracecoState {
   if (typeof window === 'undefined') return INITIAL_TRACECO_STATE;
@@ -143,12 +243,14 @@ function loadInitialState(): TracecoState {
 export default function App() {
   const [state, setState] = useState<TracecoState>(loadInitialState);
   const [activePage, setActivePage] = useState<AppPageId>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<string>('');
   const [inspectingTargetId, setInspectingTargetId] = useState<string | null>(
     null
   );
   const [selectedTraceTargetId, setSelectedTraceTargetId] = useState<
     string | null
   >('TRC-2026-004');
+  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -162,19 +264,17 @@ export default function App() {
     ? state.accounts.find((a) => a.id === state.currentUserId) ?? null
     : null;
 
-  const handleNavigate = (page: AppPageId) => {
-    const allowed = ALLOWED_PAGES_BY_ROLE[state.activeRole];
-    if (allowed.includes(page)) {
-      setActivePage(page);
-    } else {
-      setActivePage('dashboard');
-    }
+  const handleNavigate = (page: AppPageId, subTab?: string) => {
+    const resolved = normalizeRoute(state.activeRole, page, subTab);
+    setActivePage(resolved.page);
+    setActiveSubTab(resolved.sub);
   };
 
   const handleOpenTraceDetail = (targetId: string) => {
     setSelectedTraceTargetId(targetId);
-    if (ALLOWED_PAGES_BY_ROLE[state.activeRole].includes('traceability')) {
-      setActivePage('traceability');
+    if (state.activeRole === 'Kontributor') {
+      setActivePage('contribution');
+      setActiveSubTab('trace');
     } else {
       setInspectingTargetId(targetId);
     }
@@ -187,6 +287,7 @@ export default function App() {
     }
     setState(res.nextState);
     setActivePage('dashboard');
+    setActiveSubTab('');
     setInspectingTargetId(null);
     return {};
   };
@@ -206,6 +307,7 @@ export default function App() {
     }
     setState(res.nextState);
     setActivePage('dashboard');
+    setActiveSubTab('');
     setInspectingTargetId(null);
     return {};
   };
@@ -215,12 +317,16 @@ export default function App() {
     const allowed = ALLOWED_PAGES_BY_ROLE[role];
     if (!allowed.includes(activePage)) {
       setActivePage('dashboard');
+      setActiveSubTab('');
+    } else {
+      setActiveSubTab(getDefaultSubTab(role, activePage));
     }
   };
 
   const handleLogout = () => {
     setState((prev) => logoutUser(prev));
     setActivePage('dashboard');
+    setActiveSubTab('');
     setInspectingTargetId(null);
   };
 
@@ -506,6 +612,7 @@ export default function App() {
   return (
     <AppShell
       activePage={activePage}
+      activeSubTab={activeSubTab}
       onNavigate={handleNavigate}
       onPreviewRoleChange={handlePreviewRoleChange}
       onLogout={handleLogout}
@@ -520,79 +627,51 @@ export default function App() {
           onOpenTraceDetail={handleOpenTraceDetail}
         />
       )}
+
       {activePage === 'contribution' && (
         <EcobrickContributionPage
           state={state}
-          onSubmitContribution={handleSubmitContribution}
-          onInspectTarget={setInspectingTargetId}
-          onOpenTraceDetail={handleOpenTraceDetail}
-        />
-      )}
-      {activePage === 'traceability' && (
-        <TraceabilityPage
-          state={state}
-          selectedTargetId={selectedTraceTargetId}
-          onSelectTarget={setSelectedTraceTargetId}
-          onBack={() => handleNavigate('dashboard')}
-        />
-      )}
-      {(activePage === 'verification' ||
-        activePage === 'verified_list' ||
-        activePage === 'history') && (
-        <VerificationTraceabilityPage
-          state={state}
-          viewMode={
-            activePage === 'verified_list'
-              ? 'verified_list'
-              : activePage === 'history'
-                ? 'history'
-                : 'queue'
+          activeSubTab={
+            activeSubTab || getDefaultSubTab(state.activeRole, 'contribution')
           }
+          onChangeSubTab={setActiveSubTab}
+          selectedTraceTargetId={selectedTraceTargetId}
+          onSelectTraceTargetId={setSelectedTraceTargetId}
+          onSubmitContribution={handleSubmitContribution}
           onVerifySubmission={handleVerifySubmission}
           onInspectTarget={setInspectingTargetId}
-          onOpenTraceDetail={handleOpenTraceDetail}
         />
       )}
-      {activePage === 'reward' && (
-        <GreenRewardPage
+
+      {activePage === 'marketplace' && (
+        <GreenMarketplacePage
           state={state}
+          activeSubTab={activeSubTab || 'catalog'}
+          onChangeSubTab={setActiveSubTab}
+          selectedRewardId={selectedRewardId}
+          onSelectRewardId={setSelectedRewardId}
           onRedeemReward={handleRedeemReward}
-          onUpdateRedemptionStatus={handleUpdateRedemptionStatus}
-          onUpdateIncentiveStatus={handleUpdateIncentiveStatus}
-        />
-      )}
-      {(activePage === 'inventory' ||
-        activePage === 'distribution' ||
-        activePage === 'my_requests' ||
-        activePage === 'utilization') && (
-        <EcoDistributionPage
-          state={state}
-          viewMode={
-            activePage === 'inventory'
-              ? 'inventory'
-              : activePage === 'my_requests'
-                ? 'my_requests'
-                : activePage === 'utilization'
-                  ? 'utilization'
-                  : 'distribution'
-          }
-          onCreateDistributionRequest={handleCreateDistributionRequest}
-          onUpdateDistributionStatus={handleUpdateDistributionStatus}
-          onInspectTarget={setInspectingTargetId}
-          onOpenTraceDetail={handleOpenTraceDetail}
-        />
-      )}
-      {activePage === 'monitor' && (
-        <EcoMonitorPage
-          state={state}
-          onInspectTarget={setInspectingTargetId}
-          onOpenTraceDetail={handleOpenTraceDetail}
-        />
-      )}
-      {activePage === 'community' && (
-        <CommunityHubPage
-          state={state}
           onNavigate={handleNavigate}
+        />
+      )}
+
+      {activePage === 'transactions' && (
+        <TransactionsBalancePage
+          state={state}
+          activeSubTab={activeSubTab || 'balance'}
+          onChangeSubTab={setActiveSubTab}
+          onNavigate={handleNavigate}
+          onOpenTraceDetail={handleOpenTraceDetail}
+        />
+      )}
+
+      {activePage === 'activities' && (
+        <ActivitiesPage
+          state={state}
+          activeSubTab={activeSubTab || 'feed'}
+          onChangeSubTab={setActiveSubTab}
+          onNavigate={handleNavigate}
+          onOpenTraceDetail={handleOpenTraceDetail}
           onToggleJoinActivity={handleToggleJoinActivity}
           onCreateActivity={handleCreateCommunityActivity}
           onUpdateActivityStatus={handleUpdateCommunityActivityStatus}
@@ -603,14 +682,79 @@ export default function App() {
           onUpdateCollaborationStatus={handleUpdateCollaborationStatus}
         />
       )}
+
+      {activePage === 'reward' && (
+        <GreenRewardPage
+          state={state}
+          activeSubTab={activeSubTab || 'points'}
+          onChangeSubTab={setActiveSubTab}
+          onRedeemReward={handleRedeemReward}
+          onUpdateRedemptionStatus={handleUpdateRedemptionStatus}
+          onUpdateIncentiveStatus={handleUpdateIncentiveStatus}
+        />
+      )}
+
+      {(activePage === 'inventory' ||
+        activePage === 'distribution' ||
+        activePage === 'requests') && (
+        <EcoDistributionPage
+          state={state}
+          pageMode={
+            activePage === 'inventory'
+              ? 'inventory'
+              : activePage === 'requests'
+                ? 'requests'
+                : 'distribution'
+          }
+          activeSubTab={
+            activeSubTab || getDefaultSubTab(state.activeRole, activePage)
+          }
+          onChangeSubTab={setActiveSubTab}
+          onCreateDistributionRequest={handleCreateDistributionRequest}
+          onUpdateDistributionStatus={handleUpdateDistributionStatus}
+          onInspectTarget={setInspectingTargetId}
+          onOpenTraceDetail={handleOpenTraceDetail}
+        />
+      )}
+
+      {activePage === 'monitor' && (
+        <EcoMonitorPage
+          state={state}
+          activeSubTab={activeSubTab || 'trends'}
+          onChangeSubTab={setActiveSubTab}
+          onNavigate={handleNavigate}
+          onInspectTarget={setInspectingTargetId}
+          onOpenTraceDetail={handleOpenTraceDetail}
+          onToggleJoinActivity={handleToggleJoinActivity}
+          onCreateActivity={handleCreateCommunityActivity}
+          onUpdateActivityStatus={handleUpdateCommunityActivityStatus}
+          onCreatePost={handleCreateCommunityPost}
+          onReplyPost={handleReplyCommunityPost}
+          onTogglePostStatus={handleToggleCommunityPostStatus}
+          onCreateCollaboration={handleCreateCollaboration}
+          onUpdateCollaborationStatus={handleUpdateCollaborationStatus}
+        />
+      )}
+
       {activePage === 'profile' && (
         <ProfilePage
           state={state}
           currentUser={currentUser}
+          activeSubTab={activeSubTab || 'profil'}
+          onChangeSubTab={setActiveSubTab}
           onNavigate={handleNavigate}
           onLogout={handleLogout}
+          onToggleJoinActivity={handleToggleJoinActivity}
+          onCreateActivity={handleCreateCommunityActivity}
+          onUpdateActivityStatus={handleUpdateCommunityActivityStatus}
+          onCreatePost={handleCreateCommunityPost}
+          onReplyPost={handleReplyCommunityPost}
+          onTogglePostStatus={handleToggleCommunityPostStatus}
+          onCreateCollaboration={handleCreateCollaboration}
+          onUpdateCollaborationStatus={handleUpdateCollaborationStatus}
         />
       )}
+
       {activePage === 'notifications' && (
         <NotificationsPage
           state={state}
@@ -619,9 +763,13 @@ export default function App() {
           onNavigate={handleNavigate}
         />
       )}
+
       {activePage === 'settings' && (
         <SettingsPage
+          state={state}
           currentUser={currentUser}
+          activeSubTab={activeSubTab || 'users'}
+          onChangeSubTab={setActiveSubTab}
           onLogout={handleLogout}
           onResetSimulation={handleResetSimulation}
         />

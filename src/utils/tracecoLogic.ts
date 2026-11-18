@@ -1953,3 +1953,73 @@ export function updateCollaborationStatusInState(
     ),
   };
 }
+
+export interface GreenPointTransactionRow {
+  id: string;
+  contributorId: string;
+  date: string;
+  type: 'Earned' | 'Redeemed';
+  points: number;
+  signedPoints: number;
+  sourceLabel: string;
+  submissionId?: string;
+  batchId?: string;
+  balanceAfter: number;
+}
+
+export function computeContributorTransactionsWithBalance(
+  state: TracecoState,
+  contributorId: string
+): GreenPointTransactionRow[] {
+  const entries = state.green_points.filter(
+    (g) => g.contributorId === contributorId
+  );
+
+  // Order oldest-first (date ascending; within the same date preserve chronological insertion order)
+  const chronological = entries
+    .map((entry, idx) => ({ entry, idx }))
+    .sort((a, b) => {
+      const dateCmp = a.entry.date.localeCompare(b.entry.date);
+      if (dateCmp !== 0) return dateCmp;
+      // Entries in state.green_points are stored newest-first, so larger index is older
+      return b.idx - a.idx;
+    });
+
+  let runningBalance = 0;
+  const withBalances: GreenPointTransactionRow[] = chronological.map(
+    ({ entry }) => {
+      const signedPoints =
+        entry.type === 'Earned' ? entry.points : -entry.points;
+      runningBalance += signedPoints;
+      return {
+        id: entry.id,
+        contributorId: entry.contributorId,
+        date: entry.date,
+        type: entry.type,
+        points: entry.points,
+        signedPoints,
+        sourceLabel: entry.sourceLabel,
+        submissionId: entry.submissionId,
+        batchId: entry.batchId,
+        balanceAfter: runningBalance,
+      };
+    }
+  );
+
+  // Return newest-first for display
+  return withBalances.reverse();
+}
+
+export function getSubmissionStatusLabel(status: SubmissionStatus): string {
+  switch (status) {
+    case 'Pending':
+      return 'Menunggu Verifikasi';
+    case 'Verified':
+      return 'Terverifikasi';
+    case 'Partially Verified':
+      return 'Terverifikasi Sebagian';
+    case 'Rejected':
+      return 'Ditolak';
+  }
+}
+

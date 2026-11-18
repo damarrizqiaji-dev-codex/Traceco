@@ -17,6 +17,7 @@ interface TraceabilityPageProps {
   selectedTargetId: string | null;
   onSelectTarget: (targetId: string) => void;
   onBack?: () => void;
+  embedded?: boolean;
 }
 
 export function TraceabilityPage({
@@ -24,6 +25,7 @@ export function TraceabilityPage({
   selectedTargetId,
   onSelectTarget,
   onBack,
+  embedded = false,
 }: TraceabilityPageProps) {
   const actorId = state.activeActorIdByRole[state.activeRole];
   const isPersonal = isPenyerahRole(state.activeRole);
@@ -52,10 +54,12 @@ export function TraceabilityPage({
   if (!resolvedSubmission) {
     return (
       <div className="space-y-6">
-        <PageHeader
-          title="Traceability & Detail Kontribusi"
-          description="Riwayat keterlacakan ecobrick dari penyerahan hingga pemanfaatan aktual."
-        />
+        {!embedded && (
+          <PageHeader
+            title="Traceability & Detail Kontribusi"
+            description="Riwayat keterlacakan ecobrick dari penyerahan hingga pemanfaatan aktual."
+          />
+        )}
         <div className="rounded-md border border-[#E3E8E4] bg-white p-8 text-center text-xs text-[#6B756F]">
           Belum ada catatan kontribusi ecobrick untuk dilacak.
         </div>
@@ -96,33 +100,62 @@ export function TraceabilityPage({
   const qrMatrix = generateDeterministicQrMatrix(`TRACECO:${identityCode}`);
 
   return (
-    <div className="space-y-7">
-      <PageHeader
-        title={`Detail Kontribusi · ${resolvedSubmission.submissionId}`}
-        description="Penelusuran lengkap dari penyerahan ecobrick hingga inventori dan pemanfaatan akhir."
-        actions={
+    <div className="space-y-6">
+      {embedded ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E3E8E4] bg-white px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
             {onBack && (
               <SecondaryButton size="sm" onClick={onBack}>
                 <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Kembali</span>
+                <span>Riwayat</span>
               </SecondaryButton>
             )}
-            <select
-              aria-label="Pilih ID Kontribusi"
-              value={resolvedSubmission.submissionId}
-              onChange={(e) => onSelectTarget(e.target.value)}
-              className="rounded border border-[#CFD8D2] bg-white px-3 py-1.5 font-mono text-xs font-medium text-[#245C45] focus:border-[#245C45] focus:outline-none"
-            >
-              {visibleSubmissions.map((s) => (
-                <option key={s.submissionId} value={s.submissionId}>
-                  {s.submissionId} · {s.date} ({s.status})
-                </option>
-              ))}
-            </select>
+            <span className="font-mono text-xs font-semibold text-[#245C45]">
+              {resolvedSubmission.submissionId}
+            </span>
+            <StatusTag status={resolvedSubmission.status} />
           </div>
-        }
-      />
+          <select
+            aria-label="Pilih ID Kontribusi"
+            value={resolvedSubmission.submissionId}
+            onChange={(e) => onSelectTarget(e.target.value)}
+            className="rounded border border-[#CFD8D2] bg-white px-3 py-1.5 font-mono text-xs font-medium text-[#245C45] focus:border-[#245C45] focus:outline-none"
+          >
+            {visibleSubmissions.map((s) => (
+              <option key={s.submissionId} value={s.submissionId}>
+                {s.submissionId} · {s.date} ({s.status})
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : (
+        <PageHeader
+          title={`Detail Kontribusi · ${resolvedSubmission.submissionId}`}
+          description="Penelusuran lengkap dari penyerahan ecobrick hingga inventori dan pemanfaatan akhir."
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              {onBack && (
+                <SecondaryButton size="sm" onClick={onBack}>
+                  <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Kembali</span>
+                </SecondaryButton>
+              )}
+              <select
+                aria-label="Pilih ID Kontribusi"
+                value={resolvedSubmission.submissionId}
+                onChange={(e) => onSelectTarget(e.target.value)}
+                className="rounded border border-[#CFD8D2] bg-white px-3 py-1.5 font-mono text-xs font-medium text-[#245C45] focus:border-[#245C45] focus:outline-none"
+              >
+                {visibleSubmissions.map((s) => (
+                  <option key={s.submissionId} value={s.submissionId}>
+                    {s.submissionId} · {s.date} ({s.status})
+                  </option>
+                ))}
+              </select>
+            </div>
+          }
+        />
+      )}
 
       {/* Connected 5-Stage Lifecycle Summary */}
       <section className="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-[#E3E8E4] bg-[#E3E8E4] sm:grid-cols-2 lg:grid-cols-5">
