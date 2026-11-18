@@ -67,7 +67,7 @@ export function EcobrickContributionPage({
   const activeActorId = state.activeActorIdByRole[state.activeRole];
 
   const eligibleContributors = state.contributors.filter(
-    (c) => isPenyerahRole(c.role) || c.role === 'Relawan / Verifikator'
+    (c) => isPenyerahRole(c.role) || c.role === 'Admin'
   );
 
   const [selectedContributorId, setSelectedContributorId] = useState(
@@ -321,7 +321,7 @@ export function EcobrickContributionPage({
         <section className="rounded-md border border-[#E3E8E4] bg-white p-5 sm:p-6 space-y-5 lg:col-span-8">
           <SectionHeader
             title="Form Penyerahan Ecobrick"
-            description="Ecobrick jadi yang diserahkan berstatus Pending hingga diverifikasi Relawan / Verifikator."
+            description="Ecobrick jadi yang diserahkan berstatus Pending hingga diverifikasi Admin."
           />
 
           {formError && (

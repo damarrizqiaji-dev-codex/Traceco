@@ -86,7 +86,7 @@ export function GreenRewardPage({
     } else {
       setRedeemFeedback({
         type: 'ok',
-        text: `Permintaan penukaran "${title}" dicatat (status: Pending) untuk diproses oleh Admin Pesantren.`,
+        text: `Permintaan penukaran "${title}" dicatat (status: Pending) untuk diproses oleh Admin.`,
       });
     }
   };

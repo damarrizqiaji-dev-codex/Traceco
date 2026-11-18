@@ -255,9 +255,8 @@ export function SettingsPage({
               <span>
                 Peran permanen dipilih saat mendaftar. Fitur{' '}
                 <strong>Prototype Role Preview</strong> pada header atas
-                memungkinkan peninjauan seluruh 6 peran ekosistem TRACECO
-                (Santri, Warga, Keluarga Rentan, Relawan / Verifikator, Admin
-                Pesantren, dan Mitra / Pemanfaat).
+                memungkinkan peninjauan seluruh 3 peran ekosistem TRACECO
+                (Kontributor, Admin, dan Mitra).
               </span>
             </div>
           </div>

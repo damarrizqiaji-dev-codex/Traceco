@@ -322,125 +322,7 @@ export function DashboardPage({
     );
   }
 
-  // 2. Role: Relawan / Verifikator
-  if (state.activeRole === 'Relawan / Verifikator') {
-    const pendingList = state.ecobrick_submissions.filter(
-      (s) => s.status === 'Pending'
-    );
-    const verifiedList = state.verification_records;
-
-    return (
-      <div className="space-y-7">
-        <PageHeader
-          title={`Dashboard Verifikator · ${activeActor?.name ?? 'Relawan'}`}
-          description="Antrean inspeksi fisik ecobrick, riwayat verifikasi, dan pengendalian mutu standar batch."
-          actions={
-            <div className="flex flex-wrap items-center gap-2">
-              <RoleTag role={state.activeRole} />
-              <PrimaryButton
-                size="sm"
-                onClick={() => onNavigate('verification')}
-              >
-                <span>Buka Verification Queue</span>
-                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </PrimaryButton>
-            </div>
-          }
-        />
-
-        <MetricStrip
-          columns={4}
-          items={[
-            {
-              label: 'Antrean Menunggu (Pending)',
-              value: `${metrics.pendingSubmissionsCount} berkas`,
-              hint: `${metrics.ecobricksPendingCount} unit siap diperiksa`,
-              accent: 'primary',
-            },
-            {
-              label: 'Total Ecobrick Verified',
-              value: `${metrics.ecobricksVerifiedCount} unit`,
-              hint: `${metrics.verificationRatePercent}% tingkat lolos`,
-              accent: 'primary',
-            },
-            {
-              label: 'Partially Verified / Rejected',
-              value: `${metrics.partialSubmissionsCount} / ${metrics.rejectedSubmissionsCount}`,
-              hint: `${metrics.ecobricksRejectedCount} unit ditolak`,
-            },
-            {
-              label: 'Total Pemeriksaan Tercatat',
-              value: `${verifiedList.length} inspeksi`,
-              hint: `${state.ecobrick_batches.length} batch diterbitkan`,
-            },
-          ]}
-        />
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-          <section className="space-y-3 lg:col-span-7">
-            <SectionHeader
-              title="Antrean Menunggu Pemeriksaan Fisik"
-              rightSlot={
-                <SecondaryButton
-                  size="sm"
-                  onClick={() => onNavigate('verification')}
-                >
-                  Periksa Sekarang
-                </SecondaryButton>
-              }
-            />
-            <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
-              {pendingList.length === 0 ? (
-                <p className="p-6 text-center text-xs text-[#6B756F]">
-                  Semua submission sudah diperiksa.
-                </p>
-              ) : (
-                pendingList.map((sub) => {
-                  const ctr = contributorMap.get(sub.contributorId);
-                  const isSelf = sub.contributorId === actorId;
-                  return (
-                    <div
-                      key={sub.submissionId}
-                      className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5"
-                    >
-                      <div className="space-y-0.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-mono text-xs font-semibold text-[#245C45]">
-                            {sub.submissionId}
-                          </span>
-                          <span className="text-xs font-medium text-[#252B28]">
-                            {ctr?.name ?? '-'}
-                          </span>
-                          {ctr && <RoleTag role={ctr.role} />}
-                        </div>
-                        <p className="text-[11px] text-[#6B756F]">
-                          {sub.date} · {sub.quantitySubmitted} unit ·{' '}
-                          {sub.dropoffPointName}
-                          {isSelf ? ' · (Milik sendiri: periksa oleh petugas lain)' : ''}
-                        </p>
-                      </div>
-                      <SecondaryButton
-                        size="sm"
-                        onClick={() => onNavigate('verification')}
-                      >
-                        {isSelf ? 'Tinjau' : 'Periksa'}
-                      </SecondaryButton>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-5">
-            <VerificationStatusChart metrics={metrics} />
-          </section>
-        </div>
-      </div>
-    );
-  }
-
-  // 3. Role: Mitra / Pemanfaat
+  // 2. Role: Mitra
   if (isMitraRole(state.activeRole)) {
     const availableBatches = inventory.filter((i) => i.availableCount > 0);
     const partnerRequests = state.distribution_requests.filter(
@@ -453,7 +335,7 @@ export function DashboardPage({
     return (
       <div className="space-y-7">
         <PageHeader
-          title={`Dashboard Mitra · ${activeActor?.name ?? 'Mitra Pemanfaat'}`}
+          title={`Dashboard Mitra · ${activeActor?.name ?? 'Mitra'}`}
           description="Pantau stok ecobrick terverifikasi yang tersedia, ajukan permintaan pemanfaatan, dan dokumentasikan proyek nyata."
           actions={
             <div className="flex flex-wrap items-center gap-2">
@@ -592,13 +474,13 @@ export function DashboardPage({
     );
   }
 
-  // 4. Role: Admin Pesantren (Full Ecosystem Overview + 8 KPIs + 4 Data-Driven Charts)
+  // 3. Role: Admin (Full Ecosystem Overview + 8 KPIs + 4 Data-Driven Charts)
   const contributorBreakdown = computeActiveContributorBreakdown(state);
 
   return (
     <div className="space-y-7">
       <PageHeader
-        title={`Overview Ekosistem TRACECO · ${activeActor?.name ?? 'Admin Pesantren'}`}
+        title={`Overview Ekosistem TRACECO · ${activeActor?.name ?? 'Admin'}`}
         description="Kondisi operasional menyeluruh: kontribusi ecobrick, tingkat verifikasi, Green Points, inventori, dan pemanfaatan."
         actions={
           <div className="flex flex-wrap items-center gap-2">

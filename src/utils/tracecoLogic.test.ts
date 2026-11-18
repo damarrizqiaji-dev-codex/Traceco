@@ -167,7 +167,7 @@ test('End-to-End Flow across 3 roles: Kontributor submits 10 -> Admin verifies 8
   ).find((i) => i.batchId === verRes.batch!.batchId);
   assert.equal(invBeforeReq?.availableCount, 8);
 
-  // 7. Mitra / Pemanfaat requests 5 ecobricks with location & neededDate
+  // 7. Mitra requests 5 ecobricks with location & neededDate
   const reqRes = createDistributionRequestInState(redeemRes.nextState, {
     batchId: verRes.batch.batchId,
     requesterId: 'CTR-MITRA-01',
@@ -185,7 +185,7 @@ test('End-to-End Flow across 3 roles: Kontributor submits 10 -> Admin verifies 8
   assert.equal(reqRes.request.location, 'Taman Baca RW 03');
   assert.equal(reqRes.request.neededDate, '2026-11-28');
 
-  // 8. Admin Pesantren approves & hands over -> Mitra confirms Utilized
+  // 8. Admin approves & hands over -> Mitra confirms Utilized
   const approvedState = updateDistributionStatusInState(reqRes.nextState, {
     requestId: reqRes.request.id,
     nextStatus: 'Approved',

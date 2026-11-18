@@ -239,7 +239,7 @@ export function CommunityHubPage({
   // Section 4: Collaborations proposal
   const [showCollabForm, setShowCollabForm] = useState(false);
   const [collabPartnerName, setCollabPartnerName] = useState(
-    state.activeRole === 'Mitra / Pemanfaat' ? activeActor?.name ?? '' : ''
+    isMitraRole(state.activeRole) ? activeActor?.name ?? '' : ''
   );
   const [collabType, setCollabType] = useState(
     'Pemanfaatan Ecobrick Terverifikasi'
@@ -551,14 +551,14 @@ export function CommunityHubPage({
           <p className="text-xs text-[#6B756F]">
             Partisipasi ekosistem:{' '}
             <span className="text-[#252B28]">
-              Santri · Warga ·{' '}
+              Kontributor (Santri · Warga ·{' '}
               <strong className="font-medium text-[#245C45]">
                 Keluarga Rentan
               </strong>
+              )
             </span>{' '}
-            · <span className="text-[#252B28]">Relawan / Verifikator</span> ·{' '}
-            <span className="text-[#252B28]">Admin Pesantren</span> ·{' '}
-            <span className="text-[#252B28]">Mitra / Pemanfaat</span>
+            · <span className="text-[#252B28]">Admin</span> ·{' '}
+            <span className="text-[#252B28]">Mitra</span>
           </p>
         }
       />

@@ -160,7 +160,7 @@ export function VerificationTraceabilityPage({
     }
   };
 
-  // History view mode for Relawan / Verifikator
+  // History view mode for Admin
   if (viewMode === 'history') {
     const historyColumns: DataTableColumn<VerificationRecord>[] = [
       {
@@ -324,7 +324,7 @@ export function VerificationTraceabilityPage({
 
     if (!canVerifyRole) {
       setFormError(
-        'Hanya peran Relawan / Verifikator atau Admin Pesantren yang dapat menyimpan keputusan verifikasi fisik.'
+        'Hanya peran Admin yang dapat menyimpan keputusan verifikasi fisik.'
       );
       return;
     }
@@ -666,8 +666,7 @@ export function VerificationTraceabilityPage({
                 <div className="flex items-start gap-2 rounded border border-[#E5D3B3] bg-[#FFFBEB] px-3.5 py-2.5 text-xs text-[#92400E]">
                   <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                   <span>
-                    Hanya peran <strong>Relawan / Verifikator</strong> atau{' '}
-                    <strong>Admin Pesantren</strong> yang dapat menyimpan
+                    Hanya peran <strong>Admin</strong> yang dapat menyimpan
                     keputusan verifikasi fisik.
                   </span>
                 </div>
@@ -749,7 +748,7 @@ export function VerificationTraceabilityPage({
                   {canVerifyRole && (
                     <FormField
                       id="verifier-select"
-                      label="Verifikator / Admin Pemeriksa"
+                      label="Admin Pemeriksa"
                       hint="Jika submission milik sendiri, pilih pemeriksa lain"
                     >
                       <select

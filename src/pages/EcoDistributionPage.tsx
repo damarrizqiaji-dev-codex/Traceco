@@ -361,7 +361,7 @@ export function EcoDistributionPage({
                     r.id,
                     'Handed Over',
                     r.requesterName,
-                    'Serah terima fisik dicatat oleh Admin Pesantren.'
+                    'Serah terima fisik dicatat oleh Admin.'
                   )
                 }
               >
@@ -402,7 +402,7 @@ export function EcoDistributionPage({
                   r.id,
                   'Utilized',
                   r.receiverName ?? r.requesterName,
-                  `Pemanfaatan aktual (${r.utilizationDetail}) dikonfirmasi oleh Mitra / Pemanfaat.`
+                  `Pemanfaatan aktual (${r.utilizationDetail}) dikonfirmasi oleh Mitra.`
                 )
               }
             >
@@ -501,7 +501,7 @@ export function EcoDistributionPage({
         ? 'Pantau status permintaan ecobrick Anda mulai dari pengajuan hingga serah terima dan konfirmasi pemanfaatan.'
         : viewMode === 'utilization'
           ? 'Catatan resmi pemanfaatan aktual ecobrick di fasilitas pesantren, komunitas, dan proyek mitra.'
-          : 'Alur pengajuan, persetujuan Admin Pesantren, serah terima, dan pemanfaatan ecobrick terverifikasi.';
+          : 'Alur pengajuan, persetujuan Admin, serah terima, dan pemanfaatan ecobrick terverifikasi.';
 
   const showInventory = viewMode === 'inventory' || viewMode === 'distribution';
   const showRequestForm = viewMode === 'distribution';

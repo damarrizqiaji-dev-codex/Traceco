@@ -825,7 +825,7 @@ export function computeActiveContributorBreakdown(
 
   return segments.map((seg) => {
     const matchingContributors = state.contributors.filter(
-      (c) => c.role === seg || c.segment === seg
+      (c) => c.segment === seg
     );
     const ids = new Set(matchingContributors.map((c) => c.id));
     const subs = state.ecobrick_submissions.filter((s) =>
@@ -1175,13 +1175,13 @@ export function computePlatformMetrics(state: TracecoState): PlatformMetrics {
   );
 
   const activeSantriCount = state.contributors.filter(
-    (c) => (c.role === 'Santri' || c.segment === 'Santri') && contributorIdsWithActivity.has(c.id)
+    (c) => c.segment === 'Santri' && contributorIdsWithActivity.has(c.id)
   ).length;
   const activeWargaCount = state.contributors.filter(
-    (c) => (c.role === 'Warga' || c.segment === 'Warga') && contributorIdsWithActivity.has(c.id)
+    (c) => c.segment === 'Warga' && contributorIdsWithActivity.has(c.id)
   ).length;
   const vulnerableFamilyCount = state.contributors.filter(
-    (c) => c.role === 'Keluarga Rentan' || c.segment === 'Keluarga Rentan'
+    (c) => c.segment === 'Keluarga Rentan'
   ).length;
 
   const pendingDistributionRequestsCount = state.distribution_requests.filter(
