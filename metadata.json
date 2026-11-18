@@ -1,0 +1,6 @@
+{
+  "name": "TRACECO — Traceable Eco-Contribution",
+  "description": "Platform kontribusi ecobrick berbasis komunitas & pesantren untuk pencatatan penyerahan, verifikasi fisik, Green Reward, inventori, distribusi pemanfaatan, dan keterlacakan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
