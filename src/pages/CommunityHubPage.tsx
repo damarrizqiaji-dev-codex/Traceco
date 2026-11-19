@@ -211,6 +211,7 @@ export function CommunityHubPage({
   const [postCategoryFilter, setPostCategoryFilter] = useState<
     'Semua' | CommunityPostCategory
   >('Semua');
+  const [postSearch, setPostSearch] = useState('');
   const [showNewPostForm, setShowNewPostForm] = useState(false);
   const [postCategory, setPostCategory] =
     useState<CommunityPostCategory>('Tanya Standar');
@@ -281,7 +282,13 @@ export function CommunityHubPage({
       postStatusFilter === 'Semua' || post.status === postStatusFilter;
     const matchCategory =
       postCategoryFilter === 'Semua' || post.category === postCategoryFilter;
-    return matchStatus && matchCategory;
+    const q = postSearch.trim().toLowerCase();
+    const matchQuery =
+      !q ||
+      post.title.toLowerCase().includes(q) ||
+      post.body.toLowerCase().includes(q) ||
+      post.authorName.toLowerCase().includes(q);
+    return matchStatus && matchCategory && matchQuery;
   });
 
   const selectedTopic =
@@ -315,6 +322,12 @@ export function CommunityHubPage({
   }
   const isEcobrickReady =
     weightOk && checkCleanDry && checkDense && checkCapTight;
+  const readinessPassedCount =
+    (weightOk ? 1 : 0) +
+    (checkCleanDry ? 1 : 0) +
+    (checkDense ? 1 : 0) +
+    (checkCapTight ? 1 : 0);
+  const readinessPct = Math.round((readinessPassedCount / 4) * 100);
 
   const vulnerableParticipants = state.contributors.filter(
     (c) => c.segment === 'Keluarga Rentan'
@@ -915,7 +928,7 @@ export function CommunityHubPage({
                 key={status}
                 type="button"
                 onClick={() => setPostStatusFilter(status)}
-                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap ${
+                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors duration-150 whitespace-nowrap ${
                   postStatusFilter === status
                     ? 'bg-[#E7F0E8] text-[#245C45]'
                     : 'text-[#6B756F] hover:bg-[#F7F9F7] hover:text-[#252B28]'
@@ -926,30 +939,47 @@ export function CommunityHubPage({
             ))}
           </div>
 
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="forum-filter-category"
-              className="text-xs text-[#6B756F] whitespace-nowrap"
-            >
-              Kategori:
-            </label>
-            <select
-              id="forum-filter-category"
-              value={postCategoryFilter}
-              onChange={(e) =>
-                setPostCategoryFilter(
-                  e.target.value as 'Semua' | CommunityPostCategory
-                )
-              }
-              className="rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-xs text-[#252B28] focus:border-[#245C45] focus:outline-none"
-            >
-              <option value="Semua">Semua Kategori</option>
-              {POST_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-52">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                aria-label="Cari topik forum"
+                value={postSearch}
+                onChange={(e) => setPostSearch(e.target.value)}
+                placeholder="Cari topik atau penulis..."
+                className="w-full rounded border border-[#CFD8D2] bg-[#F7F9F7] py-1 pr-2.5 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] transition-colors focus:border-[#245C45] focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label
+                htmlFor="forum-filter-category"
+                className="text-xs text-[#6B756F] whitespace-nowrap"
+              >
+                Kategori:
+              </label>
+              <select
+                id="forum-filter-category"
+                value={postCategoryFilter}
+                onChange={(e) =>
+                  setPostCategoryFilter(
+                    e.target.value as 'Semua' | CommunityPostCategory
+                  )
+                }
+                className="rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-xs text-[#252B28] focus:border-[#245C45] focus:outline-none"
+              >
+                <option value="Semua">Semua Kategori</option>
+                {POST_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -1120,10 +1150,10 @@ export function CommunityHubPage({
             <div className="p-5 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[11px] font-semibold text-[#4F8A68]">
-                    MATERI {selectedTopic.index}
+                  <span className="font-mono text-[11px] font-medium text-[#4F8A68]">
+                    Materi {selectedTopic.index}
                   </span>
-                  <h3 className="text-sm font-semibold text-[#252B28]">
+                  <h3 className="font-display text-base font-semibold text-[#252B28]">
                     {selectedTopic.title}
                   </h3>
                 </div>
@@ -1176,14 +1206,28 @@ export function CommunityHubPage({
 
           {/* Pre-Submission Ecobrick Readiness Checker */}
           <div className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4 lg:col-span-5">
-            <div>
-              <h3 className="text-[13px] font-semibold text-[#252B28]">
-                Uji Kelayakan Mandiri Sebelum Ke Pos
-              </h3>
-              <p className="mt-0.5 text-xs text-[#6B756F]">
-                Periksa berat dan kondisi fisik ecobrick Anda agar lolos
-                verifikasi Petugas pada percobaan pertama.
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-display text-sm font-semibold text-[#252B28]">
+                  Uji Kelayakan Mandiri Sebelum Ke Pos
+                </h3>
+                <p className="mt-0.5 text-xs text-[#6B756F]">
+                  Periksa berat dan kondisi fisik ecobrick Anda agar lolos
+                  verifikasi pada percobaan pertama.
+                </p>
+              </div>
+              <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums whitespace-nowrap">
+                {readinessPassedCount}/4
+              </span>
+            </div>
+
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EEF2EF]">
+              <div
+                className={`h-full rounded-full transition-all duration-150 ${
+                  isEcobrickReady ? 'bg-[#245C45]' : 'bg-[#D97706]'
+                }`}
+                style={{ width: `${readinessPct}%` }}
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1321,7 +1365,7 @@ export function CommunityHubPage({
                     <span className="text-[13px] font-semibold text-[#252B28]">
                       {person.name}
                     </span>
-                    <RoleTag role={person.segment} />
+                    <RoleTag role={person.role} segment={person.segment} />
                   </div>
                   <p className="text-xs text-[#6B756F]">
                     {person.unitOrAddress}

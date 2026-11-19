@@ -83,23 +83,57 @@ export function StatusTag({ status }: { status: string }) {
   );
 }
 
-export function RoleTag({ role }: { role: UserRole | ContributorSegment | string }) {
-  const styles: Record<string, string> = {
-    Kontributor: 'bg-[#E7F0E8] text-[#245C45] border-[#C6DBC9]',
-    Santri: 'bg-[#E7F0E8] text-[#245C45] border-[#C6DBC9]',
-    Warga: 'bg-[#F7F9F7] text-[#252B28] border-[#DCE4DE]',
-    'Keluarga Rentan': 'bg-[#EFF6FF] text-[#1E40AF] border-[#BFDBFE]',
-    Admin: 'bg-[#245C45] text-white border-[#245C45]',
-    Mitra: 'bg-[#F3F4F6] text-[#374151] border-[#D1D5DB]',
+export function RoleTag({
+  role,
+  segment,
+  variant = 'inline',
+}: {
+  role: UserRole | ContributorSegment | string;
+  segment?: string;
+  variant?: 'inline' | 'badge';
+}) {
+  const label =
+    segment && segment !== role ? `${role} · ${segment}` : role;
+
+  if (variant === 'badge') {
+    const styles: Record<string, string> = {
+      Kontributor: 'bg-[#E7F0E8] text-[#245C45] border-[#C6DBC9]',
+      Santri: 'bg-[#E7F0E8] text-[#245C45] border-[#C6DBC9]',
+      Warga: 'bg-[#F7F9F7] text-[#252B28] border-[#DCE4DE]',
+      'Keluarga Rentan': 'bg-[#EFF6FF] text-[#1E40AF] border-[#BFDBFE]',
+      Admin: 'bg-[#245C45] text-white border-[#245C45]',
+      Mitra: 'bg-[#F3F4F6] text-[#374151] border-[#D1D5DB]',
+    };
+
+    return (
+      <span
+        className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap shrink-0 ${
+          styles[role] ?? 'bg-[#F7F9F7] text-[#252B28] border-[#DCE4DE]'
+        }`}
+      >
+        {label}
+      </span>
+    );
+  }
+
+  const dotColors: Record<string, string> = {
+    Kontributor: 'bg-[#4F8A68]',
+    Santri: 'bg-[#4F8A68]',
+    Warga: 'bg-[#6B756F]',
+    'Keluarga Rentan': 'bg-[#2563EB]',
+    Admin: 'bg-[#245C45]',
+    Mitra: 'bg-[#475569]',
   };
 
   return (
-    <span
-      className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap shrink-0 ${
-        styles[role] ?? 'bg-[#F7F9F7] text-[#252B28] border-[#DCE4DE]'
-      }`}
-    >
-      {role}
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#5A655F] whitespace-nowrap shrink-0">
+      <span
+        className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+          dotColors[role] ?? 'bg-[#6B756F]'
+        }`}
+        aria-hidden="true"
+      />
+      <span>{label}</span>
     </span>
   );
 }

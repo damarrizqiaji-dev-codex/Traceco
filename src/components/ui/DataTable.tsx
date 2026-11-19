@@ -13,6 +13,7 @@ interface DataTableProps<T> {
   rows: T[];
   rowKey: (row: T) => string;
   selectedRowKey?: string;
+  onRowClick?: (row: T) => void;
   emptyMessage?: string;
 }
 
@@ -21,6 +22,7 @@ export function DataTable<T>({
   rows,
   rowKey,
   selectedRowKey,
+  onRowClick,
   emptyMessage = 'Belum ada data tercatat.',
 }: DataTableProps<T>) {
   if (rows.length === 0) {
@@ -35,7 +37,7 @@ export function DataTable<T>({
     <div className="overflow-x-auto rounded-md border border-[#E3E8E4] bg-white">
       <table className="w-full border-collapse text-left text-[13px]">
         <thead>
-          <tr className="border-b border-[#E3E8E4] bg-[#F7F9F7] text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
+          <tr className="border-b border-[#E3E8E4] bg-[#F7F9F7] text-xs font-medium text-[#5A655F]">
             {columns.map((col) => (
               <th
                 key={col.key}
@@ -55,11 +57,16 @@ export function DataTable<T>({
             return (
               <tr
                 key={key}
-                className={
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={`transition-colors duration-150 ${
+                  onRowClick ? 'cursor-pointer' : ''
+                } ${
                   isSelected
                     ? 'bg-[#E7F0E8]/45'
-                    : 'hover:bg-[#FAFBF9] transition-colors'
-                }
+                    : onRowClick
+                      ? 'hover:bg-[#F2F7F3]/70'
+                      : 'hover:bg-[#FAFBF9]'
+                }`}
               >
                 {columns.map((col) => (
                   <td

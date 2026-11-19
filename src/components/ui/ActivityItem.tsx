@@ -12,7 +12,7 @@ export function ActivityItem({ item, onInspectBatch }: ActivityItemProps) {
     : item.timestamp;
 
   return (
-    <div className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+    <div className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0 transition-colors duration-150">
       <div className="flex min-w-0 items-start gap-3">
         <span className="mt-0.5 w-12 shrink-0 font-mono text-xs text-[#6B756F] tabular-nums">
           {timePart}
@@ -24,14 +24,14 @@ export function ActivityItem({ item, onInspectBatch }: ActivityItemProps) {
               · {item.category}
             </span>
           </p>
-          <p className="text-xs text-[#6B756F]">{item.detail}</p>
+          <p className="text-xs leading-relaxed text-[#6B756F]">{item.detail}</p>
         </div>
       </div>
       {item.batchId && onInspectBatch && (
         <button
           type="button"
           onClick={() => onInspectBatch(item.batchId!)}
-          className="inline-flex shrink-0 items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2 py-1 font-mono text-[11px] font-medium text-[#245C45] hover:bg-[#E7F0E8] transition-colors whitespace-nowrap"
+          className="inline-flex shrink-0 items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2.5 py-1 font-mono text-[11px] font-medium text-[#245C45] hover:border-[#245C45] hover:bg-[#E7F0E8] active:scale-[0.98] transition-[background-color,border-color,transform] duration-150 whitespace-nowrap"
         >
           <Eye className="h-3 w-3" aria-hidden="true" />
           <span>{item.batchId}</span>

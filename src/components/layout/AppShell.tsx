@@ -17,6 +17,7 @@ import {
   X,
   ChevronDown,
   ChevronRight,
+  CheckCircle2,
 } from 'lucide-react';
 import type {
   AppPageId,
@@ -38,6 +39,13 @@ export interface NavGroupSpec {
   icon: typeof LayoutDashboard;
   defaultSub?: string;
   children?: NavChildSpec[];
+}
+
+export interface ToastNotice {
+  id: number;
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 export function getNavGroupsForRole(role: UserRole): NavGroupSpec[] {
@@ -191,6 +199,8 @@ interface AppShellProps {
   onLogout: () => void;
   currentUser: UserAccount;
   state: TracecoState;
+  toast?: ToastNotice | null;
+  onDismissToast?: () => void;
   children: ReactNode;
 }
 
@@ -202,6 +212,8 @@ export function AppShell({
   onLogout,
   currentUser,
   state,
+  toast,
+  onDismissToast,
   children,
 }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -260,7 +272,7 @@ export function AppShell({
           <button
             type="button"
             onClick={() => handleSelectRoute(group.page, group.defaultSub)}
-            className={`flex flex-1 items-center gap-2.5 rounded px-3 py-2 text-left text-[13px] transition-colors whitespace-nowrap ${
+            className={`flex flex-1 items-center gap-2.5 rounded px-3 py-2 text-left text-[13px] transition-colors duration-150 whitespace-nowrap ${
               isParentActive
                 ? 'bg-[#E7F0E8] font-medium text-[#245C45]'
                 : 'font-normal text-[#252B28] hover:bg-[#F4F7F5]'
@@ -282,7 +294,7 @@ export function AppShell({
               onClick={() => toggleGroupExpand(group.page)}
               aria-expanded={isExpanded}
               aria-label={`Toggle submenu ${group.label}`}
-              className="rounded p-1.5 text-[#6B756F] hover:bg-[#F4F7F5] hover:text-[#252B28] transition-colors"
+              className="rounded p-1.5 text-[#6B756F] hover:bg-[#F4F7F5] hover:text-[#252B28] transition-colors duration-150"
             >
               {isExpanded ? (
                 <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
@@ -304,7 +316,7 @@ export function AppShell({
                   key={child.subId}
                   type="button"
                   onClick={() => handleSelectRoute(group.page, child.subId)}
-                  className={`flex w-full items-center rounded px-2.5 py-1.5 text-left text-xs transition-colors whitespace-nowrap ${
+                  className={`flex w-full items-center rounded px-2.5 py-1.5 text-left text-xs transition-colors duration-150 whitespace-nowrap ${
                     isChildActive
                       ? 'bg-[#F2F7F3] font-semibold text-[#245C45]'
                       : 'text-[#6B756F] hover:bg-[#F7F9F7] hover:text-[#252B28]'
@@ -332,7 +344,7 @@ export function AppShell({
             >
               <TracecoLogo size="md" />
               <span>
-                <span className="block text-[15px] font-semibold leading-tight tracking-tight text-[#252B28]">
+                <span className="font-display block text-[16px] font-bold leading-tight tracking-tight text-[#252B28]">
                   TRACECO
                 </span>
                 <span className="block text-[11px] leading-tight text-[#6B756F]">
@@ -352,7 +364,7 @@ export function AppShell({
         </div>
 
         <nav aria-label="Navigasi utama" className="px-3 py-4 space-y-1">
-          <p className="px-3 pb-1 text-[10px] font-semibold tracking-widest text-[#6B756F] uppercase">
+          <p className="px-3 pb-1 text-[11px] font-medium text-[#6B756F]">
             Menu · {state.activeRole}
           </p>
           {navGroups.map(renderNavGroup)}
@@ -361,17 +373,14 @@ export function AppShell({
 
       <div className="border-t border-[#E3E8E4] bg-[#F7F9F7] px-5 py-3.5 space-y-2.5">
         <div className="space-y-0.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#6B756F]">
-            Community Hub
+          <p className="text-[11px] font-medium text-[#6B756F]">
+            Pesantren Al-Amanah · Hub
           </p>
-          <p className="text-xs font-medium text-[#252B28]">
-            Pesantren Al-Amanah
-          </p>
-          <p className="text-[11px] text-[#6B756F] truncate">
+          <p className="text-xs font-semibold text-[#252B28] truncate">
             {currentUser.name}
           </p>
           <p className="text-[11px] font-medium text-[#245C45]">
-            {state.activeRole}
+            Peran aktif: {state.activeRole}
           </p>
         </div>
 
@@ -381,7 +390,7 @@ export function AppShell({
             setMobileMenuOpen(false);
             onLogout();
           }}
-          className="flex w-full items-center justify-center gap-1.5 rounded border border-[#CFD8D2] bg-white px-2.5 py-1.5 text-xs font-medium text-[#252B28] hover:bg-[#FEF2F2] hover:border-[#E2B4B4] hover:text-[#991B1B] transition-colors"
+          className="flex w-full items-center justify-center gap-1.5 rounded border border-[#CFD8D2] bg-white px-2.5 py-1.5 text-xs font-medium text-[#252B28] hover:bg-[#FEF2F2] hover:border-[#E2B4B4] hover:text-[#991B1B] transition-colors duration-150"
         >
           <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
           <span>Keluar Akun</span>
@@ -422,7 +431,9 @@ export function AppShell({
               </button>
               <TracecoLogo size="sm" className="lg:hidden" />
               <div className="flex items-center gap-1.5 text-xs text-[#6B756F] min-w-0">
-                <span className="hidden sm:inline">TRACECO</span>
+                <span className="hidden sm:inline font-display font-medium">
+                  TRACECO
+                </span>
                 <span className="hidden sm:inline" aria-hidden="true">
                   /
                 </span>
@@ -446,7 +457,7 @@ export function AppShell({
                   htmlFor="prototype-role-preview"
                   className="hidden sm:inline text-[#6B756F] whitespace-nowrap"
                 >
-                  Prototype Role Preview:
+                  Preview Peran:
                 </label>
                 <select
                   id="prototype-role-preview"
@@ -469,7 +480,7 @@ export function AppShell({
                 type="button"
                 onClick={() => handleSelectRoute('notifications')}
                 aria-label={`Notifikasi (${unreadCount} belum dibaca)`}
-                className={`relative rounded border p-1.5 transition-colors ${
+                className={`relative rounded border p-1.5 transition-colors duration-150 ${
                   activePage === 'notifications'
                     ? 'border-[#245C45] bg-[#E7F0E8] text-[#245C45]'
                     : 'border-[#E3E8E4] bg-white text-[#6B756F] hover:bg-[#F7F9F7] hover:text-[#252B28]'
@@ -490,7 +501,7 @@ export function AppShell({
                     state.activeRole === 'Admin' ? 'settings' : 'profile'
                   )
                 }
-                className="hidden md:inline-flex items-center gap-1.5 rounded border border-[#E3E8E4] bg-white px-2.5 py-1 text-xs font-medium text-[#252B28] hover:bg-[#F7F9F7] transition-colors whitespace-nowrap"
+                className="hidden md:inline-flex items-center gap-1.5 rounded border border-[#E3E8E4] bg-white px-2.5 py-1 text-xs font-medium text-[#252B28] hover:bg-[#F7F9F7] transition-colors duration-150 whitespace-nowrap"
               >
                 <User className="h-3.5 w-3.5 text-[#245C45]" aria-hidden="true" />
                 <span>{currentUser.name}</span>
@@ -500,7 +511,7 @@ export function AppShell({
                 type="button"
                 onClick={onLogout}
                 aria-label="Keluar Akun"
-                className="inline-flex items-center gap-1.5 rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-xs font-medium text-[#252B28] hover:bg-[#FEF2F2] hover:border-[#E2B4B4] hover:text-[#991B1B] transition-colors whitespace-nowrap"
+                className="inline-flex items-center gap-1.5 rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-xs font-medium text-[#252B28] hover:bg-[#FEF2F2] hover:border-[#E2B4B4] hover:text-[#991B1B] transition-colors duration-150 whitespace-nowrap"
               >
                 <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline">Keluar</span>
@@ -509,10 +520,53 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1360px] flex-1 px-4 py-5 sm:px-8 sm:py-7">
+        <main
+          key={`${activePage}:${activeSubTab ?? ''}`}
+          className="animate-traceco-enter mx-auto w-full max-w-[1360px] flex-1 px-4 py-5 sm:px-8 sm:py-7"
+        >
           {children}
         </main>
       </div>
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="animate-traceco-enter fixed right-4 bottom-4 z-50 flex max-w-sm items-start gap-2.5 rounded-md border border-[#C6DBC9] bg-white px-4 py-3 shadow-md"
+        >
+          <CheckCircle2
+            className="mt-0.5 h-4 w-4 shrink-0 text-[#245C45]"
+            aria-hidden="true"
+          />
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-xs font-medium leading-snug text-[#252B28]">
+              {toast.message}
+            </p>
+            {toast.actionLabel && toast.onAction && (
+              <button
+                type="button"
+                onClick={() => {
+                  toast.onAction?.();
+                  onDismissToast?.();
+                }}
+                className="text-[11px] font-semibold text-[#245C45] hover:underline"
+              >
+                {toast.actionLabel}
+              </button>
+            )}
+          </div>
+          {onDismissToast && (
+            <button
+              type="button"
+              onClick={onDismissToast}
+              aria-label="Tutup notifikasi singkat"
+              className="rounded p-0.5 text-[#6B756F] hover:bg-[#F7F9F7] hover:text-[#252B28]"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

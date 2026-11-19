@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 export const fieldInputClass =
-  'w-full rounded border border-[#CFD8D2] bg-white px-3 py-2 text-[13px] text-[#252B28] placeholder:text-[#8A948E] focus:border-[#245C45] focus:outline-none disabled:bg-[#F7F9F7] disabled:text-[#6B756F]';
+  'w-full rounded border border-[#CFD8D2] bg-white px-3 py-2 text-[13px] text-[#252B28] placeholder:text-[#8A948E] transition-[border-color,box-shadow] duration-150 focus:border-[#245C45] focus:ring-2 focus:ring-[#245C45]/12 focus:outline-none disabled:bg-[#F7F9F7] disabled:text-[#6B756F]';
 
 interface FormFieldProps {
   id: string;
@@ -22,7 +22,7 @@ export function FormField({
     <div className={className}>
       <label
         htmlFor={id}
-        className="mb-1 block text-xs font-medium text-[#252B28]"
+        className="mb-1.5 block text-xs font-medium text-[#252B28]"
       >
         {label}
       </label>

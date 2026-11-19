@@ -42,7 +42,7 @@ export function DashboardPage({
   const actorId = state.activeActorIdByRole[state.activeRole];
   const activeActor = state.contributors.find((c) => c.id === actorId);
 
-  // 1. KONTRIBUTOR OVERVIEW (Focused Summary Only)
+  // 1. KONTRIBUTOR OVERVIEW
   if (isPenyerahRole(state.activeRole)) {
     const mySubmissions = state.ecobrick_submissions
       .filter((s) => s.contributorId === actorId)
@@ -60,8 +60,11 @@ export function DashboardPage({
           title={`Overview · ${activeActor?.name ?? 'Kontributor'}`}
           description="Ringkasan status kontribusi ecobrick, saldo Green Points, dan langkah berikutnya."
           actions={
-            <div className="flex flex-wrap items-center gap-2">
-              <RoleTag role={activeActor?.segment ?? state.activeRole} />
+            <div className="flex flex-wrap items-center gap-3">
+              <RoleTag
+                role={state.activeRole}
+                segment={activeActor?.segment}
+              />
               <PrimaryButton
                 size="sm"
                 onClick={() => onNavigate('contribution', 'submit')}
@@ -80,18 +83,21 @@ export function DashboardPage({
               label: 'Total Ecobrick',
               value: `${stats.submittedUnits} unit`,
               hint: `${mySubmissions.length} kontribusi tercatat`,
+              onClick: () => onNavigate('contribution', 'history'),
             },
             {
               label: 'Terverifikasi',
               value: `${stats.verifiedUnits} unit`,
               hint: `${verifiedRatioPct}% lolos inspeksi`,
               accent: 'primary',
+              onClick: () => onNavigate('contribution', 'history'),
             },
             {
               label: 'Saldo Green Points',
               value: `${stats.pointsBalance.toLocaleString('id-ID')} GP`,
               hint: `+${POINTS_PER_ECOBRICK} GP / unit terverifikasi`,
               accent: 'primary',
+              onClick: () => onNavigate('marketplace', 'catalog'),
             },
             {
               label: 'Menunggu Verifikasi',
@@ -100,6 +106,10 @@ export function DashboardPage({
                 ? `Terakhir: ${latest.submissionId}`
                 : 'Belum ada penyerahan',
               accent: stats.pendingUnits > 0 ? 'muted' : 'default',
+              onClick: () =>
+                latest
+                  ? onOpenTraceDetail(latest.submissionId)
+                  : onNavigate('contribution', 'submit'),
             },
           ]}
         />
@@ -115,70 +125,77 @@ export function DashboardPage({
             />
           </section>
 
-          <section className="space-y-4 lg:col-span-5">
-            <div className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-3.5">
-              <SectionHeader
-                title="Kontribusi Aktif / Terbaru"
-                rightSlot={
-                  <SecondaryButton
-                    size="sm"
-                    onClick={() => onNavigate('contribution', 'history')}
-                  >
-                    Riwayat
-                  </SecondaryButton>
-                }
-              />
+          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4 lg:col-span-5">
+            <SectionHeader
+              title="Kontribusi Aktif & Pintasan"
+              rightSlot={
+                <SecondaryButton
+                  size="sm"
+                  onClick={() => onNavigate('contribution', 'history')}
+                >
+                  Riwayat
+                </SecondaryButton>
+              }
+            />
 
-              {latest ? (
-                <div className="rounded border border-[#E3E8E4] bg-[#F7F9F7] p-3.5 space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-mono text-xs font-semibold text-[#245C45]">
-                      {latest.submissionId}
-                    </span>
-                    <StatusTag status={latest.status} />
-                  </div>
-                  <p className="text-xs text-[#252B28]">
-                    {latest.quantitySubmitted} unit · {latest.dropoffPointName}
-                  </p>
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <span className="font-mono text-[11px] text-[#6B756F]">
-                      {latest.date}
-                    </span>
-                    <SecondaryButton
-                      size="sm"
-                      onClick={() => onOpenTraceDetail(latest.submissionId)}
-                    >
-                      <Eye className="h-3.5 w-3.5" aria-hidden="true" />
-                      <span>Lacak Status</span>
-                    </SecondaryButton>
-                  </div>
+            {latest ? (
+              <div className="border-y border-[#EEF2EF] py-3.5 space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-semibold text-[#245C45]">
+                    {latest.submissionId}
+                  </span>
+                  <StatusTag status={latest.status} />
                 </div>
-              ) : (
-                <p className="text-xs text-[#6B756F]">
-                  Belum ada kontribusi tercatat. Mulai dengan mengirim ecobrick pertama Anda.
+                <p className="text-xs text-[#252B28]">
+                  {latest.quantitySubmitted} unit · {latest.dropoffPointName}
                 </p>
-              )}
-
-              <div className="divide-y divide-[#EEF2EF] rounded border border-[#E3E8E4]">
-                <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs">
-                  <span className="text-[#252B28]">Tukar poin di Green Marketplace</span>
+                <div className="flex items-center justify-between gap-2 pt-0.5">
+                  <span className="font-mono text-[11px] text-[#6B756F]">
+                    {latest.date}
+                  </span>
                   <SecondaryButton
                     size="sm"
-                    onClick={() => onNavigate('marketplace', 'catalog')}
+                    onClick={() => onOpenTraceDetail(latest.submissionId)}
                   >
-                    Buka
-                  </SecondaryButton>
-                </div>
-                <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 text-xs">
-                  <span className="text-[#252B28]">Cek mutasi Transaksi & Saldo</span>
-                  <SecondaryButton
-                    size="sm"
-                    onClick={() => onNavigate('transactions', 'balance')}
-                  >
-                    Saldo
+                    <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Lacak Status</span>
                   </SecondaryButton>
                 </div>
               </div>
+            ) : (
+              <p className="border-y border-[#EEF2EF] py-3.5 text-xs text-[#6B756F]">
+                Belum ada kontribusi tercatat. Mulai dengan mengirim ecobrick
+                pertama Anda.
+              </p>
+            )}
+
+            <div className="divide-y divide-[#EEF2EF]">
+              <button
+                type="button"
+                onClick={() => onNavigate('marketplace', 'catalog')}
+                className="flex w-full items-center justify-between gap-2 py-2.5 text-left text-xs transition-colors duration-150 hover:text-[#245C45]"
+              >
+                <span className="font-medium text-[#252B28]">
+                  Tukar poin di Green Marketplace
+                </span>
+                <span className="inline-flex items-center gap-1 font-medium text-[#245C45]">
+                  <span>Buka</span>
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigate('transactions', 'balance')}
+                className="flex w-full items-center justify-between gap-2 py-2.5 text-left text-xs transition-colors duration-150 hover:text-[#245C45]"
+              >
+                <span className="font-medium text-[#252B28]">
+                  Cek mutasi Transaksi & Saldo
+                </span>
+                <span className="inline-flex items-center gap-1 font-medium text-[#245C45]">
+                  <span>Saldo</span>
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+              </button>
             </div>
           </section>
         </div>
@@ -210,7 +227,7 @@ export function DashboardPage({
     );
   }
 
-  // 2. MITRA OVERVIEW (Partner-focused summary without internal admin data)
+  // 2. MITRA OVERVIEW
   if (isMitraRole(state.activeRole)) {
     const availableBatches = inventory.filter((i) => i.availableCount > 0);
     const partnerRequests = state.distribution_requests.filter(
@@ -230,7 +247,7 @@ export function DashboardPage({
           title={`Overview Mitra · ${activeActor?.name ?? 'Mitra'}`}
           description="Pantau ketersediaan ecobrick terverifikasi, pengajuan permintaan, dan distribusi aktif Anda."
           actions={
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               <RoleTag role={state.activeRole} />
               <PrimaryButton
                 size="sm"
@@ -251,23 +268,27 @@ export function DashboardPage({
               value: `${metrics.inventoryAvailableCount} unit`,
               hint: `${availableBatches.length} batch siap diajukan`,
               accent: 'primary',
+              onClick: () => onNavigate('requests', 'new'),
             },
             {
               label: 'Pengajuan Aktif',
               value: `${activeRequestsCount} pengajuan`,
               hint: 'Menunggu review / disetujui',
+              onClick: () => onNavigate('requests', 'history'),
             },
             {
               label: 'Distribusi Berjalan',
               value: `${activeDistributionsCount} pengiriman`,
               hint: 'Siap konfirmasi pemanfaatan',
               accent: activeDistributionsCount > 0 ? 'muted' : 'default',
+              onClick: () => onNavigate('distribution', 'active'),
             },
             {
               label: 'Telah Dimanfaatkan',
               value: `${metrics.ecobricksUtilizedCount} unit`,
               hint: `${state.utilization_records.length} proyek tercatat`,
               accent: 'primary',
+              onClick: () => onNavigate('distribution', 'history'),
             },
           ]}
         />
@@ -294,7 +315,7 @@ export function DashboardPage({
                 partnerRequests.slice(0, 4).map((req) => (
                   <div
                     key={req.id}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5"
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 hover:bg-[#FAFBF9] transition-colors duration-150"
                   >
                     <div className="space-y-0.5">
                       <div className="flex flex-wrap items-center gap-2">
@@ -343,14 +364,14 @@ export function DashboardPage({
     );
   }
 
-  // 3. ADMIN OVERVIEW (Calm High-Level Operational Summary)
+  // 3. ADMIN OVERVIEW
   return (
     <div className="space-y-6">
       <PageHeader
         title={`Overview Operasional · ${activeActor?.name ?? 'Admin'}`}
         description="Ringkasan status ekosistem TRACECO dan antrean yang memerlukan tindak lanjut."
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             <RoleTag role={state.activeRole} />
             <PrimaryButton
               size="sm"
@@ -370,23 +391,27 @@ export function DashboardPage({
             label: 'Total Ecobrick Masuk',
             value: `${metrics.ecobricksSubmittedCount} unit`,
             hint: `${metrics.totalSubmissionsCount} penyerahan tercatat`,
+            onClick: () => onNavigate('contribution', 'all'),
           },
           {
             label: 'Terverifikasi',
             value: `${metrics.ecobricksVerifiedCount} unit`,
             hint: `${metrics.verificationRatePercent}% tingkat lolos`,
             accent: 'primary',
+            onClick: () => onNavigate('contribution', 'verify_history'),
           },
           {
             label: 'Inventori Tersedia',
             value: `${metrics.inventoryAvailableCount} unit`,
             hint: `${metrics.ecobricksUtilizedCount} unit dimanfaatkan`,
             accent: 'primary',
+            onClick: () => onNavigate('inventory', 'available'),
           },
           {
             label: 'Kontributor Aktif',
             value: `${metrics.activeContributorsCount} / ${metrics.totalContributorsCount}`,
             hint: `${metrics.activeSantriCount} santri · ${metrics.activeWargaCount} warga · ${metrics.vulnerableFamilyCount} keluarga rentan`,
+            onClick: () => onNavigate('monitor', 'users'),
           },
         ]}
       />
@@ -403,10 +428,10 @@ export function DashboardPage({
         </section>
 
         <section className="space-y-4 lg:col-span-5">
-          <div className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-3">
+          <div className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-2">
             <SectionHeader title="Perlu Tindak Lanjut" />
-            <div className="divide-y divide-[#EEF2EF] rounded border border-[#E3E8E4]">
-              <div className="flex items-center justify-between gap-3 px-3.5 py-3">
+            <div className="divide-y divide-[#EEF2EF]">
+              <div className="flex items-center justify-between gap-3 py-3">
                 <div>
                   <p className="text-xs font-semibold text-[#252B28]">
                     Antrean Verifikasi Fisik
@@ -423,7 +448,7 @@ export function DashboardPage({
                   Periksa
                 </SecondaryButton>
               </div>
-              <div className="flex items-center justify-between gap-3 px-3.5 py-3">
+              <div className="flex items-center justify-between gap-3 py-3">
                 <div>
                   <p className="text-xs font-semibold text-[#252B28]">
                     Pengajuan Distribusi Mitra
@@ -439,7 +464,7 @@ export function DashboardPage({
                   Tinjau
                 </SecondaryButton>
               </div>
-              <div className="flex items-center justify-between gap-3 px-3.5 py-3">
+              <div className="flex items-center justify-between gap-3 pt-3">
                 <div>
                   <p className="text-xs font-semibold text-[#252B28]">
                     Penukaran Reward Kontributor

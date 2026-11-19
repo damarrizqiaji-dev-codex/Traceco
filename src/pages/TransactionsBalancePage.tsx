@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, Info } from 'lucide-react';
+import {
+  ArrowDownLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Info,
+  Search,
+} from 'lucide-react';
 import type { AppPageId, TracecoState } from '../types/traceco';
 import {
   POINTS_PER_ECOBRICK,
@@ -38,12 +44,21 @@ export function TransactionsBalancePage({
   const [typeFilter, setTypeFilter] = useState<'Semua' | 'Earned' | 'Redeemed'>(
     'Semua'
   );
+  const [searchQuery, setSearchQuery] = useState('');
 
   const currentTab = activeSubTab === 'ledger' ? 'ledger' : 'balance';
 
-  const filteredTransactions = transactions.filter((t) =>
-    typeFilter === 'Semua' ? true : t.type === typeFilter
-  );
+  const filteredTransactions = transactions.filter((t) => {
+    const matchType = typeFilter === 'Semua' ? true : t.type === typeFilter;
+    const q = searchQuery.trim().toLowerCase();
+    const matchQuery =
+      !q ||
+      t.sourceLabel.toLowerCase().includes(q) ||
+      (t.submissionId ?? '').toLowerCase().includes(q) ||
+      (t.batchId ?? '').toLowerCase().includes(q) ||
+      t.date.toLowerCase().includes(q);
+    return matchType && matchQuery;
+  });
 
   return (
     <div className="space-y-6">
@@ -80,10 +95,10 @@ export function TransactionsBalancePage({
           <div className="rounded-md border border-[#C6DBC9] bg-white p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#6B756F]">
-                  Green Points
+                <p className="text-xs font-medium text-[#6B756F]">
+                  Saldo Green Points Aktif
                 </p>
-                <p className="font-mono text-3xl font-semibold text-[#245C45] tabular-nums">
+                <p className="font-display text-3xl font-semibold tracking-tight text-[#245C45] tabular-nums">
                   {balanceSummary.balance.toLocaleString('id-ID')} GP
                 </p>
                 <p className="text-xs text-[#6B756F]">
@@ -125,7 +140,8 @@ export function TransactionsBalancePage({
               {
                 label: 'Jumlah Transaksi',
                 value: `${transactions.length} mutasi`,
-                hint: 'Seluruh poin masuk & keluar',
+                hint: 'Klik untuk lihat buku mutasi lengkap',
+                onClick: () => onChangeSubTab('ledger'),
               },
             ]}
           />
@@ -151,7 +167,7 @@ export function TransactionsBalancePage({
                 transactions.slice(0, 4).map((tx) => (
                   <div
                     key={tx.id}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5"
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-[#FAFBF9]"
                   >
                     <div className="flex items-start gap-3 min-w-0">
                       <span
@@ -171,10 +187,23 @@ export function TransactionsBalancePage({
                         <p className="text-xs font-medium text-[#252B28]">
                           {tx.sourceLabel}
                         </p>
-                        <p className="font-mono text-[11px] text-[#6B756F]">
-                          {tx.date}
-                          {tx.submissionId ? ` · ${tx.submissionId}` : ''}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-[#6B756F]">
+                          <span>{tx.date}</span>
+                          {tx.submissionId && (
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onOpenTraceDetail(tx.submissionId!)
+                                }
+                                className="font-medium text-[#245C45] hover:underline"
+                              >
+                                {tx.submissionId}
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
@@ -240,11 +269,12 @@ export function TransactionsBalancePage({
 
       {currentTab === 'ledger' && (
         <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <SectionHeader
-              title="Riwayat Transaksi Green Points"
-              description="Menampilkan poin masuk dari verifikasi dan poin keluar dari penukaran reward."
-            />
+          <SectionHeader
+            title="Riwayat Transaksi Green Points"
+            description="Menampilkan poin masuk dari verifikasi dan poin keluar dari penukaran reward."
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E3E8E4] bg-white px-4 py-3">
             <FilterBar
               ariaLabel="Filter jenis transaksi"
               value={typeFilter}
@@ -259,22 +289,38 @@ export function TransactionsBalancePage({
                 {
                   value: 'Redeemed',
                   label: 'Penukaran',
-                  count: transactions.filter((t) => t.type === 'Redeemed').length,
+                  count: transactions.filter((t) => t.type === 'Redeemed')
+                    .length,
                 },
               ]}
             />
+
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                aria-label="Cari sumber atau ID transaksi"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari keterangan atau ID..."
+                className="w-full rounded border border-[#CFD8D2] bg-[#F7F9F7] py-1.5 pr-3 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] transition-colors focus:border-[#245C45] focus:bg-white focus:outline-none"
+              />
+            </div>
           </div>
 
           <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
             {filteredTransactions.length === 0 ? (
               <p className="p-6 text-center text-xs text-[#6B756F]">
-                Tidak ada transaksi pada kategori filter ini.
+                Tidak ada transaksi yang cocok dengan filter atau pencarian.
               </p>
             ) : (
               filteredTransactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 hover:bg-[#FAFBF9]"
+                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-[#FAFBF9]"
                 >
                   <div className="flex items-start gap-3 min-w-0">
                     <span
@@ -291,32 +337,41 @@ export function TransactionsBalancePage({
                       )}
                     </span>
                     <div className="min-w-0 space-y-0.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-semibold text-[#252B28]">
-                          {tx.sourceLabel}
-                        </span>
+                      <p className="text-xs font-semibold text-[#252B28]">
+                        {tx.sourceLabel}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-[#6B756F]">
                         <span
-                          className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                          className={
                             tx.type === 'Earned'
-                              ? 'bg-[#E7F0E8] text-[#245C45]'
-                              : 'bg-[#FEF2F2] text-[#991B1B]'
-                          }`}
+                              ? 'text-[#245C45]'
+                              : 'text-[#991B1B]'
+                          }
                         >
                           {tx.type === 'Earned' ? 'Masuk' : 'Keluar'}
                         </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-[#6B756F]">
+                        <span aria-hidden="true">·</span>
                         <span>{tx.date}</span>
                         {tx.submissionId && (
-                          <button
-                            type="button"
-                            onClick={() => onOpenTraceDetail(tx.submissionId!)}
-                            className="text-[#245C45] hover:underline"
-                          >
-                            {tx.submissionId}
-                          </button>
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onOpenTraceDetail(tx.submissionId!)
+                              }
+                              className="text-[#245C45] hover:underline"
+                            >
+                              {tx.submissionId}
+                            </button>
+                          </>
                         )}
-                        {tx.batchId && <span>· {tx.batchId}</span>}
+                        {tx.batchId && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span>{tx.batchId}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

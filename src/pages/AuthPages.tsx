@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import {
+  ArrowRight,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { ContributorSegment, UserAccount, UserRole } from '../types/traceco';
 import { PrimaryButton } from '../components/ui/Button';
+import { FilterBar } from '../components/ui/FilterBar';
 import { FormField, fieldInputClass } from '../components/ui/FormField';
 import { RoleTag } from '../components/ui/StatusBadge';
 import { TracecoLogo } from '../components/ui/TracecoLogo';
@@ -28,6 +30,7 @@ interface AuthPagesProps {
 }
 
 type AuthMode = 'login' | 'register';
+type AccountFilter = 'Semua' | UserRole;
 
 interface RoleOption {
   role: UserRole;
@@ -41,14 +44,14 @@ const ROLE_OPTIONS: RoleOption[] = [
     role: 'Kontributor',
     scope: 'Santri · Warga · Keluarga Rentan',
     description:
-      'Membuat dan menyerahkan ecobrick jadi ke pos TRACECO, melacak verifikasi, serta meraih +20 Green Points per unit terverifikasi.',
+      'Menyerahkan ecobrick jadi ke pos TRACECO, melacak verifikasi, dan meraih +20 Green Points per unit terverifikasi.',
     unitPlaceholder: 'Contoh: Asrama Putra Al-Farabi / Dusun Krajan RT 02',
   },
   {
     role: 'Admin',
     scope: 'Pengelola & Verifikator Eco-Hub Pesantren',
     description:
-      'Melakukan pemeriksaan fisik 8 kriteria, menerbitkan batch inventori, mengelola reward, distribusi, dan monitoring.',
+      'Memeriksa fisik 8 kriteria, menerbitkan batch inventori, mengelola reward, distribusi, dan monitoring.',
     unitPlaceholder: 'Contoh: Sekretariat & Pos Verifikasi Eco-Hub Pesantren',
   },
   {
@@ -89,6 +92,7 @@ const ECOSYSTEM_PILLARS = [
 
 export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
   const [mode, setMode] = useState<AuthMode>('login');
+  const [accountFilter, setAccountFilter] = useState<AccountFilter>('Semua');
 
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -107,6 +111,14 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
 
   const selectedRoleOption =
     ROLE_OPTIONS.find((opt) => opt.role === regRole) ?? ROLE_OPTIONS[0];
+
+  const filteredAccounts = accounts.filter((acc) =>
+    accountFilter === 'Semua' ? true : acc.role === accountFilter
+  );
+
+  const passwordLenOk = regPassword.length >= 6;
+  const passwordMatch =
+    regConfirmPassword.length > 0 && regPassword === regConfirmPassword;
 
   const handleModeSwitch = (nextMode: AuthMode) => {
     setMode(nextMode);
@@ -156,7 +168,7 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
         <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <TracecoLogo size="sm" />
-            <span className="text-[15px] font-semibold tracking-tight text-[#252B28] whitespace-nowrap">
+            <span className="font-display text-[16px] font-bold tracking-tight text-[#252B28] whitespace-nowrap">
               TRACECO
             </span>
           </div>
@@ -167,7 +179,7 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
             <button
               type="button"
               onClick={() => handleModeSwitch('login')}
-              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap ${
+              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors duration-150 whitespace-nowrap ${
                 mode === 'login'
                   ? 'bg-[#E7F0E8] text-[#245C45]'
                   : 'text-[#6B756F] hover:bg-[#F7F9F7] hover:text-[#252B28]'
@@ -178,7 +190,7 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
             <button
               type="button"
               onClick={() => handleModeSwitch('register')}
-              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap ${
+              className={`rounded px-3 py-1.5 text-xs font-medium transition-colors duration-150 whitespace-nowrap ${
                 mode === 'register'
                   ? 'bg-[#245C45] text-white'
                   : 'border border-[#CFD8D2] bg-white text-[#252B28] hover:bg-[#F7F9F7]'
@@ -191,14 +203,14 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
       </header>
 
       <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-8 sm:py-12">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
-          {/* Left Column: Community Hub Context */}
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start">
+          {/* Left Column: Editorial Community Hub Context */}
           <section className="order-2 space-y-6 lg:order-1 lg:col-span-5">
             <div className="space-y-3">
-              <p className="text-xs font-semibold tracking-wider text-[#245C45] uppercase">
+              <p className="text-xs font-semibold text-[#245C45]">
                 Pesantren Al-Amanah · Community Hub
               </p>
-              <h1 className="text-2xl font-semibold leading-snug text-[#252B28] sm:text-[28px] [text-wrap:balance]">
+              <h1 className="font-display text-2xl font-semibold leading-[1.18] tracking-tight text-[#252B28] sm:text-[30px] [text-wrap:balance]">
                 Platform Pencatatan & Verifikasi Kontribusi Ecobrick
               </h1>
               <p className="text-sm leading-relaxed text-[#6B756F]">
@@ -209,34 +221,39 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
               </p>
             </div>
 
-            <div className="divide-y divide-[#E3E8E4] rounded-md border border-[#E3E8E4] bg-white">
+            <div className="divide-y divide-[#E3E8E4] border-y border-[#E3E8E4]">
               {ECOSYSTEM_PILLARS.map((pillar) => (
-                <div key={pillar.index} className="p-4 space-y-1">
-                  <div className="flex items-baseline gap-2">
+                <div key={pillar.index} className="py-4 space-y-1">
+                  <div className="flex items-baseline gap-2.5">
                     <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums">
                       {pillar.index}
                     </span>
-                    <h2 className="text-[13px] font-semibold text-[#252B28]">
+                    <h2 className="font-display text-sm font-semibold text-[#252B28]">
                       {pillar.title}
                     </h2>
                   </div>
-                  <p className="text-xs leading-relaxed text-[#6B756F]">
+                  <p className="pl-6 text-xs leading-relaxed text-[#6B756F]">
                     {pillar.detail}
                   </p>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-md border border-[#C6DBC9] bg-[#E7F0E8]/60 p-4 space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#245C45]">
-                <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                <span>Penetapan Peran Saat Pendaftaran & Preview</span>
+            <div className="flex items-start gap-2.5 rounded-md border border-[#C6DBC9] bg-[#E7F0E8]/60 p-4 text-xs leading-relaxed text-[#252B28]">
+              <Lock
+                className="mt-0.5 h-4 w-4 shrink-0 text-[#245C45]"
+                aria-hidden="true"
+              />
+              <div>
+                <p className="font-semibold text-[#245C45]">
+                  Penetapan Peran & Prototype Preview
+                </p>
+                <p className="mt-0.5 text-[#252B28]">
+                  Pilih peran Kontributor, Admin, atau Mitra saat mendaftar.
+                  Setelah masuk, tersedia <strong>Preview Peran</strong> di
+                  header atas untuk meninjau perspektif setiap peran.
+                </p>
               </div>
-              <p className="text-xs leading-relaxed text-[#252B28]">
-                Pilih peran Kontributor, Admin, atau Mitra saat mendaftar. Setelah
-                masuk, tersedia <strong>Prototype Role Preview</strong> untuk
-                meninjau perspektif setiap peran.
-              </p>
             </div>
           </section>
 
@@ -247,7 +264,7 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
                 <button
                   type="button"
                   onClick={() => handleModeSwitch('login')}
-                  className={`flex items-center justify-center gap-2 border-b-2 px-4 py-3.5 text-[13px] font-medium transition-colors whitespace-nowrap ${
+                  className={`flex items-center justify-center gap-2 border-b-2 px-4 py-3.5 text-[13px] font-medium transition-colors duration-150 whitespace-nowrap ${
                     mode === 'login'
                       ? 'border-[#245C45] bg-white text-[#245C45]'
                       : 'border-transparent text-[#6B756F] hover:text-[#252B28]'
@@ -259,7 +276,7 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
                 <button
                   type="button"
                   onClick={() => handleModeSwitch('register')}
-                  className={`flex items-center justify-center gap-2 border-b-2 px-4 py-3.5 text-[13px] font-medium transition-colors whitespace-nowrap ${
+                  className={`flex items-center justify-center gap-2 border-b-2 px-4 py-3.5 text-[13px] font-medium transition-colors duration-150 whitespace-nowrap ${
                     mode === 'register'
                       ? 'border-[#245C45] bg-white text-[#245C45]'
                       : 'border-transparent text-[#6B756F] hover:text-[#252B28]'
@@ -271,13 +288,13 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
               </div>
 
               {mode === 'login' ? (
-                <div className="p-5 sm:p-7 space-y-6">
+                <div className="animate-traceco-enter p-5 sm:p-7 space-y-6">
                   <div className="space-y-1">
-                    <h2 className="text-lg font-semibold text-[#252B28]">
+                    <h2 className="font-display text-xl font-semibold text-[#252B28]">
                       Masuk ke TRACECO
                     </h2>
                     <p className="text-xs text-[#6B756F]">
-                      Masuk dengan email terdaftar atau pilih salah satu akun
+                      Masuk dengan email terdaftar atau pilih langsung akun
                       peran ekosistem di bawah ini.
                     </p>
                   </div>
@@ -352,56 +369,78 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
                   </form>
 
                   <div className="border-t border-[#E3E8E4] pt-5 space-y-3">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <h3 className="text-xs font-semibold text-[#252B28]">
-                          Akun Terdaftar (Kontributor · Admin · Mitra)
+                        <h3 className="font-display text-sm font-semibold text-[#252B28]">
+                          Masuk Cepat per Peran
                         </h3>
                         <p className="text-[11px] text-[#6B756F]">
-                          Klik Masuk untuk langsung masuk sebagai peran terkait.
+                          Pilih baris akun untuk langsung mencoba alur peran terkait.
                         </p>
                       </div>
-                      <span className="font-mono text-[11px] text-[#6B756F]">
-                        {accounts.length} akun
-                      </span>
+                      <FilterBar
+                        ariaLabel="Filter peran akun demo"
+                        value={accountFilter}
+                        onChange={setAccountFilter}
+                        options={[
+                          { value: 'Semua', label: 'Semua', count: accounts.length },
+                          {
+                            value: 'Kontributor',
+                            label: 'Kontributor',
+                            count: accounts.filter((a) => a.role === 'Kontributor')
+                              .length,
+                          },
+                          {
+                            value: 'Admin',
+                            label: 'Admin',
+                            count: accounts.filter((a) => a.role === 'Admin')
+                              .length,
+                          },
+                          {
+                            value: 'Mitra',
+                            label: 'Mitra',
+                            count: accounts.filter((a) => a.role === 'Mitra')
+                              .length,
+                          },
+                        ]}
+                      />
                     </div>
 
-                    <div className="divide-y divide-[#EEF2EF] rounded border border-[#E3E8E4]">
-                      {accounts.map((acc) => (
-                        <div
+                    <div className="divide-y divide-[#EEF2EF] border-y border-[#E3E8E4]">
+                      {filteredAccounts.map((acc) => (
+                        <button
                           key={acc.id}
-                          className="flex flex-wrap items-center justify-between gap-3 px-3.5 py-2.5 hover:bg-[#F7F9F7] transition-colors"
+                          type="button"
+                          onClick={() => handleQuickLogin(acc)}
+                          className="group flex w-full items-center justify-between gap-3 px-2 py-2.5 text-left transition-colors duration-150 hover:bg-[#F2F7F3]/75"
                         >
-                          <div className="min-w-0 space-y-0.5">
+                          <div className="min-w-0 flex-1 space-y-0.5">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-xs font-medium text-[#252B28]">
+                              <span className="text-xs font-semibold text-[#252B28] group-hover:text-[#245C45]">
                                 {acc.name}
                               </span>
-                              <RoleTag role={acc.role} />
-                              {acc.role === 'Kontributor' && (
-                                <RoleTag role={acc.segment} />
-                              )}
+                              <RoleTag
+                                role={acc.role}
+                                segment={acc.segment}
+                              />
                             </div>
                             <p className="font-mono text-[11px] text-[#6B756F] truncate">
                               {acc.email} · {acc.unitOrAddress}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleQuickLogin(acc)}
-                            className="rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-[11px] font-medium text-[#245C45] hover:border-[#245C45] hover:bg-[#E7F0E8] transition-colors whitespace-nowrap shrink-0"
-                          >
-                            Masuk
-                          </button>
-                        </div>
+                          <span className="inline-flex items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-[11px] font-medium text-[#245C45] group-hover:border-[#245C45] group-hover:bg-[#E7F0E8] transition-colors duration-150 whitespace-nowrap shrink-0">
+                            <span>Masuk</span>
+                            <ArrowRight className="h-3 w-3" aria-hidden="true" />
+                          </span>
+                        </button>
                       ))}
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="p-5 sm:p-7 space-y-6">
+                <div className="animate-traceco-enter p-5 sm:p-7 space-y-6">
                   <div className="space-y-1">
-                    <h2 className="text-lg font-semibold text-[#252B28]">
+                    <h2 className="font-display text-xl font-semibold text-[#252B28]">
                       Pendaftaran Akun TRACECO
                     </h2>
                     <p className="text-xs text-[#6B756F]">
@@ -475,7 +514,7 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
                               role="radio"
                               aria-checked={isSelected}
                               onClick={() => setRegRole(option.role)}
-                              className={`flex flex-col justify-between p-3.5 text-left transition-colors ${
+                              className={`flex flex-col justify-between p-3.5 text-left transition-colors duration-150 ${
                                 isSelected
                                   ? 'bg-[#E7F0E8]/75'
                                   : 'bg-white hover:bg-[#F7F9F7]'
@@ -553,7 +592,13 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
                       <FormField
                         id="reg-password"
                         label="Kata Sandi"
-                        hint="Minimal 6 karakter"
+                        hint={
+                          regPassword.length === 0
+                            ? 'Minimal 6 karakter'
+                            : passwordLenOk
+                              ? 'Panjang kata sandi memenuhi standar'
+                              : `Kurang ${6 - regPassword.length} karakter lagi`
+                        }
                       >
                         <div className="relative">
                           <input
@@ -589,6 +634,13 @@ export function AuthPages({ accounts, onLogin, onRegister }: AuthPagesProps) {
                       <FormField
                         id="reg-confirm-password"
                         label="Konfirmasi Kata Sandi"
+                        hint={
+                          regConfirmPassword.length === 0
+                            ? undefined
+                            : passwordMatch
+                              ? 'Kata sandi cocok'
+                              : 'Belum cocok dengan kata sandi'
+                        }
                       >
                         <input
                           id="reg-confirm-password"

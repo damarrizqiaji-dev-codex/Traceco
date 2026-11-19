@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Search } from 'lucide-react';
 import type {
   ActivityFeedItem,
   AppPageId,
@@ -71,12 +72,22 @@ export function ActivitiesPage({
   const [categoryFilter, setCategoryFilter] = useState<
     'Semua' | ActivityFeedItem['category']
   >('Semua');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const currentTab = activeSubTab === 'community' ? 'community' : 'feed';
 
-  const filteredActivities = state.recent_activities.filter((act) =>
-    categoryFilter === 'Semua' ? true : act.category === categoryFilter
-  );
+  const filteredActivities = state.recent_activities.filter((act) => {
+    const matchCategory =
+      categoryFilter === 'Semua' ? true : act.category === categoryFilter;
+    const q = searchQuery.trim().toLowerCase();
+    const matchQuery =
+      !q ||
+      act.title.toLowerCase().includes(q) ||
+      act.detail.toLowerCase().includes(q) ||
+      (act.submissionId ?? '').toLowerCase().includes(q) ||
+      (act.batchId ?? '').toLowerCase().includes(q);
+    return matchCategory && matchQuery;
+  });
 
   return (
     <div className="space-y-6">
@@ -105,11 +116,12 @@ export function ActivitiesPage({
 
       {currentTab === 'feed' ? (
         <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <SectionHeader
-              title="Linimasa Aktivitas"
-              description="Ringkasan peristiwa terbaru di ekosistem TRACECO."
-            />
+          <SectionHeader
+            title="Linimasa Aktivitas"
+            description="Ringkasan peristiwa terbaru di ekosistem TRACECO."
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E3E8E4] bg-white px-4 py-3">
             <FilterBar
               ariaLabel="Filter kategori aktivitas"
               value={categoryFilter}
@@ -150,12 +162,27 @@ export function ActivitiesPage({
                 },
               ]}
             />
+
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                aria-label="Cari aktivitas atau ID"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari aktivitas atau ID..."
+                className="w-full rounded border border-[#CFD8D2] bg-[#F7F9F7] py-1.5 pr-3 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] transition-colors focus:border-[#245C45] focus:bg-white focus:outline-none"
+              />
+            </div>
           </div>
 
           <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white p-4 sm:p-5">
             {filteredActivities.length === 0 ? (
               <p className="py-6 text-center text-xs text-[#6B756F]">
-                Belum ada aktivitas pada kategori ini.
+                Tidak ada aktivitas yang cocok dengan filter atau pencarian.
               </p>
             ) : (
               filteredActivities.map((act) => (

@@ -36,7 +36,7 @@ import {
   updateRedemptionStatusInState,
   verifySubmissionInState,
 } from './utils/tracecoLogic';
-import { AppShell } from './components/layout/AppShell';
+import { AppShell, type ToastNotice } from './components/layout/AppShell';
 import { TraceabilityModal } from './components/ui/TraceabilityModal';
 import { ActivitiesPage } from './pages/ActivitiesPage';
 import { AuthPages } from './pages/AuthPages';
@@ -251,6 +251,21 @@ export default function App() {
     string | null
   >('TRC-2026-004');
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastNotice | null>(null);
+
+  const showToast = (
+    message: string,
+    actionLabel?: string,
+    onAction?: () => void
+  ) => {
+    setToast({ id: Date.now(), message, actionLabel, onAction });
+  };
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 4200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   useEffect(() => {
     try {
@@ -321,6 +336,7 @@ export default function App() {
     } else {
       setActiveSubTab(getDefaultSubTab(role, activePage));
     }
+    showToast(`Tampilan peran dialihkan ke ${role}.`);
   };
 
   const handleLogout = () => {
@@ -347,6 +363,11 @@ export default function App() {
       return { error: res.error };
     }
     setState(res.nextState);
+    if (res.submission) {
+      showToast(
+        `Kontribusi ${res.submission.submissionId} (${res.submission.quantitySubmitted} unit) berhasil dicatat.`
+      );
+    }
     return { submissionId: res.submission?.submissionId };
   };
 
@@ -366,6 +387,11 @@ export default function App() {
       return { error: res.error };
     }
     setState(res.nextState);
+    showToast(
+      res.batch
+        ? `Verifikasi tersimpan · Batch ${res.batch.batchId} diterbitkan.`
+        : `Verifikasi ${params.submissionId} tersimpan.`
+    );
     return { batchId: res.batch?.batchId };
   };
 
@@ -381,6 +407,11 @@ export default function App() {
       return { error: res.error };
     }
     setState(res.nextState);
+    const rewardTitle =
+      state.rewards.find((r) => r.id === params.rewardId)?.title ?? 'Reward';
+    showToast(`Penukaran "${rewardTitle}" berhasil dicatat.`, 'Lihat Saldo', () =>
+      handleNavigate('transactions', 'ledger')
+    );
     return {};
   };
 
@@ -391,6 +422,7 @@ export default function App() {
     setState((prev) =>
       updateRedemptionStatusInState(prev, redemptionId, status, '2026-11-18')
     );
+    showToast(`Status penukaran ${redemptionId} diperbarui ke ${status}.`);
   };
 
   const handleUpdateIncentiveStatus = (
@@ -405,6 +437,7 @@ export default function App() {
           : fin
       ),
     }));
+    showToast(`Status insentif ${incentiveId} diperbarui ke ${status}.`);
   };
 
   const handleCreateDistributionRequest = (payload: {
@@ -426,6 +459,9 @@ export default function App() {
       return { error: res.error };
     }
     setState(res.nextState);
+    showToast(
+      `Pengajuan ${payload.requestedCount} unit dari Batch ${payload.batchId} dikirim.`
+    );
     return {};
   };
 
@@ -448,6 +484,7 @@ export default function App() {
         actionDate: '2026-11-18',
       });
     });
+    showToast(`Distribusi ${requestId} diperbarui: ${nextStatus}.`);
   };
 
   const handleToggleJoinActivity = (
@@ -463,6 +500,11 @@ export default function App() {
       return { joined: false, error: res.error };
     }
     setState(res.nextState);
+    showToast(
+      res.joined
+        ? 'Berhasil mendaftar ke kegiatan komunitas.'
+        : 'Pendaftaran kegiatan komunitas dibatalkan.'
+    );
     return { joined: res.joined };
   };
 
@@ -483,6 +525,7 @@ export default function App() {
       return { error: res.error };
     }
     setState(res.nextState);
+    showToast(`Agenda "${payload.title.trim()}" diterbitkan ke Community Hub.`);
     return {};
   };
 
@@ -493,6 +536,7 @@ export default function App() {
     setState((prev) =>
       updateCommunityActivityStatusInState(prev, activityId, status)
     );
+    showToast(`Status agenda ${activityId} diperbarui ke ${status}.`);
   };
 
   const handleCreateCommunityPost = (payload: {
@@ -510,6 +554,7 @@ export default function App() {
       return { error: res.error };
     }
     setState(res.nextState);
+    showToast('Topik forum berhasil diterbitkan.');
     return {};
   };
 
@@ -528,11 +573,13 @@ export default function App() {
       return { error: res.error };
     }
     setState(res.nextState);
+    showToast('Balasan forum terkirim.');
     return {};
   };
 
   const handleToggleCommunityPostStatus = (postId: string) => {
     setState((prev) => toggleCommunityPostStatusInState(prev, postId));
+    showToast('Status topik forum diperbarui.');
   };
 
   const handleCreateCollaboration = (payload: {
@@ -549,6 +596,7 @@ export default function App() {
       return { error: res.error };
     }
     setState(res.nextState);
+    showToast(`Usulan kolaborasi "${payload.partnerName.trim()}" terkirim.`);
     return {};
   };
 
@@ -559,6 +607,7 @@ export default function App() {
     setState((prev) =>
       updateCollaborationStatusInState(prev, collaborationId, status)
     );
+    showToast(`Status kolaborasi ${collaborationId} diperbarui ke ${status}.`);
   };
 
   const handleMarkNotificationRead = (id: string) => {
@@ -575,6 +624,7 @@ export default function App() {
       ...prev,
       notifications: prev.notifications.map((n) => ({ ...n, read: true })),
     }));
+    showToast('Semua notifikasi ditandai sudah dibaca.');
   };
 
   const handleResetSimulation = () => {
@@ -597,6 +647,7 @@ export default function App() {
         ],
       };
     });
+    showToast('Data operasional berhasil direset ke kondisi awal.');
   };
 
   if (!currentUser) {
@@ -618,6 +669,8 @@ export default function App() {
       onLogout={handleLogout}
       currentUser={currentUser}
       state={state}
+      toast={toast}
+      onDismissToast={() => setToast(null)}
     >
       {activePage === 'dashboard' && (
         <DashboardPage

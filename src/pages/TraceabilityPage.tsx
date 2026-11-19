@@ -160,10 +160,10 @@ export function TraceabilityPage({
       {/* Connected 5-Stage Lifecycle Summary */}
       <section className="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-[#E3E8E4] bg-[#E3E8E4] sm:grid-cols-2 lg:grid-cols-5">
         <div className="bg-white p-4 space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
-            1. Contribution
+          <p className="text-xs font-medium text-[#6B756F]">
+            1. Kontribusi
           </p>
-          <p className="font-mono text-sm font-semibold text-[#252B28] tabular-nums">
+          <p className="font-display text-base font-semibold text-[#252B28] tabular-nums">
             {resolvedSubmission.quantitySubmitted} Ecobrick
           </p>
           <p className="text-xs text-[#6B756F]">
@@ -175,8 +175,8 @@ export function TraceabilityPage({
         </div>
 
         <div className="bg-white p-4 space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
-            2. Verification
+          <p className="text-xs font-medium text-[#6B756F]">
+            2. Verifikasi
           </p>
           <div>
             <StatusTag status={resolvedSubmission.status} />
@@ -189,38 +189,38 @@ export function TraceabilityPage({
         </div>
 
         <div className="bg-white p-4 space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
+          <p className="text-xs font-medium text-[#6B756F]">
             3. Reward
           </p>
-          <p className="font-mono text-sm font-semibold text-[#245C45] tabular-nums">
+          <p className="font-display text-base font-semibold text-[#245C45] tabular-nums">
             {rewardEntry
-              ? `+${rewardEntry.points} Green Points`
+              ? `+${rewardEntry.points} GP`
               : resolvedSubmission.verifiedQuantity > 0
-                ? `+${resolvedSubmission.verifiedQuantity * POINTS_PER_ECOBRICK} pts`
-                : '0 pts'}
+                ? `+${resolvedSubmission.verifiedQuantity * POINTS_PER_ECOBRICK} GP`
+                : '0 GP'}
           </p>
           <p className="text-xs text-[#6B756F]">
-            +{POINTS_PER_ECOBRICK} pts / unit terverifikasi
+            +{POINTS_PER_ECOBRICK} GP / unit terverifikasi
           </p>
         </div>
 
         <div className="bg-white p-4 space-y-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
-            4. Inventory
+          <p className="text-xs font-medium text-[#6B756F]">
+            4. Inventori
           </p>
           <p className="font-mono text-sm font-semibold text-[#252B28]">
             {batch ? `Batch ${batch.batchId}` : 'Belum ada batch'}
           </p>
           <p className="text-xs text-[#6B756F]">
             {batchInv
-              ? `${batchInv.availableCount} available · ${batchInv.totalVerifiedCount} verified`
+              ? `${batchInv.availableCount} tersedia · ${batchInv.totalVerifiedCount} terverifikasi`
               : 'Menunggu verifikasi'}
           </p>
         </div>
 
         <div className="bg-white p-4 space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
-            5. Utilization
+          <p className="text-xs font-medium text-[#6B756F]">
+            5. Pemanfaatan
           </p>
           <div>
             <StatusTag
@@ -256,11 +256,17 @@ export function TraceabilityPage({
                   {contributor?.name ?? '-'}
                 </p>
               </div>
-              {contributor && <RoleTag role={contributor.role} />}
+              {contributor && (
+                <RoleTag
+                  role={contributor.role}
+                  segment={contributor.segment}
+                  variant="inline"
+                />
+              )}
             </div>
 
-            <div className="flex flex-col items-center rounded border border-[#E3E8E4] bg-[#F7F9F7] p-4">
-              <div className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
+            <div className="flex flex-col items-center border-b border-[#EEF2EF] pb-4">
+              <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-[#6B756F]">
                 <QrCode className="h-3.5 w-3.5 text-[#245C45]" />
                 <span>QR Identitas Batch / Kontribusi</span>
               </div>
@@ -305,7 +311,7 @@ export function TraceabilityPage({
               </div>
               {resolvedSubmission.iotSimulatedWeightKg !== undefined && (
                 <div className="flex justify-between gap-2">
-                  <span className="text-[#6B756F]">Simulated IoT Weight</span>
+                  <span className="text-[#6B756F]">Timbangan Pos</span>
                   <span className="font-mono text-[#245C45] tabular-nums">
                     {resolvedSubmission.iotSimulatedWeightKg} kg
                   </span>
@@ -323,7 +329,7 @@ export function TraceabilityPage({
 
             {resolvedSubmission.photoDataUrl && (
               <div className="space-y-1.5 border-t border-[#EEF2EF] pt-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
+                <p className="text-xs font-medium text-[#6B756F]">
                   Foto Dokumentasi
                 </p>
                 <img
@@ -347,13 +353,12 @@ export function TraceabilityPage({
         <section className="rounded-md border border-[#E3E8E4] bg-white p-5 sm:p-6 space-y-4 lg:col-span-8">
           <SectionHeader
             title="Timeline Keterlacakan Kontribusi"
-            description="Jejak proses Submission → Verification → Reward → Inventory → Distribution → Utilization."
+            description="Jejak proses Penyerahan → Verifikasi → Reward → Inventori → Distribusi → Pemanfaatan."
           />
           <Timeline stages={stages} />
-          <div className="rounded border border-[#E3E8E4] bg-[#F7F9F7] px-3.5 py-2.5 text-[11px] text-[#6B756F]">
-            Konsep Distributed Ledger (Future Audit Layer · Non-Crypto):
-            struktur riwayat kontribusi berurutan untuk audit sosial tanpa
-            dompet kripto atau token.
+          <div className="border-t border-[#EEF2EF] pt-3 text-[11px] text-[#6B756F]">
+            Audit Keterlacakan Non-Kripto: struktur riwayat kontribusi
+            berurutan untuk akuntabilitas sosial ekosistem tanpa dompet kripto.
           </div>
         </section>
       </div>

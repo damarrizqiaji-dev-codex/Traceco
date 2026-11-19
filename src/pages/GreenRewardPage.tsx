@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Award, CheckCircle2, Info, ShieldCheck } from 'lucide-react';
+import { Award, CheckCircle2, Info, Search, ShieldCheck } from 'lucide-react';
 import type {
   FinancialIncentive,
   GreenPointEntry,
@@ -14,19 +14,20 @@ import {
   isAdminRole,
   isPenyerahRole,
 } from '../utils/tracecoLogic';
+import { PrimaryButton, SecondaryButton } from '../components/ui/Button';
+import { DataTable, type DataTableColumn } from '../components/ui/DataTable';
+import { FilterBar } from '../components/ui/FilterBar';
+import { FormField, fieldInputClass } from '../components/ui/FormField';
+import { MetricStrip } from '../components/ui/Metric';
+import { PageHeader, SectionHeader } from '../components/ui/PageHeader';
+import { RoleTag, StatusTag } from '../components/ui/StatusBadge';
+import { SubNavTabs } from '../components/ui/SubNavTabs';
 
 const BOTTLE_STANDARD_RULES = [
   { label: 'Botol PET 600 ml', minUnitKg: 0.25, targetUnitKg: 0.27 },
   { label: 'Botol PET 1000 ml', minUnitKg: 0.4, targetUnitKg: 0.42 },
   { label: 'Botol PET 1500 ml', minUnitKg: 0.5, targetUnitKg: 0.52 },
 ];
-import { PrimaryButton, SecondaryButton } from '../components/ui/Button';
-import { DataTable, type DataTableColumn } from '../components/ui/DataTable';
-import { FormField, fieldInputClass } from '../components/ui/FormField';
-import { MetricStrip } from '../components/ui/Metric';
-import { PageHeader, SectionHeader } from '../components/ui/PageHeader';
-import { RoleTag, StatusTag } from '../components/ui/StatusBadge';
-import { SubNavTabs } from '../components/ui/SubNavTabs';
 
 interface GreenRewardPageProps {
   state: TracecoState;
@@ -61,6 +62,11 @@ export function GreenRewardPage({
   const [selectedContributorId, setSelectedContributorId] = useState(
     participantContributors[0]?.id ?? 'CTR-SAN-01'
   );
+  const [redemptionFilter, setRedemptionFilter] = useState<
+    'Semua' | RedemptionStatus
+  >('Semua');
+  const [redemptionSearch, setRedemptionSearch] = useState('');
+  const [ledgerSearch, setLedgerSearch] = useState('');
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null);
 
   const currentTab =
@@ -88,6 +94,31 @@ export function GreenRewardPage({
   );
 
   const contributorMap = new Map(state.contributors.map((c) => [c.id, c]));
+
+  const filteredRedemptions = state.redemptions.filter((r) => {
+    const matchStatus =
+      redemptionFilter === 'Semua' || r.status === redemptionFilter;
+    const ctr = contributorMap.get(r.contributorId);
+    const q = redemptionSearch.trim().toLowerCase();
+    const matchQuery =
+      !q ||
+      r.id.toLowerCase().includes(q) ||
+      r.rewardTitle.toLowerCase().includes(q) ||
+      (ctr?.name ?? '').toLowerCase().includes(q);
+    return matchStatus && matchQuery;
+  });
+
+  const filteredLedger = state.green_points.filter((g) => {
+    const ctr = contributorMap.get(g.contributorId);
+    const q = ledgerSearch.trim().toLowerCase();
+    return (
+      !q ||
+      g.sourceLabel.toLowerCase().includes(q) ||
+      (ctr?.name ?? '').toLowerCase().includes(q) ||
+      (g.submissionId ?? '').toLowerCase().includes(q) ||
+      (g.batchId ?? '').toLowerCase().includes(q)
+    );
+  });
 
   const handleRedemptionAction = (id: string, nextStatus: RedemptionStatus) => {
     onUpdateRedemptionStatus(id, nextStatus);
@@ -117,7 +148,7 @@ export function GreenRewardPage({
         return (
           <div className="space-y-0.5 text-xs">
             <p className="font-medium text-[#252B28]">{ctr?.name ?? '-'}</p>
-            {ctr && <RoleTag role={ctr.role} />}
+            {ctr && <RoleTag role={ctr.role} segment={ctr.segment} />}
           </div>
         );
       },
@@ -203,9 +234,10 @@ export function GreenRewardPage({
       render: (g) => {
         const ctr = contributorMap.get(g.contributorId);
         return (
-          <span className="text-xs font-medium text-[#252B28]">
-            {ctr?.name ?? '-'}
-          </span>
+          <div className="space-y-0.5 text-xs">
+            <p className="font-medium text-[#252B28]">{ctr?.name ?? '-'}</p>
+            {ctr && <RoleTag role={ctr.role} segment={ctr.segment} />}
+          </div>
         );
       },
     },
@@ -258,7 +290,7 @@ export function GreenRewardPage({
         return (
           <div className="space-y-0.5 text-xs">
             <p className="font-medium text-[#252B28]">{ctr?.name ?? '-'}</p>
-            {ctr && <RoleTag role={ctr.role} />}
+            {ctr && <RoleTag role={ctr.role} segment={ctr.segment} />}
           </div>
         );
       },
@@ -350,7 +382,7 @@ export function GreenRewardPage({
           {
             id: 'history',
             label: 'Riwayat Reward',
-            badge: state.redemptions.length,
+            badge: state.green_points.length,
           },
         ]}
       />
@@ -395,7 +427,7 @@ export function GreenRewardPage({
             ]}
           />
 
-          {/* Inspect Contributor Balance */}
+          {/* Inspect Contributor Balance (Clean Hairline Grid, no nested cards) */}
           <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
@@ -425,28 +457,28 @@ export function GreenRewardPage({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="rounded border border-[#C6DBC9] bg-[#E7F0E8]/40 p-3.5">
+            <div className="grid grid-cols-1 divide-y divide-[#EEF2EF] border-t border-[#EEF2EF] pt-4 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              <div className="py-2 sm:pr-4 sm:py-0">
                 <p className="text-[11px] font-medium text-[#6B756F]">
                   Saldo Tersedia ({activeContributor?.name ?? '-'})
                 </p>
-                <p className="mt-1 font-mono text-xl font-semibold text-[#245C45] tabular-nums">
+                <p className="mt-1 font-display text-2xl font-semibold text-[#245C45] tabular-nums">
                   {selectedBalance.balance} GP
                 </p>
               </div>
-              <div className="rounded border border-[#E3E8E4] bg-[#F7F9F7] p-3.5">
+              <div className="py-2 sm:px-5 sm:py-0">
                 <p className="text-[11px] font-medium text-[#6B756F]">
                   Total Diperoleh
                 </p>
-                <p className="mt-1 font-mono text-xl font-semibold text-[#252B28] tabular-nums">
+                <p className="mt-1 font-display text-2xl font-semibold text-[#252B28] tabular-nums">
                   +{selectedBalance.earned} GP
                 </p>
               </div>
-              <div className="rounded border border-[#E3E8E4] bg-[#F7F9F7] p-3.5">
+              <div className="py-2 sm:pl-5 sm:py-0">
                 <p className="text-[11px] font-medium text-[#6B756F]">
                   Total Ditukar
                 </p>
-                <p className="mt-1 font-mono text-xl font-semibold text-[#252B28] tabular-nums">
+                <p className="mt-1 font-display text-2xl font-semibold text-[#6B756F] tabular-nums">
                   -{selectedBalance.redeemed} GP
                 </p>
               </div>
@@ -460,14 +492,65 @@ export function GreenRewardPage({
               description="Setujui atau selesaikan permintaan penukaran reward dari kontributor."
             />
 
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E3E8E4] bg-white px-4 py-3">
+              <FilterBar
+                ariaLabel="Filter status penukaran"
+                value={redemptionFilter}
+                onChange={setRedemptionFilter}
+                options={[
+                  {
+                    value: 'Semua',
+                    label: 'Semua',
+                    count: state.redemptions.length,
+                  },
+                  {
+                    value: 'Pending',
+                    label: 'Pending',
+                    count: state.redemptions.filter(
+                      (r) => r.status === 'Pending'
+                    ).length,
+                  },
+                  {
+                    value: 'Approved',
+                    label: 'Approved',
+                    count: state.redemptions.filter(
+                      (r) => r.status === 'Approved'
+                    ).length,
+                  },
+                  {
+                    value: 'Completed',
+                    label: 'Completed',
+                    count: state.redemptions.filter(
+                      (r) => r.status === 'Completed'
+                    ).length,
+                  },
+                ]}
+              />
+
+              <div className="relative w-full sm:w-64">
+                <Search
+                  className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+                  aria-hidden="true"
+                />
+                <input
+                  type="search"
+                  aria-label="Cari ID penukaran, nama, atau reward"
+                  value={redemptionSearch}
+                  onChange={(e) => setRedemptionSearch(e.target.value)}
+                  placeholder="Cari nama, ID, atau item..."
+                  className="w-full rounded border border-[#CFD8D2] bg-[#F7F9F7] py-1.5 pr-3 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] transition-colors focus:border-[#245C45] focus:bg-white focus:outline-none"
+                />
+              </div>
+            </div>
+
             {/* Mobile Cards (< md) */}
             <div className="space-y-3 md:hidden">
-              {state.redemptions.length === 0 ? (
+              {filteredRedemptions.length === 0 ? (
                 <div className="rounded-md border border-[#E3E8E4] bg-white p-6 text-center text-xs text-[#6B756F]">
-                  Belum ada permintaan penukaran Green Points.
+                  Tidak ada permintaan penukaran yang cocok.
                 </div>
               ) : (
-                state.redemptions.map((r) => {
+                filteredRedemptions.map((r) => {
                   const ctr = contributorMap.get(r.contributorId);
                   return (
                     <div
@@ -523,9 +606,9 @@ export function GreenRewardPage({
             <div className="hidden md:block">
               <DataTable
                 columns={redemptionColumns}
-                rows={state.redemptions}
+                rows={filteredRedemptions}
                 rowKey={(r) => r.id}
-                emptyMessage="Belum ada permintaan penukaran Green Points."
+                emptyMessage="Tidak ada permintaan penukaran Green Points yang cocok."
               />
             </div>
           </section>
@@ -559,8 +642,8 @@ export function GreenRewardPage({
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                 <span>Aturan Perolehan Green Points</span>
               </div>
-              <ul className="space-y-2 text-xs text-[#252B28]">
-                <li className="rounded border border-[#EEF2EF] bg-[#F7F9F7] px-3 py-2">
+              <ul className="divide-y divide-[#EEF2EF] border-t border-[#EEF2EF] text-xs text-[#252B28]">
+                <li className="py-2.5">
                   Setiap <strong>1 ecobrick terverifikasi fisik</strong>{' '}
                   menghasilkan{' '}
                   <strong className="font-mono text-[#245C45]">
@@ -568,11 +651,11 @@ export function GreenRewardPage({
                   </strong>{' '}
                   secara otomatis.
                 </li>
-                <li className="rounded border border-[#EEF2EF] bg-[#F7F9F7] px-3 py-2">
+                <li className="py-2.5">
                   Poin tidak dapat diuangkan secara bebas (internal non-kripto),
                   hanya ditukar melalui Green Marketplace atau program sosial.
                 </li>
-                <li className="rounded border border-[#EEF2EF] bg-[#F7F9F7] px-3 py-2">
+                <li className="py-2.5">
                   Unit berstatus <strong>Ditolak</strong> tidak menghasilkan
                   poin dan tidak masuk ke inventori terverifikasi.
                 </li>
@@ -584,16 +667,16 @@ export function GreenRewardPage({
                 <Award className="h-4 w-4" aria-hidden="true" />
                 <span>Standar Kelayakan Berat per Ukuran Botol</span>
               </div>
-              <div className="space-y-2">
+              <div className="divide-y divide-[#EEF2EF] border-t border-[#EEF2EF]">
                 {BOTTLE_STANDARD_RULES.map((std) => (
                   <div
                     key={std.label}
-                    className="flex items-center justify-between rounded border border-[#EEF2EF] bg-[#F7F9F7] px-3 py-2 text-xs"
+                    className="flex items-center justify-between py-2.5 text-xs"
                   >
                     <span className="font-medium text-[#252B28]">
                       {std.label}
                     </span>
-                    <span className="font-mono text-[#245C45]">
+                    <span className="font-mono text-[#245C45] tabular-nums">
                       Min {std.minUnitKg} kg · Target {std.targetUnitKg} kg
                     </span>
                   </div>
@@ -618,16 +701,16 @@ export function GreenRewardPage({
                       <p className="text-[11px] font-medium text-[#4F8A68]">
                         {item.category}
                       </p>
-                      <h3 className="text-sm font-semibold text-[#252B28]">
+                      <h3 className="font-display text-sm font-semibold text-[#252B28]">
                         {item.title}
                       </h3>
                     </div>
-                    <span className="rounded border border-[#C6DBC9] bg-[#E7F0E8] px-2 py-0.5 font-mono text-xs font-semibold text-[#245C45] whitespace-nowrap">
+                    <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums whitespace-nowrap">
                       {item.pointsCost} GP
                     </span>
                   </div>
                   <p className="text-xs text-[#6B756F]">{item.description}</p>
-                  <p className="text-[11px] text-[#6B756F] border-t border-[#EEF2EF] pt-2">
+                  <p className="border-t border-[#EEF2EF] pt-2 text-[11px] text-[#6B756F]">
                     {item.stockNote}
                   </p>
                 </div>
@@ -638,57 +721,70 @@ export function GreenRewardPage({
       )}
 
       {currentTab === 'history' && (
-        <div className="space-y-6">
-          <section className="space-y-3">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <SectionHeader
               title="Mutasi Green Points Ekosistem"
               description="Seluruh catatan perolehan (+GP) dan penukaran (-GP) di ekosistem TRACECO."
             />
-
-            {/* Mobile Cards (< md) */}
-            <div className="space-y-2.5 md:hidden">
-              {state.green_points.map((g) => {
-                const ctr = contributorMap.get(g.contributorId);
-                return (
-                  <div
-                    key={g.id}
-                    className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-1.5"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="text-xs font-medium text-[#252B28]">
-                          {g.sourceLabel}
-                        </p>
-                        <p className="text-[11px] text-[#6B756F]">
-                          {ctr?.name ?? '-'} · {g.date}
-                        </p>
-                      </div>
-                      <span
-                        className={`font-mono text-xs font-semibold whitespace-nowrap ${
-                          g.type === 'Earned'
-                            ? 'text-[#245C45]'
-                            : 'text-[#991B1B]'
-                        }`}
-                      >
-                        {g.type === 'Earned' ? `+${g.points}` : `-${g.points}`}{' '}
-                        GP
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Desktop Table (md+) */}
-            <div className="hidden md:block">
-              <DataTable
-                columns={pointsColumns}
-                rows={state.green_points}
-                rowKey={(g) => g.id}
-                emptyMessage="Belum ada mutasi poin tercatat."
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                aria-label="Cari mutasi Green Points"
+                value={ledgerSearch}
+                onChange={(e) => setLedgerSearch(e.target.value)}
+                placeholder="Cari kontributor, batch, atau keterangan..."
+                className="w-full rounded border border-[#CFD8D2] bg-white py-1.5 pr-3 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] transition-colors focus:border-[#245C45] focus:outline-none"
               />
             </div>
-          </section>
+          </div>
+
+          {/* Mobile Cards (< md) */}
+          <div className="space-y-2.5 md:hidden">
+            {filteredLedger.map((g) => {
+              const ctr = contributorMap.get(g.contributorId);
+              return (
+                <div
+                  key={g.id}
+                  className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-1.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-medium text-[#252B28]">
+                        {g.sourceLabel}
+                      </p>
+                      <p className="text-[11px] text-[#6B756F]">
+                        {ctr?.name ?? '-'} · {g.date}
+                      </p>
+                    </div>
+                    <span
+                      className={`font-mono text-xs font-semibold whitespace-nowrap ${
+                        g.type === 'Earned'
+                          ? 'text-[#245C45]'
+                          : 'text-[#991B1B]'
+                      }`}
+                    >
+                      {g.type === 'Earned' ? `+${g.points}` : `-${g.points}`} GP
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table (md+) */}
+          <div className="hidden md:block">
+            <DataTable
+              columns={pointsColumns}
+              rows={filteredLedger}
+              rowKey={(g) => g.id}
+              emptyMessage="Tidak ada mutasi poin yang cocok dengan pencarian."
+            />
+          </div>
         </div>
       )}
     </div>

@@ -85,8 +85,7 @@ export function TraceabilityModal({
       footer={
         <>
           <span className="text-xs text-[#6B756F]">
-            Konsep Distributed Ledger (Future Development, Non-Crypto): titik
-            audit Submission → Verification → Reward → Inventory → Distribution.
+            Audit Keterlacakan TRACECO: Submission → Verification → Reward → Inventory → Distribution.
           </span>
           <PrimaryButton size="sm" onClick={onClose}>
             Tutup
@@ -96,8 +95,8 @@ export function TraceabilityModal({
     >
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[190px_1fr]">
         <div className="flex flex-col items-center rounded border border-[#E3E8E4] bg-[#F7F9F7] p-4">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[#6B756F]">
-            Identitas QR Traceability
+          <p className="mb-2 text-xs font-medium text-[#6B756F]">
+            QR Identitas Batch
           </p>
           <svg
             viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
@@ -128,7 +127,7 @@ export function TraceabilityModal({
           </p>
           {submission.photoDataUrl && (
             <div className="mt-3 w-full border-t border-[#E3E8E4] pt-3">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-[#6B756F]">
+              <p className="mb-1 text-[11px] font-medium text-[#6B756F]">
                 Foto Ecobrick
               </p>
               <img
@@ -141,8 +140,8 @@ export function TraceabilityModal({
         </div>
 
         <div>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#6B756F]">
-            Alur Keterlacakan TRACECO (6 Tahap)
+          <h3 className="mb-3 font-display text-sm font-semibold text-[#252B28]">
+            Alur Keterlacakan 6 Tahap
           </h3>
           <Timeline stages={stages} />
         </div>

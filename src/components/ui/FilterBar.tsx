@@ -32,7 +32,7 @@ export function FilterBar<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(opt.value)}
-            className={`inline-flex items-center gap-1.5 rounded-xs px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap ${
+            className={`inline-flex items-center gap-1.5 rounded-xs px-2.5 py-1 text-xs font-medium transition-[background-color,color,border-color] duration-150 whitespace-nowrap ${
               active
                 ? 'bg-white text-[#245C45] shadow-2xs border border-[#DCE4DE]'
                 : 'text-[#6B756F] hover:text-[#252B28] border border-transparent'
@@ -40,7 +40,11 @@ export function FilterBar<T extends string>({
           >
             <span>{opt.label}</span>
             {opt.count !== undefined && (
-              <span className="font-mono text-[11px] text-[#6B756F] tabular-nums">
+              <span
+                className={`font-mono text-[11px] tabular-nums ${
+                  active ? 'text-[#245C45]' : 'text-[#6B756F]'
+                }`}
+              >
                 {opt.count}
               </span>
             )}

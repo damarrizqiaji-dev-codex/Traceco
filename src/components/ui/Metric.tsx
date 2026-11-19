@@ -3,6 +3,7 @@ export interface MetricItem {
   value: string | number;
   hint?: string;
   accent?: 'default' | 'primary' | 'muted';
+  onClick?: () => void;
 }
 
 export function Metric({
@@ -10,6 +11,7 @@ export function Metric({
   value,
   hint,
   accent = 'default',
+  onClick,
   className = '',
 }: MetricItem & { className?: string }) {
   const valueColor =
@@ -19,17 +21,33 @@ export function Metric({
         ? 'text-[#6B756F]'
         : 'text-[#252B28]';
 
-  return (
-    <div className={`bg-white px-4 py-3.5 sm:px-5 sm:py-4 ${className}`}>
-      <p className="text-[11px] font-medium uppercase tracking-wider text-[#6B756F]">
-        {label}
-      </p>
+  const content = (
+    <>
+      <p className="text-xs font-medium text-[#6B756F]">{label}</p>
       <p
-        className={`mt-1 text-xl font-semibold tracking-tight tabular-nums ${valueColor}`}
+        className={`mt-1 font-display text-[22px] leading-tight font-semibold tracking-tight tabular-nums ${valueColor}`}
       >
         {value}
       </p>
-      {hint && <p className="mt-0.5 text-[11px] text-[#6B756F]">{hint}</p>}
+      {hint && <p className="mt-1 text-[11px] text-[#6B756F]">{hint}</p>}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`bg-white px-4 py-3.5 text-left hover:bg-[#FAFBF9] transition-colors duration-150 sm:px-5 sm:py-4 ${className}`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={`bg-white px-4 py-3.5 sm:px-5 sm:py-4 ${className}`}>
+      {content}
     </div>
   );
 }
