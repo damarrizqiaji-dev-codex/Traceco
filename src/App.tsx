@@ -1,5 +1,10 @@
-import { useEffect, useState } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  getRedirectResult,
+  onAuthStateChanged,
+  signOut,
+  type User,
+} from 'firebase/auth';
 import type {
   AppPageId,
   CollaborationPartner,
@@ -229,12 +234,18 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  // Firebase Auth Observer + Profile Hydration
-  useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-      setAuthLoading(true);
+  const hydratingUidRef = useRef<string | null>(null);
+
+  const hydrateUserSession = useCallback(
+    async (user: User | null, options?: { showSpinner?: boolean }) => {
+      const showSpinner = options?.showSpinner ?? false;
+      if (showSpinner) {
+        setAuthLoading(true);
+      }
       setAuthError(null);
+
       if (!user) {
+        hydratingUidRef.current = null;
         setFirebaseUser(null);
         setCurrentUserProfile(null);
         setNeedsOnboarding(false);
@@ -244,10 +255,14 @@ export default function App() {
         return;
       }
 
+      const hydrationKey = `${user.uid}:${Date.now()}`;
+      hydratingUidRef.current = hydrationKey;
       setFirebaseUser(user);
       const email = user.email ?? '';
+
       try {
         const profileResult = await fetchUserProfile(user.uid, email);
+        if (hydratingUidRef.current !== hydrationKey) return;
 
         if (!profileResult) {
           setNeedsOnboarding(true);
@@ -269,12 +284,15 @@ export default function App() {
               )
             : profileResult;
 
+        if (hydratingUidRef.current !== hydrationKey) return;
+
         setNeedsOnboarding(false);
         setCurrentUserProfile({
           account: resolvedProfile.account,
           isAdminMarkerPresent: resolvedProfile.isAdminMarkerPresent,
         });
       } catch (err) {
+        if (hydratingUidRef.current !== hydrationKey) return;
         const msg =
           err instanceof Error
             ? err.message
@@ -284,10 +302,40 @@ export default function App() {
       } finally {
         setAuthLoading(false);
       }
+    },
+    []
+  );
+
+  // Firebase Auth Observer + Mobile Redirect Result Handler
+  useEffect(() => {
+    let active = true;
+
+    getRedirectResult(auth)
+      .then((result) => {
+        if (active && result?.user) {
+          void hydrateUserSession(result.user, { showSpinner: true });
+        }
+      })
+      .catch((err) => {
+        if (!active) return;
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Gagal menyelesaikan autentikasi Google setelah pengalihan.';
+        setAuthError(msg);
+        setAuthLoading(false);
+      });
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (!active) return;
+      void hydrateUserSession(user, { showSpinner: true });
     });
 
-    return () => unsubscribeAuth();
-  }, []);
+    return () => {
+      active = false;
+      unsubscribeAuth();
+    };
+  }, [hydrateUserSession]);
 
   // Role-Scoped Firestore real-time synchronization listener
   useEffect(() => {
@@ -722,6 +770,26 @@ export default function App() {
     }
   };
 
+  const pendingGoogleUser = useMemo(
+    () =>
+      firebaseUser && needsOnboarding
+        ? {
+            uid: firebaseUser.uid as string,
+            email: (firebaseUser.email as string) ?? '',
+            emailVerified: Boolean(firebaseUser.emailVerified),
+            name: (firebaseUser.displayName as string) ?? '',
+            isAdminAuthorized: Boolean(firebaseUser.emailVerified),
+          }
+        : null,
+    [
+      firebaseUser?.uid,
+      firebaseUser?.email,
+      firebaseUser?.emailVerified,
+      firebaseUser?.displayName,
+      needsOnboarding,
+    ]
+  );
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center p-6">
@@ -739,14 +807,17 @@ export default function App() {
     return (
       <AuthPages
         onCompleteOnboarding={handleCompleteOnboarding}
-        pendingGoogleUser={
-          firebaseUser && needsOnboarding
+        onAuthenticatedUser={(user) =>
+          hydrateUserSession(user, { showSpinner: false })
+        }
+        pendingGoogleUser={pendingGoogleUser}
+        signedInFallback={
+          firebaseUser && !needsOnboarding && !currentUserProfile
             ? {
-                uid: firebaseUser.uid,
                 email: firebaseUser.email ?? '',
-                emailVerified: Boolean(firebaseUser.emailVerified),
-                name: firebaseUser.displayName ?? '',
-                isAdminAuthorized: Boolean(firebaseUser.emailVerified),
+                onRetry: () =>
+                  void hydrateUserSession(firebaseUser, { showSpinner: true }),
+                onLogout: () => void handleLogout(),
               }
             : null
         }
