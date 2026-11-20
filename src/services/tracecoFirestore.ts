@@ -181,8 +181,8 @@ export async function completeOnboardingProfile(params: {
   segment?: ContributorSegment;
   unitOrAddress: string;
 }): Promise<LoadedUserProfile> {
-  const cleanName = params.name.trim();
-  const cleanUnit = params.unitOrAddress.trim();
+  const cleanName = params.name.trim().slice(0, 100);
+  const cleanUnit = params.unitOrAddress.trim().slice(0, 180);
   if (cleanName.length < 2) {
     throw new Error('Nama lengkap minimal 2 karakter.');
   }
@@ -219,6 +219,7 @@ export async function completeOnboardingProfile(params: {
   const batch = writeBatch(db);
 
   if (
+    !hasMarker &&
     params.role === 'Admin' &&
     params.email.toLowerCase() === BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase()
   ) {

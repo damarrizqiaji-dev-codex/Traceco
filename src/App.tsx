@@ -725,7 +725,7 @@ export default function App() {
       <AuthPages
         onCompleteOnboarding={handleCompleteOnboarding}
         pendingGoogleUser={
-          firebaseUser
+          firebaseUser && needsOnboarding
             ? {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email ?? '',

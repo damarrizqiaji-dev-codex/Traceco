@@ -1,13 +1,20 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
+  Check,
   CheckCircle2,
+  Copy,
+  ExternalLink,
   Lock,
-  LogIn,
   ShieldAlert,
 } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
 import type { ContributorSegment, UserRole } from '../types/traceco';
-import { auth, googleProvider, BOOTSTRAPPED_ADMIN_EMAIL } from '../firebase';
+import {
+  auth,
+  googleProvider,
+  BOOTSTRAPPED_ADMIN_EMAIL,
+  FIREBASE_PROJECT_ID,
+} from '../firebase';
 import { PrimaryButton } from '../components/ui/Button';
 import { FormField, fieldInputClass } from '../components/ui/FormField';
 import { TracecoLogo } from '../components/ui/TracecoLogo';
@@ -97,6 +104,8 @@ export function AuthPages({
 }: AuthPagesProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [unauthorizedHost, setUnauthorizedHost] = useState<string | null>(null);
+  const [copiedHost, setCopiedHost] = useState(false);
   const displayedError = error ?? authError ?? null;
 
   // Onboarding form state (when pendingGoogleUser is present)
@@ -112,6 +121,16 @@ export function AuthPages({
   const [regSegment, setRegSegment] = useState<ContributorSegment>('Santri');
   const [regUnit, setRegUnit] = useState('');
 
+  useEffect(() => {
+    setLoading(false);
+    setError(null);
+    setUnauthorizedHost(null);
+    if (pendingGoogleUser) {
+      setRegName((prev) => prev || pendingGoogleUser.name || '');
+      setRegRole(isAdminPreAuthorized ? 'Admin' : 'Kontributor');
+    }
+  }, [pendingGoogleUser?.uid, pendingGoogleUser?.name, isAdminPreAuthorized, pendingGoogleUser]);
+
   const availableRoles = isAdminPreAuthorized
     ? [...ROLE_OPTIONS, ADMIN_ROLE_OPTION]
     : ROLE_OPTIONS;
@@ -119,16 +138,58 @@ export function AuthPages({
   const selectedRoleOption =
     availableRoles.find((opt) => opt.role === regRole) ?? availableRoles[0];
 
+  const handleCopyHost = async () => {
+    if (!unauthorizedHost || typeof navigator === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(unauthorizedHost);
+      setCopiedHost(true);
+      window.setTimeout(() => setCopiedHost(false), 2000);
+    } catch {
+      // Clipboard API unavailable; hostname remains selectable in text
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setError(null);
+    setUnauthorizedHost(null);
     setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
       // App.tsx auth state change listener will detect user and load or prompt onboarding
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Gagal masuk dengan Google.'
-      );
+      const code = (err as { code?: string })?.code ?? '';
+      const rawMsg = err instanceof Error ? err.message : String(err);
+
+      if (
+        code === 'auth/unauthorized-domain' ||
+        rawMsg.includes('auth/unauthorized-domain')
+      ) {
+        const host =
+          typeof window !== 'undefined' ? window.location.hostname : '';
+        setUnauthorizedHost(host || 'domain-vercel-anda');
+        setError(
+          `Domain "${host || 'ini'}" belum terdaftar di Authorized domains Firebase Authentication (${FIREBASE_PROJECT_ID}).`
+        );
+      } else if (
+        code === 'auth/popup-blocked' ||
+        rawMsg.includes('auth/popup-blocked')
+      ) {
+        setError(
+          'Jendela popup login Google diblokir oleh browser. Izinkan popup untuk situs ini lalu klik Masuk kembali.'
+        );
+      } else if (
+        code === 'auth/popup-closed-by-user' ||
+        code === 'auth/cancelled-popup-request'
+      ) {
+        setError('Proses masuk dibatalkan sebelum selesai.');
+      } else if (code === 'auth/network-request-failed') {
+        setError(
+          'Koneksi ke server autentikasi Google gagal. Periksa jaringan internet Anda dan coba lagi.'
+        );
+      } else {
+        setError(rawMsg || 'Gagal masuk dengan Google.');
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -148,6 +209,7 @@ export function AuthPages({
       setError(
         err instanceof Error ? err.message : 'Gagal menyimpan profil pendaftaran.'
       );
+    } finally {
       setLoading(false);
     }
   };
@@ -399,10 +461,59 @@ export function AuthPages({
                   {displayedError && (
                     <div
                       role="alert"
-                      className="max-w-md mx-auto rounded border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#991B1B] text-left flex items-start gap-2"
+                      className="max-w-md mx-auto rounded border border-[#FECACA] bg-[#FEF2F2] p-3.5 text-xs text-[#991B1B] text-left space-y-2.5"
                     >
-                      <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
-                      <span>{displayedError}</span>
+                      <div className="flex items-start gap-2 font-medium">
+                        <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                        <span>{displayedError}</span>
+                      </div>
+
+                      {unauthorizedHost && (
+                        <div className="rounded border border-[#FCA5A5]/60 bg-white/85 p-3 space-y-2 text-[11px] text-[#7F1D1D]">
+                          <p className="font-semibold text-[#991B1B]">
+                            Cara mengaktifkan login Google di domain Vercel ini:
+                          </p>
+                          <ol className="list-decimal pl-4 space-y-1 leading-relaxed">
+                            <li>
+                              Buka{' '}
+                              <a
+                                href={`https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 font-semibold text-[#245C45] underline"
+                              >
+                                <span>Firebase Console · Authorized domains</span>
+                                <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                              </a>
+                            </li>
+                            <li>
+                              Klik <strong>Add domain</strong> lalu masukkan hostname persis berikut:
+                            </li>
+                          </ol>
+                          <div className="flex items-center justify-between gap-2 rounded border border-[#E3E8E4] bg-[#F7F9F7] px-2.5 py-1.5">
+                            <code className="font-mono text-[11px] font-semibold text-[#252B28] break-all">
+                              {unauthorizedHost}
+                            </code>
+                            <button
+                              type="button"
+                              onClick={handleCopyHost}
+                              className="inline-flex shrink-0 items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2 py-1 text-[11px] font-medium text-[#252B28] hover:border-[#245C45]"
+                            >
+                              {copiedHost ? (
+                                <>
+                                  <Check className="h-3 w-3 text-[#245C45]" aria-hidden="true" />
+                                  <span>Tersalin</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-3 w-3" aria-hidden="true" />
+                                  <span>Salin</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
