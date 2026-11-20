@@ -495,14 +495,25 @@ service cloud.firestore {
 
     match /admins/{uid} {
       allow get: if isValidId(uid) && (isOwner(uid) || isAdmin());
-      allow list: if isBootstrappedAdmin();
+      allow list: if isAdmin();
       allow create: if isValidId(uid)
-        && isBootstrappedAdmin()
+        && isVerifiedUser()
         && isOwner(uid)
         && isValidAdminMarker(incoming())
         && incoming().uid == uid
         && incoming().email == request.auth.token.email
-        && incoming().createdAt == request.time;
+        && incoming().createdAt == request.time
+        && (
+          isBootstrappedAdmin()
+          || (
+            !hasPublicProfile(uid)
+            && !exists(/databases/$(database)/documents/users_private/$(uid))
+            && existsAfter(/databases/$(database)/documents/users_public/$(uid))
+            && getAfter(/databases/$(database)/documents/users_public/$(uid)).data.role == 'Admin'
+            && existsAfter(/databases/$(database)/documents/users_private/$(uid))
+            && getAfter(/databases/$(database)/documents/users_private/$(uid)).data.role == 'Admin'
+          )
+        );
       allow update, delete: if false;
     }
 
@@ -532,16 +543,31 @@ service cloud.firestore {
         && isValidUserPublic(incoming())
         && (isOwner(uid) || isAdmin())
         && incoming().id == existing().id
-        && incoming().role == existing().role
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'segment', 'unitOrAddress', 'participationRole', 'updatedAt']);
+        && (
+          (
+            incoming().role == existing().role
+            && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'segment', 'unitOrAddress', 'participationRole', 'updatedAt'])
+          )
+          || (
+            isBootstrappedAdmin()
+            && isOwner(uid)
+            && incoming().role == 'Admin'
+            && incoming().segment == 'Admin'
+            && (
+              exists(/databases/$(database)/documents/admins/$(uid))
+              || existsAfter(/databases/$(database)/documents/admins/$(uid))
+            )
+            && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'segment', 'participationRole', 'updatedAt'])
+          )
+        );
       allow delete: if false;
     }
 
     match /users_private/{uid} {
       allow get: if isValidId(uid) && (isOwner(uid) || isAdmin());
-      allow list: if isVerifiedUser() && (resource.data.id == request.auth.uid || isBootstrappedAdmin());
+      allow list: if isVerifiedUser() && (resource.data.id == request.auth.uid || isAdmin());
       allow create: if isVerifiedUser()
         && isValidId(uid)
         && isOwner(uid)
@@ -566,12 +592,26 @@ service cloud.firestore {
         && isValidUserPrivate(incoming())
         && (isOwner(uid) || isAdmin())
         && incoming().id == existing().id
-        && incoming().role == existing().role
         && incoming().email == existing().email
         && incoming().registeredAt == existing().registeredAt
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt']);
+        && (
+          (
+            incoming().role == existing().role
+            && incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt'])
+          )
+          || (
+            isBootstrappedAdmin()
+            && isOwner(uid)
+            && incoming().role == 'Admin'
+            && (
+              exists(/databases/$(database)/documents/admins/$(uid))
+              || existsAfter(/databases/$(database)/documents/admins/$(uid))
+            )
+            && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'updatedAt'])
+          )
+        );
       allow delete: if false;
     }
 
@@ -594,7 +634,7 @@ service cloud.firestore {
 
     match /rewards/{rewardId} {
       allow get: if isSignedIn() && isValidShortId(rewardId);
-      allow list: if isSignedIn() && (resource.data.pointsCost > 0 || isBootstrappedAdmin());
+      allow list: if isSignedIn() && (resource.data.pointsCost > 0 || isAdmin());
       allow create: if isAdmin()
         && isValidShortId(rewardId)
         && isValidRewardCatalogItem(incoming())
@@ -614,7 +654,7 @@ service cloud.firestore {
         && isValidShortId(submissionId)
         && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow list: if isSignedIn()
-        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow create: if isValidShortId(submissionId)
         && isValidEcobrickSubmission(incoming())
         && isKontributor(request.auth.uid)
@@ -645,7 +685,7 @@ service cloud.firestore {
         && isValidShortId(recordId)
         && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow list: if isSignedIn()
-        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow create: if isValidShortId(recordId)
         && isValidVerificationRecord(incoming())
         && isAdmin()
@@ -664,7 +704,7 @@ service cloud.firestore {
         && isValidShortId(batchId)
         && (resource.data.contributorId == request.auth.uid || resource.data.quantity > 0 || isAdmin());
       allow list: if isSignedIn()
-        && (resource.data.contributorId == request.auth.uid || resource.data.quantity > 0 || isBootstrappedAdmin());
+        && (resource.data.contributorId == request.auth.uid || resource.data.quantity > 0 || isAdmin());
       allow create: if isValidShortId(batchId)
         && isValidEcobrickBatch(incoming())
         && isAdmin()
@@ -687,7 +727,7 @@ service cloud.firestore {
         && isValidShortId(entryId)
         && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow list: if isSignedIn()
-        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow create: if isValidShortId(entryId)
         && isValidGreenPointEntry(incoming())
         && isVerifiedUser()
@@ -712,7 +752,7 @@ service cloud.firestore {
         && isValidShortId(redemptionId)
         && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow list: if isSignedIn()
-        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow create: if isValidShortId(redemptionId)
         && isValidRewardRedemption(incoming())
         && isKontributor(request.auth.uid)
@@ -742,7 +782,7 @@ service cloud.firestore {
         && isValidShortId(incentiveId)
         && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow list: if isSignedIn()
-        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
       allow create: if isValidShortId(incentiveId)
         && isValidFinancialIncentive(incoming())
         && isAdmin()
@@ -775,7 +815,7 @@ service cloud.firestore {
         && (
           resource.data.requesterId == request.auth.uid
           || resource.data.batchContributorId == request.auth.uid
-          || isBootstrappedAdmin()
+          || isAdmin()
         );
       allow create: if isValidShortId(requestId)
         && isValidDistributionRequest(incoming())
@@ -824,7 +864,7 @@ service cloud.firestore {
         && (
           resource.data.requesterId == request.auth.uid
           || resource.data.batchContributorId == request.auth.uid
-          || isBootstrappedAdmin()
+          || isAdmin()
         );
       allow create: if isValidShortId(recordId)
         && isValidUtilizationRecord(incoming())
@@ -886,7 +926,7 @@ service cloud.firestore {
 
       match /rsvps/{rsvpUid} {
         allow get: if isValidShortId(activityId) && isValidId(rsvpUid) && (isOwner(rsvpUid) || isAdmin());
-        allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBootstrappedAdmin());
+        allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
         allow create: if isValidShortId(activityId)
           && isValidId(rsvpUid)
           && isVerifiedUser()
@@ -981,7 +1021,7 @@ service cloud.firestore {
         && isValidShortId(notifId)
         && (resource.data.recipientUid == request.auth.uid || isAdmin());
       allow list: if isSignedIn()
-        && (resource.data.recipientUid == request.auth.uid || isBootstrappedAdmin());
+        && (resource.data.recipientUid == request.auth.uid || isAdmin());
       allow create: if isValidShortId(notifId)
         && isValidAppNotification(incoming())
         && isVerifiedUser()
@@ -1018,7 +1058,7 @@ service cloud.firestore {
           resource.data.actorUid == request.auth.uid
           || ('targetContributorUid' in resource.data && resource.data.targetContributorUid == request.auth.uid)
           || resource.data.category == 'Komunitas'
-          || isBootstrappedAdmin()
+          || isAdmin()
         );
       allow create: if isValidShortId(actId)
         && isValidActivityFeedItem(incoming())

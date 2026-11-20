@@ -88,15 +88,11 @@ function sortDescByField<T>(items: T[], getKey: (item: T) => string): T[] {
 }
 
 export function canUserRegisterAsAdmin(
-  email: string | null | undefined,
+  _email: string | null | undefined,
   emailVerified: boolean | undefined,
-  hasAdminMarker: boolean
+  _hasAdminMarker: boolean
 ): boolean {
-  if (!emailVerified) return false;
-  if (email?.toLowerCase() === BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase()) {
-    return true;
-  }
-  return hasAdminMarker;
+  return Boolean(emailVerified);
 }
 
 export async function checkAdminMarkerExists(uid: string): Promise<boolean> {
@@ -191,12 +187,9 @@ export async function completeOnboardingProfile(params: {
   }
 
   const hasMarker = await checkAdminMarkerExists(params.uid);
-  if (
-    params.role === 'Admin' &&
-    !canUserRegisterAsAdmin(params.email, params.emailVerified, hasMarker)
-  ) {
+  if (params.role === 'Admin' && !params.emailVerified) {
     throw new Error(
-      'Peran Admin hanya tersedia untuk akun administrator resmi yang terdaftar.'
+      'Akun Google Anda belum terverifikasi untuk mendaftar sebagai Admin.'
     );
   }
 
@@ -218,11 +211,7 @@ export async function completeOnboardingProfile(params: {
 
   const batch = writeBatch(db);
 
-  if (
-    !hasMarker &&
-    params.role === 'Admin' &&
-    params.email.toLowerCase() === BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase()
-  ) {
+  if (!hasMarker && params.role === 'Admin') {
     batch.set(doc(db, 'admins', params.uid), {
       uid: params.uid,
       email: params.email,
@@ -282,6 +271,69 @@ export async function completeOnboardingProfile(params: {
       participationRole,
     },
     isAdminMarkerPresent: params.role === 'Admin',
+  };
+}
+
+export async function restoreBootstrappedAdminRoleInFirestore(
+  existingProfile: LoadedUserProfile,
+  verifiedEmail: string
+): Promise<LoadedUserProfile> {
+  const uid = existingProfile.account.id;
+  if (
+    verifiedEmail.toLowerCase() !== BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase()
+  ) {
+    return existingProfile;
+  }
+
+  const needsMarker = !existingProfile.isAdminMarkerPresent;
+  const needsRoleUpdate = existingProfile.account.role !== 'Admin';
+  if (!needsMarker && !needsRoleUpdate) {
+    return existingProfile;
+  }
+
+  const batch = writeBatch(db);
+  if (needsMarker) {
+    batch.set(doc(db, 'admins', uid), {
+      uid,
+      email: verifiedEmail,
+      name: existingProfile.account.name.slice(0, 100),
+      createdAt: serverTimestamp(),
+    });
+  }
+
+  const participationRole = 'Admin pengelola operasional Eco-Hub';
+  if (needsRoleUpdate) {
+    batch.update(doc(db, 'users_public', uid), {
+      role: 'Admin',
+      segment: 'Admin',
+      participationRole,
+      updatedAt: serverTimestamp(),
+    });
+    batch.update(doc(db, 'users_private', uid), {
+      role: 'Admin',
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  try {
+    await batch.commit();
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `users_public/${uid}`);
+  }
+
+  return {
+    account: {
+      ...existingProfile.account,
+      role: 'Admin',
+      segment: 'Admin',
+    },
+    contributor: {
+      ...existingProfile.contributor,
+      role: 'Admin',
+      segment: 'Admin',
+      participationRole,
+    },
+    isAdminMarkerPresent: true,
   };
 }
 
@@ -544,14 +596,9 @@ export function subscribeRoleScopedState(
     }
   );
 
-  const isBootstrappedAdmin =
-    auth.currentUser?.email?.toLowerCase() ===
-      BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase() &&
-    auth.currentUser?.emailVerified === true;
-
-  // Notifications scoped by recipientUid (or all for bootstrapped Admin)
+  // Notifications scoped by recipientUid (or all for Admin)
   watch<AppNotification>(
-    role === 'Admin' && isBootstrappedAdmin
+    role === 'Admin'
       ? collection(db, 'notifications')
       : query(
           collection(db, 'notifications'),

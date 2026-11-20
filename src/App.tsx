@@ -33,6 +33,7 @@ import {
   markNotificationReadInFirestore,
   redeemRewardInFirestore,
   replyCommunityPostInFirestore,
+  restoreBootstrappedAdminRoleInFirestore,
   submitEcobrickContributionInFirestore,
   subscribeRoleScopedState,
   toggleCommunityPostStatusInFirestore,
@@ -254,10 +255,24 @@ export default function App() {
           return;
         }
 
+        const isBootstrappedEmail =
+          Boolean(user.emailVerified) &&
+          email.toLowerCase() === BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase();
+
+        const resolvedProfile =
+          isBootstrappedEmail &&
+          (profileResult.account.role !== 'Admin' ||
+            !profileResult.isAdminMarkerPresent)
+            ? await restoreBootstrappedAdminRoleInFirestore(
+                profileResult,
+                email
+              )
+            : profileResult;
+
         setNeedsOnboarding(false);
         setCurrentUserProfile({
-          account: profileResult.account,
-          isAdminMarkerPresent: profileResult.isAdminMarkerPresent,
+          account: resolvedProfile.account,
+          isAdminMarkerPresent: resolvedProfile.isAdminMarkerPresent,
         });
       } catch (err) {
         const msg =
@@ -731,10 +746,7 @@ export default function App() {
                 email: firebaseUser.email ?? '',
                 emailVerified: Boolean(firebaseUser.emailVerified),
                 name: firebaseUser.displayName ?? '',
-                isAdminAuthorized:
-                  Boolean(currentUserProfile?.isAdminMarkerPresent) ||
-                  firebaseUser.email?.toLowerCase() ===
-                    BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase(),
+                isAdminAuthorized: Boolean(firebaseUser.emailVerified),
               }
             : null
         }

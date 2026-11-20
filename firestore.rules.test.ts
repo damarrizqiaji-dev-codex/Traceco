@@ -43,11 +43,12 @@ test('firestore.rules enforces Dirty Dozen invariants & Eight Pillars', () => {
   assert.match(rules, /match \/\{document=\*\*\} \{\s*allow read, write: if false;/);
   assert.match(rules, /function isValidId\(id\)/);
 
-  // Pillar 2 & 6: Bootstrapped verified admin + PII split + immutable role
+  // Pillar 2 & 6: Bootstrapped verified admin + PII split + immutable role + admin recovery
   assert.match(rules, /request\.auth\.token\.email_verified == true/);
   assert.match(rules, /damarrizqiaji@gmail\.com/);
   assert.match(rules, /match \/users_private\/\{uid\}/);
   assert.match(rules, /incoming\(\)\.role == existing\(\)\.role/);
+  assert.match(rules, /isBootstrappedAdmin\(\)\s*&&\s*isOwner\(uid\)\s*&&\s*incoming\(\)\.role == 'Admin'/);
 
   // Pillar 7 & 8: Atomicity checks & zero blanket list reads
   assert.match(rules, /getAfter\(/);

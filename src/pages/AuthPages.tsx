@@ -40,7 +40,7 @@ interface AuthPagesProps {
 interface RoleOption {
   role: UserRole;
   scope: string;
-  description: string;
+  summary: string;
   unitPlaceholder: string;
 }
 
@@ -48,52 +48,27 @@ const ROLE_OPTIONS: RoleOption[] = [
   {
     role: 'Kontributor',
     scope: 'Santri · Warga · Keluarga Rentan',
-    description:
-      'Menyerahkan ecobrick jadi ke pos TRACECO, melacak verifikasi, dan meraih +20 Green Points per unit terverifikasi.',
+    summary: 'Kirim ecobrick, pantau verifikasi, & tukar Green Points.',
     unitPlaceholder: 'Contoh: Asrama Putra Al-Farabi / Dusun Krajan RT 02',
   },
   {
+    role: 'Admin',
+    scope: 'Pengelola Eco-Hub Pesantren',
+    summary: 'Inspeksi 8 kriteria, kelola batch, reward, & distribusi.',
+    unitPlaceholder: 'Contoh: Sekretariat & Pos Verifikasi Eco-Hub Pesantren',
+  },
+  {
     role: 'Mitra',
-    scope: 'Pengrajin, Proyek Komunal, & Lembaga Pemanfaat',
-    description:
-      'Mengajukan permintaan ecobrick terverifikasi sesuai lokasi dan tanggal kebutuhan serta mendokumentasikan pemanfaatan nyata.',
+    scope: 'Pengrajin & Lembaga Pemanfaat',
+    summary: 'Ajukan ecobrick terverifikasi & catat pemanfaatan.',
     unitPlaceholder: 'Contoh: Sanggar Kerajinan & Furnitur Krajan',
   },
 ];
-
-const ADMIN_ROLE_OPTION: RoleOption = {
-  role: 'Admin',
-  scope: 'Pengelola & Verifikator Eco-Hub Pesantren',
-  description:
-    'Memeriksa fisik 8 kriteria, menerbitkan batch inventori, mengelola reward, distribusi, dan monitoring.',
-  unitPlaceholder: 'Contoh: Sekretariat & Pos Verifikasi Eco-Hub Pesantren',
-};
 
 const KONTRIBUTOR_SEGMENTS: { value: ContributorSegment; label: string }[] = [
   { value: 'Santri', label: 'Santri Pesantren' },
   { value: 'Warga', label: 'Warga Sekitar' },
   { value: 'Keluarga Rentan', label: 'Keluarga Rentan' },
-];
-
-const ECOSYSTEM_PILLARS = [
-  {
-    index: '01',
-    title: 'Kontributor (Santri · Warga · Keluarga Rentan)',
-    detail:
-      'Membuat ecobrick jadi sesuai standar, menyerahkan ke pos TRACECO, melacak verifikasi, dan meraih +20 Green Points per unit terverifikasi.',
-  },
-  {
-    index: '02',
-    title: 'Admin Eco-Hub Pesantren',
-    detail:
-      'Memeriksa fisik 8 kriteria, menerbitkan batch inventori terverifikasi, mengelola reward, dan menyalurkan distribusi secara akuntabel.',
-  },
-  {
-    index: '03',
-    title: 'Mitra Pemanfaat',
-    detail:
-      'Mengajukan ecobrick terverifikasi sesuai lokasi dan tanggal kebutuhan, lalu mendokumentasikan pemanfaatan nyata.',
-  },
 ];
 
 export function AuthPages({
@@ -108,16 +83,14 @@ export function AuthPages({
   const [copiedHost, setCopiedHost] = useState(false);
   const displayedError = error ?? authError ?? null;
 
-  // Onboarding form state (when pendingGoogleUser is present)
-  const isAdminPreAuthorized =
-    Boolean(pendingGoogleUser?.isAdminAuthorized) ||
+  const defaultRoleForUser: UserRole =
     pendingGoogleUser?.email?.toLowerCase() ===
-      BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase();
+    BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase()
+      ? 'Admin'
+      : 'Kontributor';
 
   const [regName, setRegName] = useState(pendingGoogleUser?.name ?? '');
-  const [regRole, setRegRole] = useState<UserRole>(
-    isAdminPreAuthorized ? 'Admin' : 'Kontributor'
-  );
+  const [regRole, setRegRole] = useState<UserRole>(defaultRoleForUser);
   const [regSegment, setRegSegment] = useState<ContributorSegment>('Santri');
   const [regUnit, setRegUnit] = useState('');
 
@@ -127,16 +100,17 @@ export function AuthPages({
     setUnauthorizedHost(null);
     if (pendingGoogleUser) {
       setRegName((prev) => prev || pendingGoogleUser.name || '');
-      setRegRole(isAdminPreAuthorized ? 'Admin' : 'Kontributor');
+      setRegRole(defaultRoleForUser);
     }
-  }, [pendingGoogleUser?.uid, pendingGoogleUser?.name, isAdminPreAuthorized, pendingGoogleUser]);
-
-  const availableRoles = isAdminPreAuthorized
-    ? [...ROLE_OPTIONS, ADMIN_ROLE_OPTION]
-    : ROLE_OPTIONS;
+  }, [
+    pendingGoogleUser?.uid,
+    pendingGoogleUser?.name,
+    defaultRoleForUser,
+    pendingGoogleUser,
+  ]);
 
   const selectedRoleOption =
-    availableRoles.find((opt) => opt.role === regRole) ?? availableRoles[0];
+    ROLE_OPTIONS.find((opt) => opt.role === regRole) ?? ROLE_OPTIONS[0];
 
   const handleCopyHost = async () => {
     if (!unauthorizedHost || typeof navigator === 'undefined') return;
@@ -145,7 +119,7 @@ export function AuthPages({
       setCopiedHost(true);
       window.setTimeout(() => setCopiedHost(false), 2000);
     } catch {
-      // Clipboard API unavailable; hostname remains selectable in text
+      // Clipboard API unavailable; hostname remains selectable
     }
   };
 
@@ -155,7 +129,6 @@ export function AuthPages({
     setLoading(true);
     try {
       await signInWithPopup(auth, googleProvider);
-      // App.tsx auth state change listener will detect user and load or prompt onboarding
     } catch (err) {
       const code = (err as { code?: string })?.code ?? '';
       const rawMsg = err instanceof Error ? err.message : String(err);
@@ -175,7 +148,7 @@ export function AuthPages({
         rawMsg.includes('auth/popup-blocked')
       ) {
         setError(
-          'Jendela popup login Google diblokir oleh browser. Izinkan popup untuk situs ini lalu klik Masuk kembali.'
+          'Jendela popup login Google diblokir browser. Izinkan popup lalu coba lagi.'
         );
       } else if (
         code === 'auth/popup-closed-by-user' ||
@@ -183,9 +156,7 @@ export function AuthPages({
       ) {
         setError('Proses masuk dibatalkan sebelum selesai.');
       } else if (code === 'auth/network-request-failed') {
-        setError(
-          'Koneksi ke server autentikasi Google gagal. Periksa jaringan internet Anda dan coba lagi.'
-        );
+        setError('Koneksi ke server autentikasi gagal. Periksa jaringan Anda.');
       } else {
         setError(rawMsg || 'Gagal masuk dengan Google.');
       }
@@ -215,9 +186,9 @@ export function AuthPages({
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F9F7] text-[#252B28]">
-      <header className="border-b border-[#E3E8E4] bg-white px-4 py-3 sm:px-8">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4">
+    <div className="min-h-screen flex flex-col bg-[#F7F9F7] text-[#252B28]">
+      <header className="border-b border-[#E3E8E4] bg-white px-4 py-3.5 sm:px-8">
+        <div className="mx-auto flex max-w-[1040px] items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <TracecoLogo size="sm" />
             <span className="font-display text-[16px] font-bold tracking-tight text-[#252B28] whitespace-nowrap">
@@ -225,333 +196,326 @@ export function AuthPages({
             </span>
           </div>
           <span className="text-xs font-medium text-[#6B756F]">
-            Traceable Eco-Contribution Platform
+            Pesantren Al-Amanah · Eco-Hub
           </span>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-8 sm:py-12">
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-start">
-          {/* Left Column: Editorial Context */}
-          <section className="space-y-6 lg:col-span-5">
-            <div className="space-y-3">
+      <main className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8">
+        {pendingGoogleUser ? (
+          <section className="animate-traceco-enter w-full max-w-[780px] rounded-md border border-[#E3E8E4] bg-white p-6 sm:p-8">
+            <div className="space-y-1.5 border-b border-[#E3E8E4] pb-5">
               <p className="text-xs font-semibold text-[#245C45]">
-                Pesantren Al-Amanah · Community Hub
+                Akun Google Terautentikasi ·{' '}
+                <span className="font-mono text-[#6B756F]">
+                  {pendingGoogleUser.email}
+                </span>
               </p>
-              <h1 className="font-display text-2xl font-semibold leading-[1.18] tracking-tight text-[#252B28] sm:text-[30px] [text-wrap:balance]">
-                Platform Pencatatan & Verifikasi Kontribusi Ecobrick
+              <h1 className="font-display text-xl font-semibold text-[#252B28] sm:text-2xl">
+                Pilih Peran & Lengkapi Profil
               </h1>
-              <p className="text-sm leading-relaxed text-[#6B756F]">
-                TRACECO menghubungkan ekosistem kontributor, pos verifikasi, dan
-                mitra pemanfaat secara transparan dan akuntabel.
+              <p className="text-xs text-[#6B756F]">
+                Setiap akun terikat pada satu peran tetap untuk menjaga
+                integritas data kontribusi dan verifikasi.
               </p>
             </div>
 
-            <div className="divide-y divide-[#E3E8E4] border-y border-[#E3E8E4]">
-              {ECOSYSTEM_PILLARS.map((pillar) => (
-                <div key={pillar.index} className="py-4 space-y-1">
-                  <div className="flex items-baseline gap-2.5">
-                    <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums">
-                      {pillar.index}
-                    </span>
-                    <h2 className="font-display text-sm font-semibold text-[#252B28]">
-                      {pillar.title}
-                    </h2>
-                  </div>
-                  <p className="pl-6 text-xs leading-relaxed text-[#6B756F]">
-                    {pillar.detail}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-start gap-2.5 rounded-md border border-[#C6DBC9] bg-[#E7F0E8]/60 p-4 text-xs leading-relaxed text-[#252B28]">
-              <Lock
-                className="mt-0.5 h-4 w-4 shrink-0 text-[#245C45]"
-                aria-hidden="true"
-              />
-              <div>
-                <p className="font-semibold text-[#245C45]">
-                  Keamanan Akun & Peran Tunggal
-                </p>
-                <p className="mt-0.5 text-[#252B28]">
-                  Satu akun Google terikat pada satu peran tetap di ekosistem
-                  untuk menjaga integritas data kontribusi dan verifikasi.
-                </p>
+            {displayedError && (
+              <div
+                role="alert"
+                className="mt-5 rounded border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#991B1B]"
+              >
+                {displayedError}
               </div>
-            </div>
-          </section>
+            )}
 
-          {/* Right Column: Google Sign-In or Onboarding */}
-          <section className="lg:col-span-7">
-            <div className="rounded-md border border-[#E3E8E4] bg-white p-6 sm:p-8 shadow-sm">
-              {pendingGoogleUser ? (
-                <div className="animate-traceco-enter space-y-6">
-                  <div className="space-y-1.5 border-b border-[#E3E8E4] pb-4">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-[#E7F0E8] px-3 py-1 text-xs font-semibold text-[#245C45]">
-                      <span>Akun Google Terautentikasi</span>
-                    </div>
-                    <h2 className="font-display text-xl font-semibold text-[#252B28]">
-                      Pilih Peran & Lengkapi Profil Anda
-                    </h2>
-                    <p className="text-xs text-[#6B756F]">
-                      Email:{' <' + pendingGoogleUser.email + '>'} · Pilih peran
-                      yang sesuai dengan aktivitas Anda. Peran bersifat tetap
-                      setelah disimpan.
-                    </p>
-                  </div>
+            <form
+              onSubmit={handleOnboardingSubmit}
+              className="mt-6 space-y-5"
+            >
+              <FormField id="onboard-name" label="Nama Lengkap / Panggilan">
+                <input
+                  id="onboard-name"
+                  type="text"
+                  required
+                  value={regName}
+                  onChange={(e) => setRegName(e.target.value)}
+                  placeholder="Contoh: Muhammad Rizqi"
+                  className={fieldInputClass}
+                />
+              </FormField>
 
-                  {displayedError && (
-                    <div
-                      role="alert"
-                      className="rounded border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#991B1B]"
-                    >
-                      {displayedError}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleOnboardingSubmit} className="space-y-5">
-                    <FormField id="onboard-name" label="Nama Lengkap / Panggilan">
-                      <input
-                        id="onboard-name"
-                        type="text"
-                        required
-                        value={regName}
-                        onChange={(e) => setRegName(e.target.value)}
-                        placeholder="Contoh: Muhammad Rizqi"
-                        className={fieldInputClass}
-                      />
-                    </FormField>
-
-                    <div className="space-y-2">
-                      <span
-                        id="onboard-role-label"
-                        className="text-xs font-medium text-[#252B28]"
+              <div className="space-y-2">
+                <span
+                  id="onboard-role-label"
+                  className="text-xs font-medium text-[#252B28]"
+                >
+                  Peran Ekosistem
+                </span>
+                <div
+                  role="radiogroup"
+                  aria-labelledby="onboard-role-label"
+                  className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+                >
+                  {ROLE_OPTIONS.map((option) => {
+                    const isSelected = regRole === option.role;
+                    return (
+                      <button
+                        key={option.role}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => setRegRole(option.role)}
+                        className={`flex flex-col justify-between rounded-md border p-4 text-left transition-colors duration-150 cursor-pointer ${
+                          isSelected
+                            ? 'border-[#245C45] bg-[#E7F0E8]/70'
+                            : 'border-[#E3E8E4] bg-white hover:border-[#CFD8D2]'
+                        }`}
                       >
-                        Pilih Peran Utama Anda
-                      </span>
-                      <div
-                        role="radiogroup"
-                        aria-labelledby="onboard-role-label"
-                        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-                      >
-                        {availableRoles.map((option) => {
-                          const isSelected = regRole === option.role;
-                          return (
-                            <button
-                              key={option.role}
-                              type="button"
-                              role="radio"
-                              aria-checked={isSelected}
-                              onClick={() => setRegRole(option.role)}
-                              className={`flex flex-col justify-between rounded-lg border p-4 text-left transition-all duration-150 cursor-pointer ${
-                                isSelected
-                                  ? 'border-[#245C45] bg-[#E7F0E8]/75 shadow-xs'
-                                  : 'border-[#E3E8E4] bg-white hover:border-[#CFD8D2]'
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span
+                              className={`text-sm font-semibold ${
+                                isSelected ? 'text-[#245C45]' : 'text-[#252B28]'
                               }`}
                             >
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span
-                                    className={`text-sm font-semibold ${
-                                      isSelected
-                                        ? 'text-[#245C45]'
-                                        : 'text-[#252B28]'
-                                    }`}
-                                  >
-                                    {option.role}
-                                  </span>
-                                  {isSelected && (
-                                    <CheckCircle2
-                                      className="h-4 w-4 shrink-0 text-[#245C45]"
-                                      aria-hidden="true"
-                                    />
-                                  )}
-                                </div>
-                                <p className="text-[11px] font-medium text-[#4F8A68]">
-                                  {option.scope}
-                                </p>
-                                <p className="text-xs leading-relaxed text-[#6B756F]">
-                                  {option.description}
-                                </p>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {regRole === 'Kontributor' && (
-                        <div className="pt-2">
-                          <FormField
-                            id="onboard-segment"
-                            label="Kategori Kontributor"
-                          >
-                            <select
-                              id="onboard-segment"
-                              value={regSegment}
-                              onChange={(e) =>
-                                setRegSegment(
-                                  e.target.value as ContributorSegment
-                                )
-                              }
-                              className={fieldInputClass}
-                            >
-                              {KONTRIBUTOR_SEGMENTS.map((seg) => (
-                                <option key={seg.value} value={seg.value}>
-                                  {seg.label}
-                                </option>
-                              ))}
-                            </select>
-                          </FormField>
-                        </div>
-                      )}
-                    </div>
-
-                    <FormField
-                      id="onboard-unit"
-                      label="Unit Asrama / Lembaga / Alamat RT-RW"
-                    >
-                      <input
-                        id="onboard-unit"
-                        type="text"
-                        required
-                        value={regUnit}
-                        onChange={(e) => setRegUnit(e.target.value)}
-                        placeholder={selectedRoleOption.unitPlaceholder}
-                        className={fieldInputClass}
-                      />
-                    </FormField>
-
-                    <div className="flex items-center justify-between gap-3 border-t border-[#E3E8E4] pt-4">
-                      {onCancelOnboarding && (
-                        <button
-                          type="button"
-                          onClick={onCancelOnboarding}
-                          className="text-xs font-medium text-[#6B756F] hover:text-[#252B28]"
-                        >
-                          Batal / Masuk Akun Lain
-                        </button>
-                      )}
-                      <div className="ml-auto">
-                        <PrimaryButton type="submit" disabled={loading}>
-                          <span>
-                            {loading ? 'Menyimpan...' : 'Simpan & Mulai TRACECO'}
-                          </span>
-                        </PrimaryButton>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              ) : (
-                <div className="animate-traceco-enter py-8 text-center space-y-6">
-                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E7F0E8] border border-[#C6DBC9]">
-                    <TracecoLogo size="md" />
-                  </div>
-
-                  <div className="space-y-2 max-w-md mx-auto">
-                    <h2 className="font-display text-2xl font-semibold text-[#252B28]">
-                      Masuk ke TRACECO
-                    </h2>
-                    <p className="text-sm text-[#6B756F] leading-relaxed">
-                      Autentikasi akun Google Anda untuk mengakses platform
-                      pencatatan dan verifikasi ecobrick terpadu.
-                    </p>
-                  </div>
-
-                  {displayedError && (
-                    <div
-                      role="alert"
-                      className="max-w-md mx-auto rounded border border-[#FECACA] bg-[#FEF2F2] p-3.5 text-xs text-[#991B1B] text-left space-y-2.5"
-                    >
-                      <div className="flex items-start gap-2 font-medium">
-                        <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
-                        <span>{displayedError}</span>
-                      </div>
-
-                      {unauthorizedHost && (
-                        <div className="rounded border border-[#FCA5A5]/60 bg-white/85 p-3 space-y-2 text-[11px] text-[#7F1D1D]">
-                          <p className="font-semibold text-[#991B1B]">
-                            Cara mengaktifkan login Google di domain Vercel ini:
-                          </p>
-                          <ol className="list-decimal pl-4 space-y-1 leading-relaxed">
-                            <li>
-                              Buka{' '}
-                              <a
-                                href={`https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 font-semibold text-[#245C45] underline"
-                              >
-                                <span>Firebase Console · Authorized domains</span>
-                                <ExternalLink className="h-3 w-3" aria-hidden="true" />
-                              </a>
-                            </li>
-                            <li>
-                              Klik <strong>Add domain</strong> lalu masukkan hostname persis berikut:
-                            </li>
-                          </ol>
-                          <div className="flex items-center justify-between gap-2 rounded border border-[#E3E8E4] bg-[#F7F9F7] px-2.5 py-1.5">
-                            <code className="font-mono text-[11px] font-semibold text-[#252B28] break-all">
-                              {unauthorizedHost}
-                            </code>
-                            <button
-                              type="button"
-                              onClick={handleCopyHost}
-                              className="inline-flex shrink-0 items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2 py-1 text-[11px] font-medium text-[#252B28] hover:border-[#245C45]"
-                            >
-                              {copiedHost ? (
-                                <>
-                                  <Check className="h-3 w-3 text-[#245C45]" aria-hidden="true" />
-                                  <span>Tersalin</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="h-3 w-3" aria-hidden="true" />
-                                  <span>Salin</span>
-                                </>
-                              )}
-                            </button>
+                              {option.role}
+                            </span>
+                            {isSelected && (
+                              <CheckCircle2
+                                className="h-4 w-4 shrink-0 text-[#245C45]"
+                                aria-hidden="true"
+                              />
+                            )}
                           </div>
+                          <p className="text-[11px] font-medium text-[#4F8A68]">
+                            {option.scope}
+                          </p>
+                          <p className="text-xs leading-relaxed text-[#6B756F]">
+                            {option.summary}
+                          </p>
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={handleGoogleSignIn}
-                      className="inline-flex items-center justify-center gap-3 rounded-lg border border-[#CFD8D2] bg-white px-6 py-3.5 text-sm font-semibold text-[#252B28] shadow-xs hover:bg-[#F7F9F7] hover:border-[#245C45] transition-all duration-150 cursor-pointer w-full max-w-md"
-                    >
-                      <svg className="h-5 w-5" viewBox="0 0 24 24">
-                        <path
-                          fill="#4285F4"
-                          d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.19v3.15C3.17 21.36 7.23 24 12 24z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.19C.43 8.13 0 9.87 0 11.7s.43 3.57 1.19 5.12l4.09-2.55z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.64 1.19 6.58l4.09 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                        />
-                      </svg>
-                      <span>
-                        {loading ? 'Menghubungkan...' : 'Masuk dengan Akun Google'}
-                      </span>
-                    </button>
-                  </div>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
+
+                {regRole === 'Kontributor' && (
+                  <div className="pt-2">
+                    <FormField
+                      id="onboard-segment"
+                      label="Kategori Kontributor"
+                    >
+                      <select
+                        id="onboard-segment"
+                        value={regSegment}
+                        onChange={(e) =>
+                          setRegSegment(e.target.value as ContributorSegment)
+                        }
+                        className={fieldInputClass}
+                      >
+                        {KONTRIBUTOR_SEGMENTS.map((seg) => (
+                          <option key={seg.value} value={seg.value}>
+                            {seg.label}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+                  </div>
+                )}
+              </div>
+
+              <FormField
+                id="onboard-unit"
+                label="Unit Asrama / Lembaga / Alamat RT-RW"
+              >
+                <input
+                  id="onboard-unit"
+                  type="text"
+                  required
+                  value={regUnit}
+                  onChange={(e) => setRegUnit(e.target.value)}
+                  placeholder={selectedRoleOption.unitPlaceholder}
+                  className={fieldInputClass}
+                />
+              </FormField>
+
+              <div className="flex items-center justify-between gap-3 border-t border-[#E3E8E4] pt-4">
+                {onCancelOnboarding && (
+                  <button
+                    type="button"
+                    onClick={onCancelOnboarding}
+                    className="text-xs font-medium text-[#6B756F] hover:text-[#252B28]"
+                  >
+                    Batal / Ganti Akun
+                  </button>
+                )}
+                <div className="ml-auto">
+                  <PrimaryButton type="submit" disabled={loading}>
+                    <span>
+                      {loading ? 'Menyimpan...' : 'Simpan & Mulai TRACECO'}
+                    </span>
+                  </PrimaryButton>
+                </div>
+              </div>
+            </form>
           </section>
-        </div>
+        ) : (
+          <div className="mx-auto grid w-full max-w-[960px] grid-cols-1 items-center gap-10 lg:grid-cols-12 lg:gap-14">
+            {/* Left Column: Minimalist Editorial Summary */}
+            <section className="space-y-6 lg:col-span-6">
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-[#245C45]">
+                  Traceable Eco-Contribution
+                </p>
+                <h1 className="font-display text-3xl font-semibold leading-[1.15] tracking-tight text-[#252B28] sm:text-[34px] [text-wrap:balance]">
+                  Pencatatan &amp; Verifikasi Ecobrick Terpadu
+                </h1>
+                <p className="text-sm leading-relaxed text-[#6B756F]">
+                  Satu platform akuntabel untuk penyetoran, inspeksi 8 kriteria,
+                  inventori terverifikasi, dan penyaluran pemanfaatan.
+                </p>
+              </div>
+
+              <div className="divide-y divide-[#E3E8E4] border-y border-[#E3E8E4]">
+                {ROLE_OPTIONS.map((item, idx) => (
+                  <div
+                    key={item.role}
+                    className="flex items-baseline justify-between gap-4 py-3"
+                  >
+                    <div className="flex items-baseline gap-3">
+                      <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums">
+                        {String(idx + 1).padStart(2, '0')}
+                      </span>
+                      <span className="font-display text-sm font-semibold text-[#252B28]">
+                        {item.role}
+                      </span>
+                    </div>
+                    <span className="text-right text-xs text-[#6B756F]">
+                      {item.scope}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="flex items-center gap-2 text-xs text-[#6B756F]">
+                <Lock className="h-3.5 w-3.5 shrink-0 text-[#245C45]" aria-hidden="true" />
+                <span>Satu akun Google terikat pada satu peran tetap.</span>
+              </p>
+            </section>
+
+            {/* Right Column: Clean Sign-In Card */}
+            <section className="lg:col-span-6">
+              <div className="animate-traceco-enter rounded-md border border-[#E3E8E4] bg-white p-7 sm:p-10 space-y-6">
+                <div className="space-y-2 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md border border-[#E3E8E4] bg-[#F7F9F7]">
+                    <TracecoLogo size="sm" />
+                  </div>
+                  <h2 className="font-display text-xl font-semibold text-[#252B28] sm:text-2xl">
+                    Masuk ke TRACECO
+                  </h2>
+                  <p className="text-xs text-[#6B756F]">
+                    Autentikasi dengan akun Google Anda untuk melanjutkan.
+                  </p>
+                </div>
+
+                {displayedError && (
+                  <div
+                    role="alert"
+                    className="rounded border border-[#FECACA] bg-[#FEF2F2] p-3.5 text-xs text-[#991B1B] space-y-2.5"
+                  >
+                    <div className="flex items-start gap-2 font-medium">
+                      <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>{displayedError}</span>
+                    </div>
+
+                    {unauthorizedHost && (
+                      <div className="rounded border border-[#FCA5A5]/60 bg-white/90 p-3 space-y-2 text-[11px] text-[#7F1D1D]">
+                        <p className="font-semibold text-[#991B1B]">
+                          Aktifkan domain ini di Firebase Console:
+                        </p>
+                        <ol className="list-decimal pl-4 space-y-1 leading-relaxed">
+                          <li>
+                            Buka{' '}
+                            <a
+                              href={`https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 font-semibold text-[#245C45] underline"
+                            >
+                              <span>Firebase Console · Authorized domains</span>
+                              <ExternalLink
+                                className="h-3 w-3"
+                                aria-hidden="true"
+                              />
+                            </a>
+                          </li>
+                          <li>
+                            Pilih <strong>Add domain</strong> lalu masukkan hostname berikut:
+                          </li>
+                        </ol>
+                        <div className="flex items-center justify-between gap-2 rounded border border-[#E3E8E4] bg-[#F7F9F7] px-2.5 py-1.5">
+                          <code className="font-mono text-[11px] font-semibold text-[#252B28] break-all">
+                            {unauthorizedHost}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={handleCopyHost}
+                            className="inline-flex shrink-0 items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2 py-1 text-[11px] font-medium text-[#252B28] hover:border-[#245C45]"
+                          >
+                            {copiedHost ? (
+                              <>
+                                <Check
+                                  className="h-3 w-3 text-[#245C45]"
+                                  aria-hidden="true"
+                                />
+                                <span>Tersalin</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3" aria-hidden="true" />
+                                <span>Salin</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleGoogleSignIn}
+                  className="flex w-full items-center justify-center gap-3 rounded-md border border-[#CFD8D2] bg-white px-5 py-3 text-sm font-semibold text-[#252B28] transition-colors duration-150 hover:border-[#245C45] hover:bg-[#F7F9F7] cursor-pointer disabled:opacity-60"
+                >
+                  <svg className="h-4.5 w-4.5 shrink-0" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.19v3.15C3.17 21.36 7.23 24 12 24z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.19C.43 8.13 0 9.87 0 11.7s.43 3.57 1.19 5.12l4.09-2.55z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.64 1.19 6.58l4.09 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                    />
+                  </svg>
+                  <span>
+                    {loading ? 'Menghubungkan...' : 'Masuk dengan Akun Google'}
+                  </span>
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
       </main>
     </div>
   );
