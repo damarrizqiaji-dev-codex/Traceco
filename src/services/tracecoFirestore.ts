@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
@@ -57,6 +58,7 @@ import {
   defaultSegmentForRole,
   getAvailableBatchQuantity,
   POINTS_PER_ECOBRICK,
+  validateRewardCatalogPayload,
 } from '../utils/tracecoLogic';
 
 export interface LoadedUserProfile {
@@ -942,15 +944,12 @@ export async function createRewardCatalogItemInFirestore(payload: {
   description: string;
   stockNote: string;
 }): Promise<string> {
-  const title = payload.title.trim().slice(0, 120);
-  const description = payload.description.trim().slice(0, 400);
-  const stockNote = payload.stockNote.trim().slice(0, 140);
-  if (title.length < 2 || description.length < 2 || stockNote.length < 2) {
-    throw new Error('Judul, deskripsi, dan info ketersediaan reward wajib diisi.');
+  const validation = validateRewardCatalogPayload(payload);
+  if (!validation.valid) {
+    throw new Error(validation.error);
   }
-  if (!Number.isInteger(payload.pointsCost) || payload.pointsCost < 1 || payload.pointsCost > 100000) {
-    throw new Error('Biaya Green Points harus antara 1 hingga 100.000 GP.');
-  }
+  const { title, category, pointsCost, description, stockNote } =
+    validation.normalized;
 
   const rewardId = makeShortId('REW');
   const path = `rewards/${rewardId}`;
@@ -959,8 +958,8 @@ export async function createRewardCatalogItemInFirestore(payload: {
     batch.set(doc(db, 'rewards', rewardId), {
       id: rewardId,
       title,
-      category: payload.category,
-      pointsCost: payload.pointsCost,
+      category,
+      pointsCost,
       description,
       stockNote,
       createdAt: serverTimestamp(),
@@ -969,6 +968,58 @@ export async function createRewardCatalogItemInFirestore(payload: {
     return rewardId;
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, path);
+  }
+}
+
+export async function updateRewardCatalogItemInFirestore(
+  rewardId: string,
+  payload: {
+    title: string;
+    category: RewardCatalogItem['category'];
+    pointsCost: number;
+    description: string;
+    stockNote: string;
+  }
+): Promise<void> {
+  const cleanId = rewardId.trim();
+  if (!cleanId) {
+    throw new Error('ID item reward tidak valid.');
+  }
+
+  const validation = validateRewardCatalogPayload(payload);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+  const { title, category, pointsCost, description, stockNote } =
+    validation.normalized;
+
+  const path = `rewards/${cleanId}`;
+  try {
+    await updateDoc(doc(db, 'rewards', cleanId), {
+      title,
+      category,
+      pointsCost,
+      description,
+      stockNote,
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, path);
+  }
+}
+
+export async function deleteRewardCatalogItemInFirestore(
+  rewardId: string
+): Promise<void> {
+  const cleanId = rewardId.trim();
+  if (!cleanId) {
+    throw new Error('ID item reward tidak valid.');
+  }
+
+  const path = `rewards/${cleanId}`;
+  try {
+    await deleteDoc(doc(db, 'rewards', cleanId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
   }
 }
 

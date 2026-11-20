@@ -21,7 +21,7 @@ export function FilterBar<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className="inline-flex flex-wrap items-center gap-0.5 rounded border border-[#E3E8E4] bg-[#F7F9F7] p-0.5"
+      className="inline-flex flex-wrap items-center gap-1 rounded-md border border-[#D8DFDA] bg-[#F2F4F2] p-1"
     >
       {options.map((opt) => {
         const active = opt.value === value;
@@ -32,17 +32,17 @@ export function FilterBar<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(opt.value)}
-            className={`inline-flex items-center gap-1.5 rounded-xs px-2.5 py-1 text-xs font-medium transition-[background-color,color,border-color] duration-150 whitespace-nowrap ${
+            className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-[background-color,color,box-shadow] duration-150 whitespace-nowrap shrink-0 ${
               active
-                ? 'bg-white text-[#245C45] shadow-2xs border border-[#DCE4DE]'
-                : 'text-[#6B756F] hover:text-[#252B28] border border-transparent'
+                ? 'bg-[#111E19] text-white shadow-2xs'
+                : 'text-[#54625B] hover:bg-white/75 hover:text-[#17201C]'
             }`}
           >
             <span>{opt.label}</span>
             {opt.count !== undefined && (
               <span
                 className={`font-mono text-[11px] tabular-nums ${
-                  active ? 'text-[#245C45]' : 'text-[#6B756F]'
+                  active ? 'text-[#A7D7C2]' : 'text-[#6B7972]'
                 }`}
               >
                 {opt.count}

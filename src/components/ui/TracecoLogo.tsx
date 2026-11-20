@@ -3,12 +3,17 @@ import { Leaf } from 'lucide-react';
 
 interface TracecoLogoProps {
   size?: 'sm' | 'md' | 'lg';
+  tone?: 'light' | 'dark';
   className?: string;
 }
 
 const LOGO_SRC = '/assets/aistudio/Interlocking_Green_Eco-Tech_Emblem_811ef0e5.png';
 
-export function TracecoLogo({ size = 'md', className = '' }: TracecoLogoProps) {
+export function TracecoLogo({
+  size = 'md',
+  tone = 'light',
+  className = '',
+}: TracecoLogoProps) {
   const [imgError, setImgError] = useState(false);
 
   const boxSizes = {
@@ -20,7 +25,11 @@ export function TracecoLogo({ size = 'md', className = '' }: TracecoLogoProps) {
   if (imgError) {
     return (
       <span
-        className={`inline-flex items-center justify-center border border-[#C6DBC9] bg-[#E7F0E8] text-[#245C45] shrink-0 ${boxSizes[size]} ${className}`}
+        className={`inline-flex items-center justify-center shrink-0 ${
+          tone === 'dark'
+            ? 'border border-[#2D473B] bg-[#1A2C25] text-[#6EE7B7]'
+            : 'border border-[#C6D1CA] bg-[#EBF4EF] text-[#166549]'
+        } ${boxSizes[size]} ${className}`}
         aria-label="Logo TRACECO"
       >
         <Leaf className="h-4 w-4" aria-hidden="true" />
@@ -30,7 +39,11 @@ export function TracecoLogo({ size = 'md', className = '' }: TracecoLogoProps) {
 
   return (
     <span
-      className={`inline-flex items-center justify-center overflow-hidden border border-[#E2E8E4] bg-white shrink-0 ${boxSizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center overflow-hidden bg-white shrink-0 ${
+        tone === 'dark'
+          ? 'border border-[#2D473B]'
+          : 'border border-[#D8DFDA]'
+      } ${boxSizes[size]} ${className}`}
     >
       <img
         src={LOGO_SRC}

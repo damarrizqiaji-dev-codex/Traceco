@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, Database, Eye } from 'lucide-react';
+import { ArrowRight, Database, Eye, ShieldCheck, Send, Award } from 'lucide-react';
 import type { AppPageId, TracecoState } from '../types/traceco';
 import {
   POINTS_PER_ECOBRICK,
@@ -58,6 +58,22 @@ export function DashboardPage({
         : 0;
     const latest = stats.latestSubmission;
 
+    const sortedRewards = [...state.rewards].sort(
+      (a, b) => a.pointsCost - b.pointsCost
+    );
+    const nextGoalReward =
+      sortedRewards.find((r) => r.pointsCost > stats.pointsBalance) ??
+      sortedRewards[sortedRewards.length - 1];
+    const affordableCount = state.rewards.filter(
+      (r) => stats.pointsBalance >= r.pointsCost
+    ).length;
+    const goalPct = nextGoalReward
+      ? Math.min(
+          100,
+          Math.round((stats.pointsBalance / Math.max(1, nextGoalReward.pointsCost)) * 100)
+        )
+      : 100;
+
     return (
       <div className="space-y-6">
         <PageHeader
@@ -80,6 +96,67 @@ export function DashboardPage({
           }
         />
 
+        {/* Hero Obsidian Command Strip */}
+        <section className="rounded-lg border border-[#243A31] bg-[#111E19] p-5 text-[#ECF2EE] sm:p-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-1.5">
+              <p className="font-mono text-xs font-medium text-[#6EE7B7]">
+                Saldo Green Points &amp; Target Reward
+              </p>
+              <div className="flex flex-wrap items-baseline gap-3">
+                <p className="font-display text-3xl font-semibold tracking-tight text-white tabular-nums">
+                  {stats.pointsBalance.toLocaleString('id-ID')} GP
+                </p>
+                <span className="font-mono text-xs text-[#9EB5AA]">
+                  +{POINTS_PER_ECOBRICK} GP / unit terverifikasi
+                </span>
+              </div>
+              {nextGoalReward ? (
+                <div className="pt-1 space-y-1.5 max-w-md">
+                  <div className="flex items-center justify-between gap-2 text-xs text-[#C8D8D0]">
+                    <span>
+                      {stats.pointsBalance >= nextGoalReward.pointsCost
+                        ? `${affordableCount} reward siap ditukar sekarang`
+                        : `Menuju "${nextGoalReward.title}" (${nextGoalReward.pointsCost} GP)`}
+                    </span>
+                    <span className="font-mono text-[11px] font-semibold text-[#6EE7B7] tabular-nums">
+                      {goalPct}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#243A31]">
+                    <div
+                      className="h-full rounded-full bg-[#34D399] transition-[width] duration-300"
+                      style={{ width: `${goalPct}%` }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-[#9EB5AA]">
+                  Kumpulkan Green Points dari setiap ecobrick yang lolos inspeksi pos.
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => onNavigate('marketplace', 'catalog')}
+                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-md border border-[#2D473B] bg-[#1A2C25] px-3.5 py-2 text-xs font-semibold text-[#ECF2EE] hover:border-[#6EE7B7] hover:text-white transition-colors duration-150 whitespace-nowrap"
+              >
+                <Award className="h-3.5 w-3.5 text-[#6EE7B7]" aria-hidden="true" />
+                <span>Green Marketplace</span>
+              </button>
+              <PrimaryButton
+                size="sm"
+                onClick={() => onNavigate('contribution', 'submit')}
+              >
+                <span>Kirim Ecobrick Baru</span>
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </PrimaryButton>
+            </div>
+          </div>
+        </section>
+
         <MetricStrip
           columns={4}
           items={[
@@ -94,13 +171,14 @@ export function DashboardPage({
               value: `${stats.verifiedUnits} unit`,
               hint: `${verifiedRatioPct}% lolos inspeksi`,
               accent: 'primary',
+              progressPercent: verifiedRatioPct,
               onClick: () => onNavigate('contribution', 'history'),
             },
             {
               label: 'Saldo Green Points',
               value: `${stats.pointsBalance.toLocaleString('id-ID')} GP`,
-              hint: `+${POINTS_PER_ECOBRICK} GP / unit terverifikasi`,
-              accent: 'primary',
+              hint: `${affordableCount} item siap ditukar`,
+              accent: 'teal',
               onClick: () => onNavigate('marketplace', 'catalog'),
             },
             {
@@ -109,7 +187,7 @@ export function DashboardPage({
               hint: latest
                 ? `Terakhir: ${latest.submissionId}`
                 : 'Belum ada penyerahan',
-              accent: stats.pendingUnits > 0 ? 'muted' : 'default',
+              accent: stats.pendingUnits > 0 ? 'amber' : 'muted',
               onClick: () =>
                 latest
                   ? onOpenTraceDetail(latest.submissionId)
@@ -120,7 +198,7 @@ export function DashboardPage({
 
         {/* Active / Latest Contribution + Quick Next Steps */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-7">
+          <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-7">
             <ContributionTrendChart
               submissions={mySubmissions}
               title="Tren Kontribusi Ecobrick Saya"
@@ -129,7 +207,7 @@ export function DashboardPage({
             />
           </section>
 
-          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4 lg:col-span-5">
+          <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 space-y-4 lg:col-span-5">
             <SectionHeader
               title="Kontribusi Aktif & Pintasan"
               rightSlot={
@@ -143,18 +221,18 @@ export function DashboardPage({
             />
 
             {latest ? (
-              <div className="border-y border-[#EEF2EF] py-3.5 space-y-2">
+              <div className="border-y border-[#EAEFEA] py-3.5 space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-mono text-xs font-semibold text-[#245C45]">
+                  <span className="font-mono text-xs font-semibold text-[#166549]">
                     {latest.submissionId}
                   </span>
                   <StatusTag status={latest.status} />
                 </div>
-                <p className="text-xs text-[#252B28]">
+                <p className="text-xs text-[#17201C]">
                   {latest.quantitySubmitted} unit · {latest.dropoffPointName}
                 </p>
                 <div className="flex items-center justify-between gap-2 pt-0.5">
-                  <span className="font-mono text-[11px] text-[#6B756F]">
+                  <span className="font-mono text-[11px] text-[#54625B]">
                     {latest.date}
                   </span>
                   <SecondaryButton
@@ -167,22 +245,22 @@ export function DashboardPage({
                 </div>
               </div>
             ) : (
-              <p className="border-y border-[#EEF2EF] py-3.5 text-xs text-[#6B756F]">
+              <p className="border-y border-[#EAEFEA] py-3.5 text-xs text-[#54625B]">
                 Belum ada kontribusi tercatat. Mulai dengan mengirim ecobrick
                 pertama Anda.
               </p>
             )}
 
-            <div className="divide-y divide-[#EEF2EF]">
+            <div className="divide-y divide-[#EAEFEA]">
               <button
                 type="button"
                 onClick={() => onNavigate('marketplace', 'catalog')}
-                className="flex w-full items-center justify-between gap-2 py-2.5 text-left text-xs transition-colors duration-150 hover:text-[#245C45]"
+                className="flex w-full items-center justify-between gap-2 py-2.5 text-left text-xs transition-colors duration-150 hover:text-[#166549]"
               >
-                <span className="font-medium text-[#252B28]">
+                <span className="font-medium text-[#17201C]">
                   Tukar poin di Green Marketplace
                 </span>
-                <span className="inline-flex items-center gap-1 font-medium text-[#245C45]">
+                <span className="inline-flex items-center gap-1 font-medium text-[#166549]">
                   <span>Buka</span>
                   <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </span>
@@ -190,12 +268,12 @@ export function DashboardPage({
               <button
                 type="button"
                 onClick={() => onNavigate('transactions', 'balance')}
-                className="flex w-full items-center justify-between gap-2 py-2.5 text-left text-xs transition-colors duration-150 hover:text-[#245C45]"
+                className="flex w-full items-center justify-between gap-2 py-2.5 text-left text-xs transition-colors duration-150 hover:text-[#1D6373]"
               >
-                <span className="font-medium text-[#252B28]">
-                  Cek mutasi Transaksi & Saldo
+                <span className="font-medium text-[#17201C]">
+                  Cek mutasi Transaksi &amp; Saldo
                 </span>
-                <span className="inline-flex items-center gap-1 font-medium text-[#245C45]">
+                <span className="inline-flex items-center gap-1 font-medium text-[#1D6373]">
                   <span>Saldo</span>
                   <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </span>
@@ -217,7 +295,7 @@ export function DashboardPage({
               </SecondaryButton>
             }
           />
-          <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white p-4 sm:px-5">
+          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white p-4 sm:px-5">
             {state.recent_activities.slice(0, 3).map((act) => (
               <ActivityItem
                 key={act.id}
@@ -263,6 +341,46 @@ export function DashboardPage({
           }
         />
 
+        {/* Mitra Hero Pool Banner */}
+        <section className="rounded-lg border border-[#243A31] bg-[#111E19] p-5 text-[#ECF2EE] sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-1">
+              <p className="font-mono text-xs font-medium text-[#6EE7B7]">
+                Stok Batch Terverifikasi Siap Dimanfaatkan
+              </p>
+              <div className="flex flex-wrap items-baseline gap-3">
+                <p className="font-display text-3xl font-semibold text-white tabular-nums">
+                  {metrics.inventoryAvailableCount} unit
+                </p>
+                <span className="font-mono text-xs text-[#9EB5AA]">
+                  dalam {availableBatches.length} batch terverifikasi
+                </span>
+              </div>
+              <p className="text-xs text-[#9EB5AA]">
+                Pilih batch sesuai ukuran botol proyek lalu konfirmasi pemanfaatan aktual setelah pemasangan.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => onNavigate('distribution', 'active')}
+                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-md border border-[#2D473B] bg-[#1A2C25] px-3.5 py-2 text-xs font-semibold text-[#ECF2EE] hover:border-[#6EE7B7] hover:text-white transition-colors duration-150 whitespace-nowrap"
+              >
+                <Send className="h-3.5 w-3.5 text-[#6EE7B7]" aria-hidden="true" />
+                <span>Distribusi Aktif ({activeDistributionsCount})</span>
+              </button>
+              <PrimaryButton
+                size="sm"
+                onClick={() => onNavigate('requests', 'new')}
+              >
+                <span>Ajukan Permintaan</span>
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </PrimaryButton>
+            </div>
+          </div>
+        </section>
+
         <MetricStrip
           columns={4}
           items={[
@@ -277,20 +395,21 @@ export function DashboardPage({
               label: 'Pengajuan Aktif',
               value: `${activeRequestsCount} pengajuan`,
               hint: 'Menunggu review / disetujui',
+              accent: activeRequestsCount > 0 ? 'amber' : 'default',
               onClick: () => onNavigate('requests', 'history'),
             },
             {
               label: 'Distribusi Berjalan',
               value: `${activeDistributionsCount} pengiriman`,
               hint: 'Siap konfirmasi pemanfaatan',
-              accent: activeDistributionsCount > 0 ? 'muted' : 'default',
+              accent: activeDistributionsCount > 0 ? 'teal' : 'muted',
               onClick: () => onNavigate('distribution', 'active'),
             },
             {
               label: 'Telah Dimanfaatkan',
               value: `${metrics.ecobricksUtilizedCount} unit`,
               hint: `${state.utilization_records.length} proyek tercatat`,
-              accent: 'primary',
+              accent: 'teal',
               onClick: () => onNavigate('distribution', 'history'),
             },
           ]}
@@ -309,25 +428,25 @@ export function DashboardPage({
                 </SecondaryButton>
               }
             />
-            <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
+            <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
               {partnerRequests.length === 0 ? (
-                <p className="p-6 text-center text-xs text-[#6B756F]">
+                <p className="p-6 text-center text-xs text-[#54625B]">
                   Belum ada pengajuan permintaan ecobrick tercatat.
                 </p>
               ) : (
                 partnerRequests.slice(0, 4).map((req) => (
                   <div
                     key={req.id}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 hover:bg-[#FAFBF9] transition-colors duration-150"
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 hover:bg-[#F8FAF8] transition-colors duration-150"
                   >
                     <div className="space-y-0.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-semibold text-[#245C45]">
+                        <span className="font-mono text-xs font-semibold text-[#166549]">
                           {req.id} · {req.batchId}
                         </span>
                         <StatusTag status={req.status} />
                       </div>
-                      <p className="text-xs text-[#252B28]">
+                      <p className="text-xs text-[#17201C]">
                         {req.requestedCount} unit ·{' '}
                         {req.location ?? req.utilizationCategory}
                       </p>
@@ -345,9 +464,9 @@ export function DashboardPage({
             </div>
           </section>
 
-          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4 lg:col-span-5">
+          <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 space-y-4 lg:col-span-5">
             <DistributionUtilizationChart metrics={metrics} />
-            <div className="flex flex-wrap gap-2 border-t border-[#EEF2EF] pt-3">
+            <div className="flex flex-wrap gap-2 border-t border-[#EAEFEA] pt-3">
               <PrimaryButton
                 size="sm"
                 onClick={() => onNavigate('requests', 'new')}
@@ -368,6 +487,11 @@ export function DashboardPage({
   }
 
   // 3. ADMIN OVERVIEW
+  const totalActionableQueue =
+    metrics.pendingSubmissionsCount +
+    metrics.pendingDistributionRequestsCount +
+    metrics.pendingRedemptionsCount;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -387,22 +511,95 @@ export function DashboardPage({
         }
       />
 
+      {/* Admin Obsidian Command Strip */}
+      <section className="rounded-lg border border-[#243A31] bg-[#111E19] p-5 text-[#ECF2EE]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <p className="font-mono text-xs font-medium text-[#6EE7B7]">
+              Pusat Komando Eco-Hub Pesantren
+            </p>
+            <p className="font-display text-lg font-semibold text-white">
+              {totalActionableQueue > 0
+                ? `${totalActionableQueue} item antrean memerlukan tindak lanjut Admin`
+                : 'Semua antrean operasional saat ini telah tertangani'}
+            </p>
+            <p className="text-xs text-[#9EB5AA]">
+              Plastik terkemas terverifikasi:{' '}
+              <span className="font-mono font-semibold text-[#ECF2EE] tabular-nums">
+                {metrics.plasticDivertedContextKg.toFixed(1)} kg
+              </span>{' '}
+              · Tingkat lolos inspeksi:{' '}
+              <span className="font-mono font-semibold text-[#6EE7B7] tabular-nums">
+                {metrics.verificationRatePercent}%
+              </span>
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => onNavigate('contribution', 'verify')}
+              className="flex items-center justify-between gap-3 rounded-md border border-[#2D473B] bg-[#1A2C25] px-3.5 py-2.5 text-left transition-colors hover:border-[#6EE7B7]"
+            >
+              <div>
+                <p className="text-[11px] text-[#9EB5AA]">Verifikasi</p>
+                <p className="font-mono text-sm font-semibold text-white tabular-nums">
+                  {metrics.pendingSubmissionsCount} berkas
+                </p>
+              </div>
+              <ShieldCheck
+                className="h-4 w-4 text-[#6EE7B7]"
+                aria-hidden="true"
+              />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('distribution', 'requests')}
+              className="flex items-center justify-between gap-3 rounded-md border border-[#2D473B] bg-[#1A2C25] px-3.5 py-2.5 text-left transition-colors hover:border-[#7DD3FC]"
+            >
+              <div>
+                <p className="text-[11px] text-[#9EB5AA]">Distribusi</p>
+                <p className="font-mono text-sm font-semibold text-white tabular-nums">
+                  {metrics.pendingDistributionRequestsCount} ajuan
+                </p>
+              </div>
+              <Send className="h-4 w-4 text-[#7DD3FC]" aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('reward', 'points')}
+              className="flex items-center justify-between gap-3 rounded-md border border-[#2D473B] bg-[#1A2C25] px-3.5 py-2.5 text-left transition-colors hover:border-[#FCD34D]"
+            >
+              <div>
+                <p className="text-[11px] text-[#9EB5AA]">Penukaran GP</p>
+                <p className="font-mono text-sm font-semibold text-white tabular-nums">
+                  {metrics.pendingRedemptionsCount} antrean
+                </p>
+              </div>
+              <Award className="h-4 w-4 text-[#FCD34D]" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </section>
+
       {(state.dropoff_points.length === 0 || state.rewards.length === 0) &&
         onInitializeMasterCatalog && (
-          <section className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-[#C6DBC9] bg-[#E7F0E8]/60 px-5 py-4">
+          <section className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[#B5CEC0] bg-[#EBF4EF] px-5 py-4">
             <div className="flex items-start gap-3">
               <Database
-                className="mt-0.5 h-4 w-4 shrink-0 text-[#245C45]"
+                className="mt-0.5 h-4 w-4 shrink-0 text-[#166549]"
                 aria-hidden="true"
               />
               <div className="space-y-0.5 text-xs">
-                <p className="font-semibold text-[#245C45]">
-                  Siapkan Master Data Pos Serah & Katalog Reward di Firestore
+                <p className="font-semibold text-[#166549]">
+                  Siapkan Master Data Pos Serah &amp; Katalog Reward di Firestore
                 </p>
-                <p className="text-[#252B28]">
+                <p className="text-[#17201C]">
                   Database produksi masih kosong ({state.dropoff_points.length}{' '}
                   pos serah, {state.rewards.length} item reward). Aktifkan pos
-                  & katalog standar Pesantren agar Kontributor bisa langsung
+                  &amp; katalog standar Pesantren agar Kontributor bisa langsung
                   mengirim ecobrick dan menukar poin.
                 </p>
               </div>
@@ -442,19 +639,21 @@ export function DashboardPage({
             value: `${metrics.ecobricksVerifiedCount} unit`,
             hint: `${metrics.verificationRatePercent}% tingkat lolos`,
             accent: 'primary',
+            progressPercent: metrics.verificationRatePercent,
             onClick: () => onNavigate('contribution', 'verify_history'),
           },
           {
             label: 'Inventori Tersedia',
             value: `${metrics.inventoryAvailableCount} unit`,
             hint: `${metrics.ecobricksUtilizedCount} unit dimanfaatkan`,
-            accent: 'primary',
+            accent: 'teal',
             onClick: () => onNavigate('inventory', 'available'),
           },
           {
             label: 'Kontributor Aktif',
             value: `${metrics.activeContributorsCount} / ${metrics.totalContributorsCount}`,
             hint: `${metrics.activeSantriCount} santri · ${metrics.activeWargaCount} warga · ${metrics.vulnerableFamilyCount} keluarga rentan`,
+            accent: 'amber',
             onClick: () => onNavigate('monitor', 'users'),
           },
         ]}
@@ -462,7 +661,7 @@ export function DashboardPage({
 
       {/* Actionable Queues + Key Trend */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
-        <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-7">
+        <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-7">
           <ContributionTrendChart
             submissions={state.ecobrick_submissions}
             title="Tren Kontribusi Ekosistem"
@@ -472,15 +671,15 @@ export function DashboardPage({
         </section>
 
         <section className="space-y-4 lg:col-span-5">
-          <div className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-2">
+          <div className="rounded-lg border border-[#D8DFDA] bg-white p-5 space-y-2">
             <SectionHeader title="Perlu Tindak Lanjut" />
-            <div className="divide-y divide-[#EEF2EF]">
+            <div className="divide-y divide-[#EAEFEA]">
               <div className="flex items-center justify-between gap-3 py-3">
                 <div>
-                  <p className="text-xs font-semibold text-[#252B28]">
+                  <p className="text-xs font-semibold text-[#17201C]">
                     Antrean Verifikasi Fisik
                   </p>
-                  <p className="text-[11px] text-[#6B756F]">
+                  <p className="text-[11px] text-[#54625B]">
                     {metrics.pendingSubmissionsCount} berkas (
                     {metrics.ecobricksPendingCount} unit)
                   </p>
@@ -494,10 +693,10 @@ export function DashboardPage({
               </div>
               <div className="flex items-center justify-between gap-3 py-3">
                 <div>
-                  <p className="text-xs font-semibold text-[#252B28]">
+                  <p className="text-xs font-semibold text-[#17201C]">
                     Pengajuan Distribusi Mitra
                   </p>
-                  <p className="text-[11px] text-[#6B756F]">
+                  <p className="text-[11px] text-[#54625B]">
                     {metrics.pendingDistributionRequestsCount} pengajuan menunggu
                   </p>
                 </div>
@@ -510,10 +709,10 @@ export function DashboardPage({
               </div>
               <div className="flex items-center justify-between gap-3 pt-3">
                 <div>
-                  <p className="text-xs font-semibold text-[#252B28]">
+                  <p className="text-xs font-semibold text-[#17201C]">
                     Penukaran Reward Kontributor
                   </p>
-                  <p className="text-[11px] text-[#6B756F]">
+                  <p className="text-[11px] text-[#54625B]">
                     {metrics.pendingRedemptionsCount} penukaran menunggu
                   </p>
                 </div>
@@ -527,7 +726,7 @@ export function DashboardPage({
             </div>
           </div>
 
-          <div className="rounded-md border border-[#E3E8E4] bg-white p-5">
+          <div className="rounded-lg border border-[#D8DFDA] bg-white p-5">
             <VerificationStatusChart metrics={metrics} />
           </div>
         </section>
@@ -546,7 +745,7 @@ export function DashboardPage({
             </SecondaryButton>
           }
         />
-        <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white p-4 sm:px-5">
+        <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white p-4 sm:px-5">
           {state.recent_activities.slice(0, 4).map((act) => (
             <ActivityItem
               key={act.id}

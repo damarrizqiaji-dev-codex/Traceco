@@ -1882,3 +1882,71 @@ export function getSubmissionStatusLabel(status: SubmissionStatus): string {
   }
 }
 
+export const REWARD_CATALOG_CATEGORIES = [
+  'Merchandise Ramah Lingkungan',
+  'Voucher Kegiatan',
+  'Perlengkapan Belajar',
+  'Benefit Komunitas',
+  'Reward Program Pesantren',
+] as const;
+
+export type RewardCatalogCategory = (typeof REWARD_CATALOG_CATEGORIES)[number];
+
+export interface RewardCatalogPayload {
+  title: string;
+  category: RewardCatalogCategory;
+  pointsCost: number;
+  description: string;
+  stockNote: string;
+}
+
+export function validateRewardCatalogPayload(
+  payload: RewardCatalogPayload
+): { valid: true; normalized: RewardCatalogPayload } | { valid: false; error: string } {
+  const title = payload.title.trim().slice(0, 120);
+  const description = payload.description.trim().slice(0, 400);
+  const stockNote = payload.stockNote.trim().slice(0, 140);
+
+  if (
+    !REWARD_CATALOG_CATEGORIES.includes(
+      payload.category as RewardCatalogCategory
+    )
+  ) {
+    return {
+      valid: false,
+      error: 'Kategori reward tidak sesuai dengan daftar kategori yang diizinkan.',
+    };
+  }
+
+  if (title.length < 2 || description.length < 2 || stockNote.length < 2) {
+    return {
+      valid: false,
+      error:
+        'Judul, deskripsi, dan info ketersediaan reward wajib diisi minimal 2 karakter.',
+    };
+  }
+
+  if (
+    !Number.isInteger(payload.pointsCost) ||
+    payload.pointsCost < 1 ||
+    payload.pointsCost > 100000
+  ) {
+    return {
+      valid: false,
+      error: 'Harga Green Points harus bilangan bulat antara 1 hingga 100.000 GP.',
+    };
+  }
+
+  return {
+    valid: true,
+    normalized: {
+      title,
+      category: payload.category,
+      pointsCost: payload.pointsCost,
+      description,
+      stockNote,
+    },
+  };
+}
+
+

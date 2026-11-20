@@ -22,6 +22,7 @@ import {
 } from '../utils/tracecoLogic';
 import { PrimaryButton, SecondaryButton } from '../components/ui/Button';
 import { DataTable, type DataTableColumn } from '../components/ui/DataTable';
+import { FilterBar } from '../components/ui/FilterBar';
 import { FormField, fieldInputClass } from '../components/ui/FormField';
 import { MetricStrip } from '../components/ui/Metric';
 import { PageHeader, SectionHeader } from '../components/ui/PageHeader';
@@ -93,7 +94,8 @@ const EDUCATION_TOPICS: EducationTopic[] = [
       'Sisa makanan, minyak basah, kertas, logam, kaca, baterai, atau limbah medis/B3.',
       'Botol penyok, retak, atau terasa empuk/kempes saat ditekan dua jari.',
     ],
-    targetAction: 'Pastikan berat botol memenuhi batas minimal sebelum dibawa ke pos.',
+    targetAction:
+      'Pastikan berat botol memenuhi batas minimal sebelum dibawa ke pos.',
   },
   {
     id: 'EDU-02',
@@ -111,7 +113,8 @@ const EDUCATION_TOPICS: EducationTopic[] = [
       'Unit yang lembab atau berembun di dinding dalam botol otomatis ditolak sebagian (Partially Verified).',
       'Unit yang ditolak dikembalikan ke penyerah disertai catatan perbaikan tertulis.',
     ],
-    targetAction: 'Hanya unit yang lolos 8 kriteria yang memperoleh Batch ID & +20 Green Points.',
+    targetAction:
+      'Hanya unit yang lolos 8 kriteria yang memperoleh Batch ID & +20 Green Points.',
   },
   {
     id: 'EDU-03',
@@ -127,7 +130,8 @@ const EDUCATION_TOPICS: EducationTopic[] = [
     rejectedItems: [
       'TRACECO tidak menerima sampah plastik mentah curah yang belum menjadi ecobrick.',
     ],
-    targetAction: 'Gunakan Forum Koordinasi jika membutuhkan jadwal serah kolektif RT/asrama.',
+    targetAction:
+      'Gunakan Forum Koordinasi jika membutuhkan jadwal serah kolektif RT/asrama.',
   },
   {
     id: 'EDU-04',
@@ -143,11 +147,15 @@ const EDUCATION_TOPICS: EducationTopic[] = [
     rejectedItems: [
       'Pengambilan unit dari gudang hub tanpa persetujuan Request ID dan berita acara handover.',
     ],
-    targetAction: 'Mitra dapat mempublikasikan kebutuhan ukuran botol melalui Forum Koordinasi.',
+    targetAction:
+      'Mitra dapat mempublikasikan kebutuhan ukuran botol melalui Forum Koordinasi.',
   },
 ];
 
-const BOTTLE_MIN_GRAMS: Record<'600' | '1000' | '1500', { label: string; minGrams: number; idealGrams: number }> = {
+const BOTTLE_MIN_GRAMS: Record<
+  '600' | '1000' | '1500',
+  { label: string; minGrams: number; idealGrams: number }
+> = {
   '600': { label: 'Botol PET 600 ml', minGrams: 250, idealGrams: 270 },
   '1000': { label: 'Botol PET 1000 ml', minGrams: 400, idealGrams: 420 },
   '1500': { label: 'Botol PET 1500 ml', minGrams: 500, idealGrams: 525 },
@@ -328,6 +336,12 @@ export function CommunityHubPage({
     (checkDense ? 1 : 0) +
     (checkCapTight ? 1 : 0);
   const readinessPct = Math.round((readinessPassedCount / 4) * 100);
+  const readinessBarColor =
+    readinessPassedCount === 4
+      ? 'bg-[#166549]'
+      : readinessPassedCount === 3
+        ? 'bg-[#1D6373]'
+        : 'bg-[#D97706]';
 
   const vulnerableParticipants = state.contributors.filter(
     (c) => c.segment === 'Keluarga Rentan'
@@ -441,22 +455,30 @@ export function CommunityHubPage({
     {
       key: 'title',
       header: 'Kegiatan',
+      sortValue: (act) => act.title,
       render: (act) => (
         <div className="max-w-[210px] text-xs">
-          <p className="font-semibold text-[#252B28] leading-snug">{act.title}</p>
-          <p className="text-[11px] text-[#4F8A68]">{act.category}</p>
+          <p className="font-semibold leading-snug text-[#17201C]">
+            {act.title}
+          </p>
+          <p className="text-[11px] font-medium text-[#1D6373]">
+            {act.category}
+          </p>
         </div>
       ),
     },
     {
       key: 'schedule',
       header: 'Jadwal & Lokasi',
+      sortValue: (act) => act.date,
       render: (act) => (
-        <div className="max-w-[175px] text-xs space-y-0.5">
-          <p className="font-mono text-[11px] font-medium text-[#252B28] tabular-nums whitespace-nowrap">
+        <div className="max-w-[175px] space-y-0.5 text-xs">
+          <p className="font-mono text-[11px] font-medium text-[#17201C] tabular-nums whitespace-nowrap">
             {act.date}
           </p>
-          <p className="text-[11px] text-[#6B756F] leading-snug">{act.location}</p>
+          <p className="leading-snug text-[11px] text-[#54625B]">
+            {act.location}
+          </p>
         </div>
       ),
     },
@@ -469,13 +491,15 @@ export function CommunityHubPage({
           .map((id) => state.contributors.find((c) => c.id === id)?.name)
           .filter(Boolean);
         return (
-          <div className="max-w-[240px] text-xs space-y-0.5">
-            <p className="text-[#252B28] leading-snug">{act.participantSummary}</p>
-            <p className="text-[11px] text-[#6B756F] leading-snug">
+          <div className="max-w-[240px] space-y-0.5 text-xs">
+            <p className="leading-snug text-[#17201C]">
+              {act.participantSummary}
+            </p>
+            <p className="leading-snug text-[11px] text-[#54625B]">
               {act.inclusiveParticipationNote}
             </p>
             {registeredNames.length > 0 && (
-              <p className="text-[11px] font-medium text-[#245C45]">
+              <p className="text-[11px] font-medium text-[#166549]">
                 Terdaftar ({registeredNames.length}):{' '}
                 {registeredNames.slice(0, 2).join(', ')}
                 {registeredNames.length > 2
@@ -491,6 +515,7 @@ export function CommunityHubPage({
       key: 'count',
       header: 'Jumlah',
       align: 'right',
+      sortValue: (act) => act.participantCount,
       render: (act) => (
         <span className="font-mono text-xs font-semibold tabular-nums whitespace-nowrap">
           {act.participantCount} orang
@@ -500,6 +525,7 @@ export function CommunityHubPage({
     {
       key: 'status',
       header: 'Status',
+      sortValue: (act) => act.status,
       render: (act) => <StatusTag status={act.status} />,
     },
     {
@@ -515,10 +541,10 @@ export function CommunityHubPage({
               <button
                 type="button"
                 onClick={() => handleToggleJoin(act.id, act.title)}
-                className={`inline-flex items-center gap-1 rounded border px-2.5 py-1 text-[11px] font-medium transition-colors whitespace-nowrap ${
+                className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap ${
                   isJoined
-                    ? 'border-[#C6DBC9] bg-[#E7F0E8] text-[#245C45] hover:bg-[#D7E6D9]'
-                    : 'border-[#CFD8D2] bg-white text-[#252B28] hover:border-[#245C45] hover:text-[#245C45]'
+                    ? 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549] hover:bg-[#DDECE4]'
+                    : 'border-[#C6D1CA] bg-white text-[#17201C] hover:border-[#166549] hover:text-[#166549]'
                 }`}
               >
                 {isJoined && (
@@ -544,7 +570,7 @@ export function CommunityHubPage({
               </SecondaryButton>
             )}
             {!isHubCoordinator && act.status === 'Selesai' && (
-              <span className="text-[11px] text-[#6B756F]">Selesai</span>
+              <span className="text-[11px] text-[#54625B]">Selesai</span>
             )}
           </div>
         );
@@ -564,17 +590,17 @@ export function CommunityHubPage({
             </div>
           }
           footer={
-            <p className="text-xs text-[#6B756F]">
+            <p className="text-xs text-[#54625B]">
               Partisipasi ekosistem:{' '}
-              <span className="text-[#252B28]">
+              <span className="text-[#17201C]">
                 Kontributor (Santri · Warga ·{' '}
-                <strong className="font-medium text-[#245C45]">
+                <strong className="font-medium text-[#166549]">
                   Keluarga Rentan
                 </strong>
                 )
               </span>{' '}
-              · <span className="text-[#252B28]">Admin</span> ·{' '}
-              <span className="text-[#252B28]">Mitra</span>
+              · <span className="text-[#17201C]">Admin</span> ·{' '}
+              <span className="text-[#17201C]">Mitra</span>
             </p>
           }
         />
@@ -593,12 +619,13 @@ export function CommunityHubPage({
             label: 'Partisipasi Anda',
             value: `${myJoinedCount} kegiatan`,
             hint: `Akun aktif: ${activeActor?.name ?? state.activeRole}`,
+            accent: 'teal',
           },
           {
             label: 'Forum Koordinasi Warga',
             value: `${openPostsCount} terbuka`,
             hint: `${posts.length - openPostsCount} topik sudah terjawab`,
-            accent: openPostsCount > 0 ? 'primary' : 'default',
+            accent: openPostsCount > 0 ? 'amber' : 'default',
           },
           {
             label: 'Kolaborasi Mitra Aktif',
@@ -608,7 +635,7 @@ export function CommunityHubPage({
         ]}
       />
 
-      {/* 1. Activities & Training Schedule (Interactive RSVP + Filter + Petugas Creation) */}
+      {/* 1. Activities & Training Schedule */}
       <section className="space-y-4">
         <SectionHeader
           title="1. Kegiatan & Jadwal Komunitas"
@@ -631,10 +658,10 @@ export function CommunityHubPage({
         {activityFeedback && (
           <div
             role={activityFeedback.type === 'error' ? 'alert' : 'status'}
-            className={`rounded border px-3.5 py-2.5 text-xs font-medium ${
+            className={`rounded-md border px-3.5 py-2.5 text-xs font-medium ${
               activityFeedback.type === 'error'
-                ? 'border-[#FECACA] bg-[#FEF2F2] text-[#991B1B]'
-                : 'border-[#C6DBC9] bg-[#E7F0E8] text-[#245C45]'
+                ? 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
+                : 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
             }`}
           >
             {activityFeedback.text}
@@ -644,14 +671,14 @@ export function CommunityHubPage({
         {isHubCoordinator && showCreateActivity && (
           <form
             onSubmit={handleCreateActivitySubmit}
-            className="rounded-md border border-[#C6DBC9] bg-white p-5 space-y-4"
+            className="space-y-4 rounded-lg border border-[#B5CEC0] bg-white p-5"
           >
-            <div className="flex items-center justify-between gap-2 border-b border-[#EEF2EF] pb-3">
+            <div className="flex items-center justify-between gap-2 border-b border-[#EAEFEA] pb-3">
               <div>
-                <h3 className="text-[13px] font-semibold text-[#245C45]">
+                <h3 className="text-[13px] font-semibold text-[#166549]">
                   Jadwalkan Agenda Community Hub Baru
                 </h3>
-                <p className="text-xs text-[#6B756F]">
+                <p className="text-xs text-[#54625B]">
                   Agenda baru langsung muncul di jadwal komunitas dan ringkasan
                   dashboard.
                 </p>
@@ -760,35 +787,44 @@ export function CommunityHubPage({
         )}
 
         {/* Filter Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E3E8E4] bg-white px-4 py-3">
-          <div
-            role="tablist"
-            aria-label="Filter status kegiatan"
-            className="flex flex-wrap items-center gap-1"
-          >
-            {(['Semua', 'Terjadwal', 'Berlangsung', 'Selesai'] as const).map(
-              (status) => (
-                <button
-                  key={status}
-                  type="button"
-                  role="tab"
-                  aria-selected={activityStatusFilter === status}
-                  onClick={() => setActivityStatusFilter(status)}
-                  className={`rounded px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap ${
-                    activityStatusFilter === status
-                      ? 'bg-[#E7F0E8] text-[#245C45]'
-                      : 'text-[#6B756F] hover:bg-[#F7F9F7] hover:text-[#252B28]'
-                  }`}
-                >
-                  {status}
-                </button>
-              )
-            )}
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
+          <FilterBar
+            ariaLabel="Filter status kegiatan"
+            value={activityStatusFilter}
+            onChange={setActivityStatusFilter}
+            options={[
+              {
+                value: 'Semua',
+                label: 'Semua',
+                count: state.community_activities.length,
+              },
+              {
+                value: 'Terjadwal',
+                label: 'Terjadwal',
+                count: state.community_activities.filter(
+                  (a) => a.status === 'Terjadwal'
+                ).length,
+              },
+              {
+                value: 'Berlangsung',
+                label: 'Berlangsung',
+                count: state.community_activities.filter(
+                  (a) => a.status === 'Berlangsung'
+                ).length,
+              },
+              {
+                value: 'Selesai',
+                label: 'Selesai',
+                count: state.community_activities.filter(
+                  (a) => a.status === 'Selesai'
+                ).length,
+              },
+            ]}
+          />
 
           <div className="relative w-full sm:w-64">
             <Search
-              className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+              className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
               aria-hidden="true"
             />
             <input
@@ -797,7 +833,7 @@ export function CommunityHubPage({
               value={activitySearch}
               onChange={(e) => setActivitySearch(e.target.value)}
               placeholder="Cari kegiatan atau lokasi..."
-              className="w-full rounded border border-[#CFD8D2] bg-[#F7F9F7] py-1.5 pr-3 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] focus:border-[#245C45] focus:bg-white focus:outline-none"
+              className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] focus:border-[#166549] focus:bg-white focus:outline-none"
             />
           </div>
         </div>
@@ -831,10 +867,10 @@ export function CommunityHubPage({
         {postFeedback && (
           <div
             role={postFeedback.type === 'error' ? 'alert' : 'status'}
-            className={`rounded border px-3.5 py-2.5 text-xs font-medium ${
+            className={`rounded-md border px-3.5 py-2.5 text-xs font-medium ${
               postFeedback.type === 'error'
-                ? 'border-[#FECACA] bg-[#FEF2F2] text-[#991B1B]'
-                : 'border-[#C6DBC9] bg-[#E7F0E8] text-[#245C45]'
+                ? 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
+                : 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
             }`}
           >
             {postFeedback.text}
@@ -844,14 +880,14 @@ export function CommunityHubPage({
         {showNewPostForm && (
           <form
             onSubmit={handleCreatePostSubmit}
-            className="rounded-md border border-[#C6DBC9] bg-white p-5 space-y-4"
+            className="space-y-4 rounded-lg border border-[#B5CEC0] bg-white p-5"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#EEF2EF] pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#EAEFEA] pb-3">
               <div>
-                <h3 className="text-[13px] font-semibold text-[#245C45]">
+                <h3 className="text-[13px] font-semibold text-[#166549]">
                   Buat Topik Diskusi / Koordinasi Baru
                 </h3>
-                <p className="text-xs text-[#6B756F]">
+                <p className="text-xs text-[#54625B]">
                   Dikirim atas nama {activeActor?.name ?? state.activeRole} (
                   {state.activeRole}).
                 </p>
@@ -921,28 +957,30 @@ export function CommunityHubPage({
         )}
 
         {/* Forum Filters */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E3E8E4] bg-white px-4 py-3">
-          <div className="flex flex-wrap items-center gap-1">
-            {(['Semua', 'Terbuka', 'Terjawab'] as const).map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setPostStatusFilter(status)}
-                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors duration-150 whitespace-nowrap ${
-                  postStatusFilter === status
-                    ? 'bg-[#E7F0E8] text-[#245C45]'
-                    : 'text-[#6B756F] hover:bg-[#F7F9F7] hover:text-[#252B28]'
-                }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
+          <FilterBar
+            ariaLabel="Filter status topik forum"
+            value={postStatusFilter}
+            onChange={setPostStatusFilter}
+            options={[
+              { value: 'Semua', label: 'Semua', count: posts.length },
+              {
+                value: 'Terbuka',
+                label: 'Terbuka',
+                count: posts.filter((p) => p.status === 'Terbuka').length,
+              },
+              {
+                value: 'Terjawab',
+                label: 'Terjawab',
+                count: posts.filter((p) => p.status === 'Terjawab').length,
+              },
+            ]}
+          />
 
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-full sm:w-52">
               <Search
-                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
                 aria-hidden="true"
               />
               <input
@@ -951,14 +989,14 @@ export function CommunityHubPage({
                 value={postSearch}
                 onChange={(e) => setPostSearch(e.target.value)}
                 placeholder="Cari topik atau penulis..."
-                className="w-full rounded border border-[#CFD8D2] bg-[#F7F9F7] py-1 pr-2.5 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] transition-colors focus:border-[#245C45] focus:bg-white focus:outline-none"
+                className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1 pr-2.5 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] transition-colors focus:border-[#166549] focus:bg-white focus:outline-none"
               />
             </div>
 
             <div className="flex items-center gap-2">
               <label
                 htmlFor="forum-filter-category"
-                className="text-xs text-[#6B756F] whitespace-nowrap"
+                className="text-xs text-[#54625B] whitespace-nowrap"
               >
                 Kategori:
               </label>
@@ -970,7 +1008,7 @@ export function CommunityHubPage({
                     e.target.value as 'Semua' | CommunityPostCategory
                   )
                 }
-                className="rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-xs text-[#252B28] focus:border-[#245C45] focus:outline-none"
+                className="rounded-md border border-[#C6D1CA] bg-white px-2.5 py-1 text-xs text-[#17201C] focus:border-[#166549] focus:outline-none"
               >
                 <option value="Semua">Semua Kategori</option>
                 {POST_CATEGORIES.map((cat) => (
@@ -983,9 +1021,9 @@ export function CommunityHubPage({
           </div>
         </div>
 
-        <div className="divide-y divide-[#E3E8E4] rounded-md border border-[#E3E8E4] bg-white">
+        <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
           {filteredPosts.length === 0 ? (
-            <div className="p-8 text-center text-xs text-[#6B756F]">
+            <div className="p-8 text-center text-xs text-[#54625B]">
               Belum ada topik diskusi untuk filter ini. Klik{' '}
               <strong>Tulis Topik / Tanya</strong> untuk memulai koordinasi.
             </div>
@@ -996,15 +1034,15 @@ export function CommunityHubPage({
               const replyErr = replyErrorByPost[post.id];
 
               return (
-                <article key={post.id} className="p-5 space-y-3">
+                <article key={post.id} className="space-y-3 p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#6B756F]">
-                        <span className="font-mono font-semibold text-[#245C45]">
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#54625B]">
+                        <span className="font-mono font-semibold text-[#166549]">
                           {post.id}
                         </span>
                         <span aria-hidden="true">·</span>
-                        <span className="font-medium text-[#4F8A68]">
+                        <span className="font-medium text-[#1D6373]">
                           {post.category}
                         </span>
                         <span aria-hidden="true">·</span>
@@ -1015,7 +1053,7 @@ export function CommunityHubPage({
                           {post.timestamp}
                         </span>
                       </div>
-                      <h3 className="text-[14px] font-semibold text-[#252B28]">
+                      <h3 className="text-[14px] font-semibold text-[#17201C]">
                         {post.title}
                       </h3>
                     </div>
@@ -1026,7 +1064,7 @@ export function CommunityHubPage({
                         <button
                           type="button"
                           onClick={() => onTogglePostStatus(post.id)}
-                          className="rounded border border-[#CFD8D2] bg-white px-2 py-1 text-[11px] font-medium text-[#252B28] hover:bg-[#F7F9F7] whitespace-nowrap"
+                          className="rounded-md border border-[#C6D1CA] bg-white px-2.5 py-1 text-[11px] font-medium text-[#17201C] transition-colors hover:bg-[#F8FAF8] whitespace-nowrap"
                         >
                           {post.status === 'Terbuka'
                             ? 'Tandai Terjawab'
@@ -1036,16 +1074,16 @@ export function CommunityHubPage({
                     </div>
                   </div>
 
-                  <p className="text-xs leading-relaxed text-[#252B28]">
+                  <p className="text-xs leading-relaxed text-[#17201C]">
                     {post.body}
                   </p>
 
                   {post.replies.length > 0 && (
-                    <div className="divide-y divide-[#EEF2EF] border-t border-[#EEF2EF] pt-3 space-y-2">
+                    <div className="space-y-2 divide-y divide-[#EAEFEA] border-t border-[#EAEFEA] pt-3">
                       {post.replies.map((reply) => (
-                        <div key={reply.id} className="pt-2 first:pt-0 space-y-1">
-                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#6B756F]">
-                            <span className="font-semibold text-[#252B28]">
+                        <div key={reply.id} className="space-y-1 pt-2 first:pt-0">
+                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#54625B]">
+                            <span className="font-semibold text-[#17201C]">
                               {reply.authorName}
                             </span>
                             <RoleTag role={reply.authorRole} />
@@ -1054,7 +1092,7 @@ export function CommunityHubPage({
                               {reply.timestamp}
                             </span>
                           </div>
-                          <p className="text-xs leading-relaxed text-[#252B28]">
+                          <p className="text-xs leading-relaxed text-[#17201C]">
                             {reply.body}
                           </p>
                         </div>
@@ -1064,7 +1102,7 @@ export function CommunityHubPage({
 
                   <form
                     onSubmit={(e) => handleReplySubmit(e, post.id)}
-                    className="pt-1 space-y-1.5"
+                    className="space-y-1.5 pt-1"
                   >
                     <div className="flex flex-col gap-2 sm:flex-row">
                       <input
@@ -1082,7 +1120,7 @@ export function CommunityHubPage({
                             ? 'Tulis jawaban resmi Koordinator Hub (otomatis menandai Terjawab)...'
                             : 'Tulis tanggapan atau informasi tambahan...'
                         }
-                        className="flex-1 rounded border border-[#CFD8D2] bg-[#F7F9F7] px-3 py-1.5 text-xs text-[#252B28] placeholder:text-[#8A948E] focus:border-[#245C45] focus:bg-white focus:outline-none"
+                        className="flex-1 rounded-md border border-[#C6D1CA] bg-[#F8FAF8] px-3 py-1.5 text-xs text-[#17201C] placeholder:text-[#7D8C84] focus:border-[#166549] focus:bg-white focus:outline-none"
                       />
                       <SecondaryButton type="submit" size="sm">
                         <Send className="h-3 w-3" aria-hidden="true" />
@@ -1090,7 +1128,7 @@ export function CommunityHubPage({
                       </SecondaryButton>
                     </div>
                     {replyErr && (
-                      <p className="text-[11px] font-medium text-[#991B1B]">
+                      <p className="text-[11px] font-medium text-[#B91C1C]">
                         {replyErr}
                       </p>
                     )}
@@ -1108,17 +1146,17 @@ export function CommunityHubPage({
           title="3. Panduan Standar & Uji Kelayakan Mandiri Ecobrick"
           description="Pelajari standar pembuatan ecobrick dan lakukan simulasi pemeriksaan kelayakan sebelum menyerahkan ke Pos Eco-Hub."
           rightSlot={
-            <span className="font-mono text-xs font-medium text-[#245C45] tabular-nums">
+            <span className="font-mono text-xs font-medium text-[#166549] tabular-nums">
               Materi dipahami: {studiedTopicIds.length} /{' '}
               {EDUCATION_TOPICS.length}
             </span>
           }
         />
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
           {/* Interactive Topic Explorer */}
-          <div className="rounded-md border border-[#E3E8E4] bg-white lg:col-span-7">
-            <div className="grid grid-cols-2 border-b border-[#E3E8E4] bg-[#F7F9F7] sm:grid-cols-4">
+          <div className="overflow-hidden rounded-lg border border-[#D8DFDA] bg-white lg:col-span-7">
+            <div className="grid grid-cols-2 border-b border-[#D8DFDA] bg-[#F8FAF8] sm:grid-cols-4">
               {EDUCATION_TOPICS.map((topic) => {
                 const isSelected = topic.id === selectedTopic.id;
                 const isStudied = studiedTopicIds.includes(topic.id);
@@ -1127,10 +1165,10 @@ export function CommunityHubPage({
                     key={topic.id}
                     type="button"
                     onClick={() => setSelectedTopicId(topic.id)}
-                    className={`flex items-center justify-between gap-1.5 border-b-2 px-3 py-2.5 text-left text-xs font-medium transition-colors ${
+                    className={`flex items-center justify-between gap-1.5 border-b-2 px-3 py-2.5 text-left text-xs font-medium transition-colors duration-150 ${
                       isSelected
-                        ? 'border-[#245C45] bg-white text-[#245C45]'
-                        : 'border-transparent text-[#6B756F] hover:text-[#252B28]'
+                        ? 'border-[#111E19] bg-[#111E19] text-white'
+                        : 'border-transparent text-[#54625B] hover:bg-white hover:text-[#17201C]'
                     }`}
                   >
                     <span className="whitespace-nowrap">
@@ -1138,7 +1176,9 @@ export function CommunityHubPage({
                     </span>
                     {isStudied && (
                       <CheckCircle2
-                        className="h-3.5 w-3.5 shrink-0 text-[#4F8A68]"
+                        className={`h-3.5 w-3.5 shrink-0 ${
+                          isSelected ? 'text-[#6EE7B7]' : 'text-[#166549]'
+                        }`}
                         aria-hidden="true"
                       />
                     )}
@@ -1147,13 +1187,13 @@ export function CommunityHubPage({
               })}
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="space-y-4 p-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[11px] font-medium text-[#4F8A68]">
+                  <span className="font-mono text-[11px] font-medium text-[#1D6373]">
                     Materi {selectedTopic.index}
                   </span>
-                  <h3 className="font-display text-base font-semibold text-[#252B28]">
+                  <h3 className="font-display text-base font-semibold text-[#17201C]">
                     {selectedTopic.title}
                   </h3>
                 </div>
@@ -1170,16 +1210,16 @@ export function CommunityHubPage({
                 </SecondaryButton>
               </div>
 
-              <p className="text-xs leading-relaxed text-[#6B756F]">
+              <p className="text-xs leading-relaxed text-[#54625B]">
                 {selectedTopic.summary}
               </p>
 
-              <div className="grid grid-cols-1 gap-4 border-t border-[#EEF2EF] pt-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 border-t border-[#EAEFEA] pt-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-[#245C45]">
+                  <p className="text-xs font-semibold text-[#166549]">
                     Ketentuan yang Diterima
                   </p>
-                  <ul className="space-y-1.5 text-xs text-[#252B28] list-disc pl-4">
+                  <ul className="list-disc space-y-1.5 pl-4 text-xs text-[#17201C]">
                     {selectedTopic.acceptedItems.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
@@ -1187,10 +1227,10 @@ export function CommunityHubPage({
                 </div>
 
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-[#991B1B]">
+                  <p className="text-xs font-semibold text-[#B91C1C]">
                     Yang Menyebabkan Penolakan
                   </p>
-                  <ul className="space-y-1.5 text-xs text-[#6B756F] list-disc pl-4">
+                  <ul className="list-disc space-y-1.5 pl-4 text-xs text-[#54625B]">
                     {selectedTopic.rejectedItems.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
@@ -1198,34 +1238,32 @@ export function CommunityHubPage({
                 </div>
               </div>
 
-              <p className="rounded border border-[#E3E8E4] bg-[#F7F9F7] px-3 py-2 text-[11px] font-medium text-[#245C45]">
+              <p className="rounded-md border border-[#B2D3DC] bg-[#EAF3F5] px-3 py-2 text-[11px] font-medium text-[#1D6373]">
                 Catatan praktis: {selectedTopic.targetAction}
               </p>
             </div>
           </div>
 
           {/* Pre-Submission Ecobrick Readiness Checker */}
-          <div className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4 lg:col-span-5">
+          <div className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-display text-sm font-semibold text-[#252B28]">
+                <h3 className="font-display text-sm font-semibold text-[#17201C]">
                   Uji Kelayakan Mandiri Sebelum Ke Pos
                 </h3>
-                <p className="mt-0.5 text-xs text-[#6B756F]">
+                <p className="mt-0.5 text-xs text-[#54625B]">
                   Periksa berat dan kondisi fisik ecobrick Anda agar lolos
                   verifikasi pada percobaan pertama.
                 </p>
               </div>
-              <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums whitespace-nowrap">
+              <span className="font-mono text-xs font-semibold text-[#166549] tabular-nums whitespace-nowrap">
                 {readinessPassedCount}/4
               </span>
             </div>
 
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EEF2EF]">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E3E9E5]">
               <div
-                className={`h-full rounded-full transition-all duration-150 ${
-                  isEcobrickReady ? 'bg-[#245C45]' : 'bg-[#D97706]'
-                }`}
+                className={`h-full rounded-full transition-[width] duration-200 ${readinessBarColor}`}
                 style={{ width: `${readinessPct}%` }}
               />
             </div>
@@ -1265,31 +1303,31 @@ export function CommunityHubPage({
               </FormField>
             </div>
 
-            <div className="space-y-2 border-t border-[#EEF2EF] pt-3">
-              <label className="flex items-start gap-2 text-xs text-[#252B28] cursor-pointer">
+            <div className="space-y-2 border-t border-[#EAEFEA] pt-3">
+              <label className="flex cursor-pointer items-start gap-2 text-xs text-[#17201C]">
                 <input
                   type="checkbox"
                   checked={checkCleanDry}
                   onChange={(e) => setCheckCleanDry(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[#245C45]"
+                  className="mt-0.5 h-4 w-4 accent-[#166549]"
                 />
                 <span>Isi plastik bersih dari minyak dan kering total</span>
               </label>
-              <label className="flex items-start gap-2 text-xs text-[#252B28] cursor-pointer">
+              <label className="flex cursor-pointer items-start gap-2 text-xs text-[#17201C]">
                 <input
                   type="checkbox"
                   checked={checkDense}
                   onChange={(e) => setCheckDense(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[#245C45]"
+                  className="mt-0.5 h-4 w-4 accent-[#166549]"
                 />
                 <span>Kompaksi padat merata (tidak kempes saat ditekan)</span>
               </label>
-              <label className="flex items-start gap-2 text-xs text-[#252B28] cursor-pointer">
+              <label className="flex cursor-pointer items-start gap-2 text-xs text-[#17201C]">
                 <input
                   type="checkbox"
                   checked={checkCapTight}
                   onChange={(e) => setCheckCapTight(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[#245C45]"
+                  className="mt-0.5 h-4 w-4 accent-[#166549]"
                 />
                 <span>Botol utuh dan tutup botol terpasang rapat</span>
               </label>
@@ -1297,10 +1335,10 @@ export function CommunityHubPage({
 
             <div
               role="status"
-              className={`rounded border p-3.5 space-y-1.5 text-xs ${
+              className={`space-y-1.5 rounded-md border p-3.5 text-xs ${
                 isEcobrickReady
-                  ? 'border-[#C6DBC9] bg-[#E7F0E8] text-[#245C45]'
-                  : 'border-[#E5D3B3] bg-[#FFFBEB] text-[#92400E]'
+                  ? 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
+                  : 'border-[#FCD34D] bg-[#FEF3C7] text-[#B45309]'
               }`}
             >
               <p className="font-semibold">
@@ -1314,7 +1352,7 @@ export function CommunityHubPage({
                   dan siap dibawa ke Pos Eco-Hub untuk verifikasi Petugas.
                 </p>
               ) : (
-                <ul className="list-disc pl-4 space-y-0.5">
+                <ul className="list-disc space-y-0.5 pl-4">
                   {readinessIssues.map((issue) => (
                     <li key={issue}>{issue}</li>
                   ))}
@@ -1337,56 +1375,63 @@ export function CommunityHubPage({
       </section>
 
       {/* 4. Inclusive Participation + Interactive Partner Collaborations */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
         <section className="space-y-3 lg:col-span-5">
           <SectionHeader
             title="4. Partisipasi Aktif Keluarga Rentan"
             description="Jejak kontribusi terverifikasi, keikutsertaan kegiatan, dan dukungan program secara setara."
           />
-          <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
-            {vulnerableParticipants.map((person) => {
-              const verifiedUnits = state.ecobrick_submissions
-                .filter((s) => s.contributorId === person.id)
-                .reduce((sum, s) => sum + s.verifiedQuantity, 0);
-              const joinedActivities = state.community_activities.filter((a) =>
-                (a.registeredParticipantIds ?? []).includes(person.id)
-              ).length;
-              const incentivesTotal = state.financial_incentives
-                .filter(
-                  (f) =>
-                    f.contributorId === person.id &&
-                    (f.status === 'Paid' || f.status === 'Approved')
-                )
-                .reduce((sum, f) => sum + f.amountIdr, 0);
+          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+            {vulnerableParticipants.length === 0 ? (
+              <p className="p-6 text-center text-xs text-[#54625B]">
+                Belum ada akun segmen Keluarga Rentan yang terdaftar di
+                database.
+              </p>
+            ) : (
+              vulnerableParticipants.map((person) => {
+                const verifiedUnits = state.ecobrick_submissions
+                  .filter((s) => s.contributorId === person.id)
+                  .reduce((sum, s) => sum + s.verifiedQuantity, 0);
+                const joinedActivities = state.community_activities.filter(
+                  (a) => (a.registeredParticipantIds ?? []).includes(person.id)
+                ).length;
+                const incentivesTotal = state.financial_incentives
+                  .filter(
+                    (f) =>
+                      f.contributorId === person.id &&
+                      (f.status === 'Paid' || f.status === 'Approved')
+                  )
+                  .reduce((sum, f) => sum + f.amountIdr, 0);
 
-              return (
-                <div key={person.id} className="p-4 space-y-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[13px] font-semibold text-[#252B28]">
-                      {person.name}
-                    </span>
-                    <RoleTag role={person.role} segment={person.segment} />
-                  </div>
-                  <p className="text-xs text-[#6B756F]">
-                    {person.unitOrAddress}
-                  </p>
-                  {person.participationRole && (
-                    <p className="text-xs font-medium text-[#245C45]">
-                      Peran ekosistem: {person.participationRole}
+                return (
+                  <div key={person.id} className="space-y-2 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[13px] font-semibold text-[#17201C]">
+                        {person.name}
+                      </span>
+                      <RoleTag role={person.role} segment={person.segment} />
+                    </div>
+                    <p className="text-xs text-[#54625B]">
+                      {person.unitOrAddress}
                     </p>
-                  )}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#EEF2EF] pt-2 font-mono text-[11px] text-[#6B756F] tabular-nums">
-                    <span>{verifiedUnits} unit verified</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{joinedActivities} agenda diikuti</span>
-                    <span aria-hidden="true">·</span>
-                    <span>
-                      Insentif Rp {incentivesTotal.toLocaleString('id-ID')}
-                    </span>
+                    {person.participationRole && (
+                      <p className="text-xs font-medium text-[#166549]">
+                        Peran ekosistem: {person.participationRole}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#EAEFEA] pt-2 font-mono text-[11px] text-[#54625B] tabular-nums">
+                      <span>{verifiedUnits} unit verified</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{joinedActivities} agenda diikuti</span>
+                      <span aria-hidden="true">·</span>
+                      <span>
+                        Insentif Rp {incentivesTotal.toLocaleString('id-ID')}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </section>
 
@@ -1412,10 +1457,10 @@ export function CommunityHubPage({
           {collabFeedback && (
             <div
               role={collabFeedback.type === 'error' ? 'alert' : 'status'}
-              className={`rounded border px-3.5 py-2.5 text-xs font-medium ${
+              className={`rounded-md border px-3.5 py-2.5 text-xs font-medium ${
                 collabFeedback.type === 'error'
-                  ? 'border-[#FECACA] bg-[#FEF2F2] text-[#991B1B]'
-                  : 'border-[#C6DBC9] bg-[#E7F0E8] text-[#245C45]'
+                  ? 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
+                  : 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
               }`}
             >
               {collabFeedback.text}
@@ -1425,7 +1470,7 @@ export function CommunityHubPage({
           {canProposeCollab && showCollabForm && (
             <form
               onSubmit={handleCreateCollaborationSubmit}
-              className="rounded-md border border-[#C6DBC9] bg-white p-4 space-y-3"
+              className="space-y-3 rounded-lg border border-[#B5CEC0] bg-white p-4"
             >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <FormField id="collab-partner-name" label="Nama Mitra / Lembaga">
@@ -1482,45 +1527,52 @@ export function CommunityHubPage({
             </form>
           )}
 
-          <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
-            {state.collaborations.map((colb) => (
-              <div key={colb.id} className="p-4 space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="space-y-0.5">
-                    <span className="text-[13px] font-semibold text-[#252B28]">
-                      {colb.partnerName}
-                    </span>
-                    <p className="text-xs font-medium text-[#245C45]">
-                      {colb.collaborationType}
-                    </p>
+          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+            {state.collaborations.length === 0 ? (
+              <p className="p-6 text-center text-xs text-[#54625B]">
+                Belum ada kolaborasi mitra tercatat.
+              </p>
+            ) : (
+              state.collaborations.map((colb) => (
+                <div key={colb.id} className="space-y-2 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <span className="text-[13px] font-semibold text-[#17201C]">
+                        {colb.partnerName}
+                      </span>
+                      <p className="text-xs font-medium text-[#1D6373]">
+                        {colb.collaborationType}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StatusTag status={colb.status} />
+                      {isHubCoordinator &&
+                        colb.status === 'Dalam Koordinasi' && (
+                          <SecondaryButton
+                            size="sm"
+                            onClick={() =>
+                              onUpdateCollaborationStatus(colb.id, 'Aktif')
+                            }
+                          >
+                            Aktifkan
+                          </SecondaryButton>
+                        )}
+                      {isHubCoordinator && colb.status === 'Aktif' && (
+                        <SecondaryButton
+                          size="sm"
+                          onClick={() =>
+                            onUpdateCollaborationStatus(colb.id, 'Selesai')
+                          }
+                        >
+                          Selesaikan
+                        </SecondaryButton>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <StatusTag status={colb.status} />
-                    {isHubCoordinator && colb.status === 'Dalam Koordinasi' && (
-                      <SecondaryButton
-                        size="sm"
-                        onClick={() =>
-                          onUpdateCollaborationStatus(colb.id, 'Aktif')
-                        }
-                      >
-                        Aktifkan
-                      </SecondaryButton>
-                    )}
-                    {isHubCoordinator && colb.status === 'Aktif' && (
-                      <SecondaryButton
-                        size="sm"
-                        onClick={() =>
-                          onUpdateCollaborationStatus(colb.id, 'Selesai')
-                        }
-                      >
-                        Selesaikan
-                      </SecondaryButton>
-                    )}
-                  </div>
+                  <p className="text-xs text-[#54625B]">{colb.activity}</p>
                 </div>
-                <p className="text-xs text-[#6B756F]">{colb.activity}</p>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </section>
       </div>

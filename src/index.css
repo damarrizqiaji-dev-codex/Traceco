@@ -5,22 +5,31 @@
   --font-display: "Outfit", "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-forest: #245C45;
-  --color-forest-hover: #1B4735;
-  --color-eco: #4F8A68;
-  --color-soft-green: #E7F0E8;
-  --color-canvas: #F7F9F7;
-  --color-charcoal: #252B28;
-  --color-muted: #6B756F;
-  --color-hairline: #E3E8E4;
+  --color-obsidian: #111E19;
+  --color-obsidian-soft: #1A2C25;
+  --color-obsidian-hairline: #243A31;
+
+  --color-forest: #166549;
+  --color-forest-hover: #0F4C36;
+  --color-eco: #2D8A68;
+  --color-soft-green: #EBF4EF;
+
+  --color-teal: #1D6373;
+  --color-teal-soft: #EAF3F5;
+
+  --color-canvas: #F2F4F2;
+  --color-surface-subtle: #F8FAF8;
+  --color-charcoal: #17201C;
+  --color-muted: #54625B;
+  --color-hairline: #D8DFDA;
 }
 
 @layer base {
   html,
   body {
     font-family: var(--font-sans);
-    background-color: #F7F9F7;
-    color: #252B28;
+    background-color: #F2F4F2;
+    color: #17201C;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -43,7 +52,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid #245C45;
+    outline: 2px solid #166549;
     outline-offset: 2px;
   }
 }
@@ -55,6 +64,19 @@
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+.traceco-card {
+  background-color: #FFFFFF;
+  border: 1px solid #D8DFDA;
+  border-radius: 0.5rem;
+}
+
+.traceco-obsidian {
+  background-color: #111E19;
+  color: #ECF2EE;
+  border: 1px solid #243A31;
+  border-radius: 0.5rem;
 }
 
 @keyframes tracecoFadeSlide {
@@ -80,7 +102,7 @@
 }
 
 .animate-traceco-enter {
-  animation: tracecoFadeSlide 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: tracecoFadeSlide 170ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-traceco-modal {

@@ -64,14 +64,23 @@ interface EcobrickContributionPageProps {
 
 const BOTTLE_STANDARDS = [
   {
+    shortTitle: '600 ml',
+    minLabel: 'Min. 250g/unit',
+    minUnitKg: 0.25,
     label: 'Botol PET 600 ml (Standar min. 250g/unit)',
     targetUnitKg: 0.27,
   },
   {
+    shortTitle: '1000 ml',
+    minLabel: 'Min. 400g/unit',
+    minUnitKg: 0.4,
     label: 'Botol PET 1000 ml (Standar min. 400g/unit)',
     targetUnitKg: 0.42,
   },
   {
+    shortTitle: '1500 ml',
+    minLabel: 'Min. 500g/unit',
+    minUnitKg: 0.5,
     label: 'Botol PET 1500 ml (Standar min. 500g/unit)',
     targetUnitKg: 0.52,
   },
@@ -80,7 +89,7 @@ const BOTTLE_STANDARDS = [
 const SAMPLE_ECOBRICK_PHOTO_SVG =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="#F2F7F3"/><rect x="16" y="16" width="288" height="148" rx="6" fill="#FFFFFF" stroke="#C6DBC9"/><rect x="44" y="54" width="44" height="76" rx="8" fill="#E7F0E8" stroke="#245C45" stroke-width="2"/><rect x="56" y="42" width="20" height="12" rx="2" fill="#245C45"/><rect x="100" y="54" width="44" height="76" rx="8" fill="#E7F0E8" stroke="#245C45" stroke-width="2"/><rect x="112" y="42" width="20" height="12" rx="2" fill="#245C45"/><text x="166" y="76" font-family="sans-serif" font-size="13" font-weight="600" fill="#252B28">Dokumentasi Ecobrick</text><text x="166" y="96" font-family="sans-serif" font-size="11" fill="#6B756F">Botol PET Bersih &amp; Padat</text><text x="166" y="114" font-family="monospace" font-size="11" fill="#245C45">Siap Verifikasi Pos</text></svg>`
+    `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="#F2F4F2"/><rect x="16" y="16" width="288" height="148" rx="6" fill="#FFFFFF" stroke="#D8DFDA"/><rect x="44" y="54" width="44" height="76" rx="8" fill="#EBF4EF" stroke="#166549" stroke-width="2"/><rect x="56" y="42" width="20" height="12" rx="2" fill="#166549"/><rect x="100" y="54" width="44" height="76" rx="8" fill="#EAF3F5" stroke="#1D6373" stroke-width="2"/><rect x="112" y="42" width="20" height="12" rx="2" fill="#1D6373"/><text x="166" y="76" font-family="sans-serif" font-size="13" font-weight="600" fill="#17201C">Dokumentasi Ecobrick</text><text x="166" y="96" font-family="sans-serif" font-size="11" fill="#54625B">Botol PET Bersih &amp; Padat</text><text x="166" y="114" font-family="monospace" font-size="11" fill="#166549">Siap Verifikasi Pos</text></svg>`
   );
 
 export function EcobrickContributionPage({
@@ -163,10 +172,29 @@ export function EcobrickContributionPage({
   const activeBottleStandard =
     BOTTLE_STANDARDS.find((b) => b.label === bottleSize) ?? BOTTLE_STANDARDS[0];
   const liveQty = Math.max(0, parseInt(quantitySubmitted, 10) || 0);
+  const liveMinWeightKg = Number(
+    (liveQty * activeBottleStandard.minUnitKg).toFixed(2)
+  );
   const liveTargetWeightKg = Number(
     (liveQty * activeBottleStandard.targetUnitKg).toFixed(2)
   );
   const liveEstimatedGp = liveQty * POINTS_PER_ECOBRICK;
+
+  const enteredWeight =
+    weightKg.trim() !== '' && !Number.isNaN(parseFloat(weightKg))
+      ? parseFloat(weightKg)
+      : null;
+  const avgGramsPerUnit =
+    enteredWeight && liveQty > 0
+      ? Math.round((enteredWeight / liveQty) * 1000)
+      : null;
+  const minGramsPerUnit = Math.round(activeBottleStandard.minUnitKg * 1000);
+  const weightCompliancePct =
+    avgGramsPerUnit !== null
+      ? Math.min(100, Math.round((avgGramsPerUnit / minGramsPerUnit) * 100))
+      : null;
+  const weightCompliant =
+    avgGramsPerUnit !== null ? avgGramsPerUnit >= minGramsPerUnit : null;
 
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -357,6 +385,7 @@ export function EcobrickContributionPage({
     {
       key: 'submissionId',
       header: 'Submission ID',
+      sortValue: (s) => s.submissionId,
       render: (s) => (
         <button
           type="button"
@@ -364,7 +393,7 @@ export function EcobrickContributionPage({
             e.stopPropagation();
             openContributionDetail(s.submissionId);
           }}
-          className="font-mono text-xs font-semibold text-[#245C45] hover:underline whitespace-nowrap"
+          className="font-mono text-xs font-semibold text-[#166549] hover:underline whitespace-nowrap"
         >
           {s.submissionId}
         </button>
@@ -375,11 +404,13 @@ export function EcobrickContributionPage({
           {
             key: 'contributor',
             header: 'Kontributor',
+            sortValue: (s: EcobrickSubmission) =>
+              contributorMap.get(s.contributorId)?.name ?? '',
             render: (s: EcobrickSubmission) => {
               const ctr = contributorMap.get(s.contributorId);
               return (
                 <div className="space-y-0.5 text-xs">
-                  <p className="font-medium text-[#252B28]">
+                  <p className="font-medium text-[#17201C]">
                     {ctr?.name ?? '-'}
                   </p>
                   {ctr && (
@@ -398,8 +429,9 @@ export function EcobrickContributionPage({
     {
       key: 'date',
       header: 'Tanggal',
+      sortValue: (s) => s.date,
       render: (s) => (
-        <span className="font-mono text-xs text-[#6B756F] tabular-nums whitespace-nowrap">
+        <span className="font-mono text-xs text-[#54625B] tabular-nums whitespace-nowrap">
           {s.date}
         </span>
       ),
@@ -408,6 +440,7 @@ export function EcobrickContributionPage({
       key: 'qty',
       header: 'Jumlah',
       align: 'right',
+      sortValue: (s) => s.quantitySubmitted,
       render: (s) => (
         <span className="font-mono text-xs font-medium tabular-nums whitespace-nowrap">
           {s.quantitySubmitted} unit
@@ -418,8 +451,9 @@ export function EcobrickContributionPage({
       key: 'weight',
       header: 'Berat',
       align: 'right',
+      sortValue: (s) => s.weightKg ?? 0,
       render: (s) => (
-        <span className="font-mono text-xs text-[#6B756F] tabular-nums whitespace-nowrap">
+        <span className="font-mono text-xs text-[#54625B] tabular-nums whitespace-nowrap">
           {s.weightKg ? `${s.weightKg.toFixed(2)} kg` : '-'}
         </span>
       ),
@@ -427,13 +461,14 @@ export function EcobrickContributionPage({
     {
       key: 'status',
       header: 'Status',
+      sortValue: (s) => s.status,
       render: (s) => {
         const ver = verificationMap.get(s.submissionId);
         return (
           <div className="space-y-1">
             <StatusTag status={s.status} />
             {ver?.rejectionReason && (
-              <p className="max-w-[230px] text-[11px] text-[#991B1B]">
+              <p className="max-w-[230px] text-[11px] text-[#B91C1C]">
                 Alasan: {ver.rejectionReason}
               </p>
             )}
@@ -445,10 +480,11 @@ export function EcobrickContributionPage({
       key: 'reward',
       header: 'Green Points',
       align: 'right',
+      sortValue: (s) => s.verifiedQuantity * POINTS_PER_ECOBRICK,
       render: (s) => {
         const pts = s.verifiedQuantity * POINTS_PER_ECOBRICK;
         return (
-          <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums whitespace-nowrap">
+          <span className="font-mono text-xs font-semibold text-[#166549] tabular-nums whitespace-nowrap">
             {pts > 0 ? `+${pts} GP` : '-'}
           </span>
         );
@@ -465,7 +501,7 @@ export function EcobrickContributionPage({
             e.stopPropagation();
             openContributionDetail(s.submissionId);
           }}
-          className="inline-flex items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-[11px] font-medium text-[#245C45] hover:border-[#245C45] hover:bg-[#E7F0E8] transition-colors duration-150 whitespace-nowrap"
+          className="inline-flex items-center gap-1 rounded border border-[#C6D1CA] bg-white px-2.5 py-1 text-[11px] font-medium text-[#166549] hover:border-[#166549] hover:bg-[#EBF4EF] transition-colors duration-150 whitespace-nowrap"
         >
           <Eye className="h-3 w-3" aria-hidden="true" />
           <span>{isContributorView ? 'Lacak' : 'Detail'}</span>
@@ -484,7 +520,7 @@ export function EcobrickContributionPage({
     return (
       <ol
         aria-label="Tahap pengajuan ecobrick"
-        className="grid grid-cols-3 gap-2 border-b border-[#EEF2EF] pb-4"
+        className="grid grid-cols-3 gap-2 border-b border-[#EAEFEA] pb-4"
       >
         {steps.map((st, idx) => {
           const isCurrent = idx === currentIdx;
@@ -494,19 +530,19 @@ export function EcobrickContributionPage({
               key={st.id}
               className={`flex items-center gap-2 text-xs ${
                 isCurrent
-                  ? 'font-semibold text-[#245C45]'
+                  ? 'font-semibold text-[#111E19]'
                   : isDone
-                    ? 'font-medium text-[#4F8A68]'
-                    : 'text-[#6B756F]'
+                    ? 'font-medium text-[#166549]'
+                    : 'text-[#54625B]'
               }`}
             >
               <span
-                className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-semibold ${
+                className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md font-mono text-[10px] font-semibold ${
                   isCurrent
-                    ? 'bg-[#245C45] text-white'
+                    ? 'bg-[#111E19] text-[#6EE7B7]'
                     : isDone
-                      ? 'bg-[#E7F0E8] text-[#245C45]'
-                      : 'bg-[#F2F5F3] text-[#6B756F]'
+                      ? 'bg-[#EBF4EF] text-[#166549] border border-[#B5CEC0]'
+                      : 'bg-[#F2F4F2] text-[#54625B] border border-[#D8DFDA]'
                 }`}
               >
                 {st.num}
@@ -522,7 +558,7 @@ export function EcobrickContributionPage({
   const renderSubmissionFlow = () => (
     <div className="space-y-5">
       {submitStep === 'form' && (
-        <section className="rounded-md border border-[#E3E8E4] bg-white p-5 sm:p-6 space-y-5">
+        <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 sm:p-6 space-y-5">
           {renderWizardStepper()}
 
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -533,7 +569,7 @@ export function EcobrickContributionPage({
             <button
               type="button"
               onClick={() => setShowDropoffInfo((v) => !v)}
-              className="inline-flex items-center gap-1.5 rounded border border-[#CFD8D2] bg-[#F7F9F7] px-3 py-1.5 text-xs font-medium text-[#245C45] hover:bg-[#E7F0E8] transition-colors duration-150"
+              className="inline-flex items-center gap-1.5 rounded-md border border-[#C6D1CA] bg-[#F8FAF8] px-3 py-1.5 text-xs font-medium text-[#166549] hover:bg-[#EBF4EF] transition-colors duration-150"
             >
               <span>Jadwal Titik Serah</span>
               {showDropoffInfo ? (
@@ -545,12 +581,12 @@ export function EcobrickContributionPage({
           </div>
 
           {showDropoffInfo && (
-            <div className="animate-traceco-enter grid grid-cols-1 gap-4 border-y border-[#E3E8E4] py-3.5 md:grid-cols-3">
+            <div className="animate-traceco-enter grid grid-cols-1 gap-4 border-y border-[#D8DFDA] py-3.5 md:grid-cols-3">
               {state.dropoff_points.map((dp) => (
                 <div key={dp.id} className="space-y-0.5 text-xs">
-                  <p className="font-semibold text-[#252B28]">{dp.name}</p>
-                  <p className="text-[11px] text-[#6B756F]">{dp.area}</p>
-                  <p className="font-mono text-[11px] text-[#245C45]">
+                  <p className="font-semibold text-[#17201C]">{dp.name}</p>
+                  <p className="text-[11px] text-[#54625B]">{dp.area}</p>
+                  <p className="font-mono text-[11px] text-[#166549]">
                     {dp.schedule}
                   </p>
                 </div>
@@ -561,19 +597,19 @@ export function EcobrickContributionPage({
           {formError && (
             <div
               role="alert"
-              className="rounded border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-medium text-[#991B1B]"
+              className="rounded-md border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-medium text-[#B91C1C]"
             >
               {formError}
             </div>
           )}
 
-          <form onSubmit={validateBeforeReview} className="space-y-4">
+          <form onSubmit={validateBeforeReview} className="space-y-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {isContributorView ? (
                 <FormField id="contrib-actor-readonly" label="Kontributor">
                   <div
                     id="contrib-actor-readonly"
-                    className="flex items-center justify-between gap-2 rounded border border-[#E3E8E4] bg-[#F7F9F7] px-3 py-2 text-[13px] text-[#252B28]"
+                    className="flex items-center justify-between gap-2 rounded-md border border-[#D8DFDA] bg-[#F8FAF8] px-3 py-2 text-[13px] text-[#17201C]"
                   >
                     <span className="truncate font-medium">
                       {activeContributor?.name ?? 'Kontributor'}
@@ -604,7 +640,7 @@ export function EcobrickContributionPage({
 
               <FormField id="dropoff-select" label="Lokasi Penyerahan (Drop-off)">
                 {state.dropoff_points.length === 0 ? (
-                  <p className="rounded border border-[#E5D3B3] bg-[#FFFBEB] px-3 py-2 text-xs text-[#92400E]">
+                  <p className="rounded-md border border-[#FCD34D] bg-[#FFFBEB] px-3 py-2 text-xs text-[#B45309]">
                     Belum ada Pos Serah aktif di database. Admin dapat
                     menambahkannya melalui menu Pengaturan → Profil Pesantren.
                   </p>
@@ -625,7 +661,59 @@ export function EcobrickContributionPage({
               </FormField>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Interactive Bottle Size Cards */}
+            <div className="space-y-2">
+              <span
+                id="bottle-size-label"
+                className="block text-xs font-medium text-[#17201C]"
+              >
+                Ukuran Botol Ecobrick
+              </span>
+              <div
+                role="radiogroup"
+                aria-labelledby="bottle-size-label"
+                className="grid grid-cols-1 gap-2.5 sm:grid-cols-3"
+              >
+                {BOTTLE_STANDARDS.map((b) => {
+                  const selected = bottleSize === b.label;
+                  return (
+                    <button
+                      key={b.label}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setBottleSize(b.label)}
+                      className={`flex items-center justify-between gap-3 rounded-lg border px-3.5 py-3 text-left transition-all duration-150 ${
+                        selected
+                          ? 'border-[#166549] bg-[#EBF4EF]'
+                          : 'border-[#D8DFDA] bg-white hover:border-[#9EB0A6]'
+                      }`}
+                    >
+                      <div>
+                        <p
+                          className={`font-display text-sm font-semibold ${
+                            selected ? 'text-[#166549]' : 'text-[#17201C]'
+                          }`}
+                        >
+                          Botol {b.shortTitle}
+                        </p>
+                        <p className="font-mono text-[11px] text-[#54625B]">
+                          {b.minLabel}
+                        </p>
+                      </div>
+                      {selected && (
+                        <CheckCircle2
+                          className="h-4 w-4 shrink-0 text-[#166549]"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <FormField id="contrib-date" label="Tanggal Penyerahan">
                 <input
                   id="contrib-date"
@@ -637,23 +725,6 @@ export function EcobrickContributionPage({
                 />
               </FormField>
 
-              <FormField id="bottle-size" label="Ukuran Botol Ecobrick">
-                <select
-                  id="bottle-size"
-                  value={bottleSize}
-                  onChange={(e) => setBottleSize(e.target.value)}
-                  className={fieldInputClass}
-                >
-                  {BOTTLE_STANDARDS.map((b) => (
-                    <option key={b.label} value={b.label}>
-                      {b.label}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 id="quantity-submitted"
                 label="Jumlah Ecobrick (Unit)"
@@ -664,7 +735,7 @@ export function EcobrickContributionPage({
                       type="button"
                       onClick={() => adjustQuantity(-1)}
                       aria-label="Kurangi jumlah ecobrick"
-                      className="rounded border border-[#CFD8D2] bg-white p-2 text-[#252B28] hover:bg-[#F7F9F7] active:scale-95 transition-transform duration-150"
+                      className="rounded-md border border-[#C6D1CA] bg-white p-2 text-[#17201C] hover:bg-[#F2F4F2] active:scale-95 transition-transform duration-150"
                     >
                       <Minus className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -682,13 +753,13 @@ export function EcobrickContributionPage({
                       type="button"
                       onClick={() => adjustQuantity(1)}
                       aria-label="Tambah jumlah ecobrick"
-                      className="rounded border border-[#CFD8D2] bg-white p-2 text-[#252B28] hover:bg-[#F7F9F7] active:scale-95 transition-transform duration-150"
+                      className="rounded-md border border-[#C6D1CA] bg-white p-2 text-[#17201C] hover:bg-[#F2F4F2] active:scale-95 transition-transform duration-150"
                     >
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span className="text-[#6B756F]">Cepat:</span>
+                    <span className="text-[#54625B]">Cepat:</span>
                     {[5, 10, 20].map((preset) => (
                       <button
                         key={preset}
@@ -696,8 +767,8 @@ export function EcobrickContributionPage({
                         onClick={() => setQuantitySubmitted(String(preset))}
                         className={`rounded border px-2 py-0.5 font-mono transition-colors duration-150 ${
                           liveQty === preset
-                            ? 'border-[#245C45] bg-[#E7F0E8] font-semibold text-[#245C45]'
-                            : 'border-[#E3E8E4] bg-[#F7F9F7] text-[#6B756F] hover:text-[#252B28]'
+                            ? 'border-[#111E19] bg-[#111E19] font-semibold text-[#6EE7B7]'
+                            : 'border-[#D8DFDA] bg-[#F8FAF8] text-[#54625B] hover:text-[#17201C]'
                         }`}
                       >
                         {preset} unit
@@ -710,7 +781,7 @@ export function EcobrickContributionPage({
               <FormField
                 id="weight-kg"
                 label="Berat (kg · Opsional)"
-                hint="Kosongkan jika ditimbang langsung saat verifikasi di pos"
+                hint="Kosongkan jika ditimbang di pos"
               >
                 <div className="space-y-2">
                   <input
@@ -720,21 +791,21 @@ export function EcobrickContributionPage({
                     step={0.01}
                     value={weightKg}
                     onChange={(e) => setWeightKg(e.target.value)}
-                    placeholder={`Target ideal ± ${liveTargetWeightKg} kg`}
+                    placeholder={`Target ± ${liveTargetWeightKg} kg`}
                     className={fieldInputClass}
                   />
                   <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
                     <button
                       type="button"
                       onClick={handleSimulateScale}
-                      className="inline-flex items-center gap-1 font-medium text-[#245C45] hover:underline"
+                      className="inline-flex items-center gap-1 font-medium text-[#1D6373] hover:underline"
                     >
                       <Cpu className="h-3 w-3" aria-hidden="true" />
-                      <span>Isi dari Simulasi Timbangan Pos</span>
+                      <span>Simulasi Timbangan Pos</span>
                     </button>
                     {iotSimulatedWeightKg !== undefined && (
-                      <span className="font-mono text-[#245C45] tabular-nums">
-                        Timbangan: {iotSimulatedWeightKg} kg
+                      <span className="font-mono text-[#166549] tabular-nums">
+                        {iotSimulatedWeightKg} kg
                       </span>
                     )}
                   </div>
@@ -742,18 +813,50 @@ export function EcobrickContributionPage({
               </FormField>
             </div>
 
-            {/* Live Estimator Summary Strip */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-y border-[#EEF2EF] bg-[#F7F9F7]/70 px-3.5 py-2.5 text-xs">
-              <span className="text-[#6B756F]">
-                Target berat minimal standar:{' '}
-                <strong className="font-mono text-[#252B28] tabular-nums">
-                  {liveTargetWeightKg} kg
+            {/* Live Compliance Gauge when Weight is Provided */}
+            {avgGramsPerUnit !== null && weightCompliancePct !== null && (
+              <div className="rounded-md border border-[#D8DFDA] bg-[#F8FAF8] p-3.5 space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="font-medium text-[#17201C]">
+                    Rata-rata berat per unit:{' '}
+                    <strong className="font-mono tabular-nums">
+                      {avgGramsPerUnit} g
+                    </strong>{' '}
+                    (Min. {minGramsPerUnit} g)
+                  </span>
+                  <span
+                    className={`font-mono text-[11px] font-semibold ${
+                      weightCompliant ? 'text-[#166549]' : 'text-[#B45309]'
+                    }`}
+                  >
+                    {weightCompliant
+                      ? 'Memenuhi batas standar'
+                      : `Kurang ${minGramsPerUnit - avgGramsPerUnit} g/unit`}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E3E9E5]">
+                  <div
+                    className={`h-full rounded-full transition-[width] duration-200 ${
+                      weightCompliant ? 'bg-[#166549]' : 'bg-[#D97706]'
+                    }`}
+                    style={{ width: `${weightCompliancePct}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Obsidian Live Estimator Summary Strip */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#243A31] bg-[#111E19] px-4 py-3 text-xs text-[#C8D8D0]">
+              <span>
+                Target minimal {liveQty} unit:{' '}
+                <strong className="font-mono text-white tabular-nums">
+                  {liveMinWeightKg} kg
                 </strong>{' '}
-                ({liveQty} unit)
+                (ideal ± {liveTargetWeightKg} kg)
               </span>
-              <span className="text-[#6B756F]">
-                Potensi reward jika lolos semua:{' '}
-                <strong className="font-mono text-[#245C45] tabular-nums">
+              <span>
+                Potensi reward lolos semua:{' '}
+                <strong className="font-mono text-[#6EE7B7] tabular-nums">
                   +{liveEstimatedGp.toLocaleString('id-ID')} GP
                 </strong>
               </span>
@@ -763,7 +866,7 @@ export function EcobrickContributionPage({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <label
                   htmlFor="contrib-photo"
-                  className="text-xs font-medium text-[#252B28]"
+                  className="text-xs font-medium text-[#17201C]"
                 >
                   Foto Ecobrick (Opsional)
                 </label>
@@ -773,18 +876,18 @@ export function EcobrickContributionPage({
                     setPhotoDataUrl(SAMPLE_ECOBRICK_PHOTO_SVG);
                     setPhotoLabel('contoh-ecobrick-pos.svg');
                   }}
-                  className="text-[11px] font-medium text-[#245C45] hover:underline"
+                  className="text-[11px] font-medium text-[#166549] hover:underline"
                 >
                   Lampirkan Contoh Foto
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 rounded border border-dashed border-[#CFD8D2] bg-[#FAFBF9] p-3">
+              <div className="flex flex-wrap items-center gap-3 rounded-md border border-dashed border-[#C6D1CA] bg-[#F8FAF8] p-3">
                 <label
                   htmlFor="contrib-photo"
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-[#CFD8D2] bg-white px-3 py-1.5 text-xs font-medium text-[#252B28] hover:bg-[#F7F9F7] transition-colors duration-150"
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[#C6D1CA] bg-white px-3 py-1.5 text-xs font-medium text-[#17201C] hover:bg-[#F2F4F2] transition-colors duration-150"
                 >
-                  <Camera className="h-3.5 w-3.5 text-[#245C45]" />
+                  <Camera className="h-3.5 w-3.5 text-[#166549]" />
                   <span>Pilih File Foto</span>
                 </label>
                 <input
@@ -794,7 +897,7 @@ export function EcobrickContributionPage({
                   onChange={handlePhotoChange}
                   className="sr-only"
                 />
-                <span className="text-xs text-[#6B756F] truncate">
+                <span className="text-xs text-[#54625B] truncate">
                   {photoLabel ?? 'Belum ada foto dilampirkan (maks 2 MB)'}
                 </span>
                 {photoDataUrl && (
@@ -804,7 +907,7 @@ export function EcobrickContributionPage({
                       setPhotoDataUrl(undefined);
                       setPhotoLabel(undefined);
                     }}
-                    className="ml-auto inline-flex items-center gap-1 text-[11px] text-[#991B1B] hover:underline"
+                    className="ml-auto inline-flex items-center gap-1 text-[11px] text-[#B91C1C] hover:underline"
                   >
                     <X className="h-3 w-3" />
                     <span>Hapus</span>
@@ -816,7 +919,7 @@ export function EcobrickContributionPage({
                 <img
                   src={photoDataUrl}
                   alt="Pratinjau foto ecobrick yang diserahkan"
-                  className="h-24 w-auto rounded border border-[#E3E8E4] object-cover"
+                  className="h-24 w-auto rounded-md border border-[#D8DFDA] object-cover"
                 />
               )}
             </div>
@@ -832,8 +935,8 @@ export function EcobrickContributionPage({
               />
             </FormField>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EEF2EF] pt-3">
-              <span className="text-[11px] text-[#6B756F]">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EAEFEA] pt-3">
+              <span className="text-[11px] text-[#54625B]">
                 +{POINTS_PER_ECOBRICK} GP / unit otomatis masuk saldo setelah
                 verifikasi fisik pos.
               </span>
@@ -847,49 +950,49 @@ export function EcobrickContributionPage({
       )}
 
       {submitStep === 'review' && (
-        <section className="animate-traceco-enter rounded-md border border-[#E3E8E4] bg-white p-5 sm:p-6 space-y-5">
+        <section className="animate-traceco-enter rounded-lg border border-[#D8DFDA] bg-white p-5 sm:p-6 space-y-5">
           {renderWizardStepper()}
           <SectionHeader
             title="Review & Konfirmasi Kontribusi"
             description="Periksa kembali detail penyerahan Anda sebelum mengirim ke antrean verifikasi."
           />
 
-          <dl className="divide-y divide-[#EEF2EF] border-y border-[#E3E8E4] text-xs">
+          <dl className="divide-y divide-[#EAEFEA] border-y border-[#D8DFDA] text-xs">
             <div className="flex items-center justify-between gap-3 py-2.5">
-              <dt className="text-[#6B756F]">Kontributor</dt>
-              <dd className="font-medium text-[#252B28]">
+              <dt className="text-[#54625B]">Kontributor</dt>
+              <dd className="font-medium text-[#17201C]">
                 {activeContributor?.name ?? '-'}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3 py-2.5">
-              <dt className="text-[#6B756F]">Lokasi Penyerahan</dt>
-              <dd className="font-medium text-[#252B28]">
+              <dt className="text-[#54625B]">Lokasi Penyerahan</dt>
+              <dd className="font-medium text-[#17201C]">
                 {selectedDropoff?.name ?? resolvedDropoffPointId}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3 py-2.5">
-              <dt className="text-[#6B756F]">Tanggal</dt>
-              <dd className="font-mono text-[#252B28]">{date}</dd>
+              <dt className="text-[#54625B]">Tanggal</dt>
+              <dd className="font-mono text-[#17201C]">{date}</dd>
             </div>
             <div className="flex items-center justify-between gap-3 py-2.5">
-              <dt className="text-[#6B756F]">Ukuran Botol</dt>
-              <dd className="text-[#252B28]">{bottleSize}</dd>
+              <dt className="text-[#54625B]">Ukuran Botol</dt>
+              <dd className="text-[#17201C]">{bottleSize}</dd>
             </div>
             <div className="flex items-center justify-between gap-3 py-2.5">
-              <dt className="text-[#6B756F]">Jumlah Unit</dt>
-              <dd className="font-mono font-semibold text-[#252B28]">
+              <dt className="text-[#54625B]">Jumlah Unit</dt>
+              <dd className="font-mono font-semibold text-[#17201C]">
                 {quantitySubmitted} unit
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3 py-2.5">
-              <dt className="text-[#6B756F]">Berat Tercatat</dt>
-              <dd className="font-mono text-[#252B28]">
+              <dt className="text-[#54625B]">Berat Tercatat</dt>
+              <dd className="font-mono text-[#17201C]">
                 {weightKg.trim() ? `${weightKg} kg` : 'Ditimbang di pos'}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3 py-2.5">
-              <dt className="text-[#6B756F]">Potensi Green Points</dt>
-              <dd className="font-mono font-semibold text-[#245C45]">
+              <dt className="text-[#54625B]">Potensi Green Points</dt>
+              <dd className="font-mono font-semibold text-[#166549]">
                 +{liveEstimatedGp.toLocaleString('id-ID')} GP (jika lolos semua)
               </dd>
             </div>
@@ -919,17 +1022,17 @@ export function EcobrickContributionPage({
       )}
 
       {submitStep === 'done' && (
-        <section className="animate-traceco-enter rounded-md border border-[#C6DBC9] bg-white p-5 sm:p-6 space-y-5">
+        <section className="animate-traceco-enter rounded-lg border border-[#B5CEC0] bg-white p-5 sm:p-6 space-y-5">
           {renderWizardStepper()}
           <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#245C45]" />
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#166549]" />
             <div className="space-y-1">
-              <h2 className="font-display text-lg font-semibold text-[#252B28]">
+              <h2 className="font-display text-lg font-semibold text-[#17201C]">
                 Submission Berhasil Dicatat
               </h2>
-              <p className="text-xs text-[#6B756F]">
+              <p className="text-xs text-[#54625B]">
                 Kontribusi Anda dengan ID{' '}
-                <strong className="font-mono text-[#245C45]">
+                <strong className="font-mono text-[#166549]">
                   {lastSubmittedId}
                 </strong>{' '}
                 telah masuk ke antrean pos Eco-Hub.
@@ -940,7 +1043,7 @@ export function EcobrickContributionPage({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 border-t border-[#EEF2EF] pt-4">
+          <div className="flex flex-wrap gap-2 border-t border-[#EAEFEA] pt-4">
             {lastSubmittedId && (
               <PrimaryButton
                 size="sm"
@@ -1021,7 +1124,7 @@ export function EcobrickContributionPage({
 
         <div className="relative w-full sm:w-64">
           <Search
-            className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+            className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
             aria-hidden="true"
           />
           <input
@@ -1030,7 +1133,7 @@ export function EcobrickContributionPage({
             value={historySearch}
             onChange={(e) => setHistorySearch(e.target.value)}
             placeholder="Cari ID, pos, atau nama..."
-            className="w-full rounded border border-[#CFD8D2] bg-white py-1.5 pr-3 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] focus:border-[#245C45] focus:outline-none"
+            className="w-full rounded-md border border-[#C6D1CA] bg-white py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] focus:border-[#166549] focus:outline-none"
           />
         </div>
       </div>
@@ -1038,7 +1141,7 @@ export function EcobrickContributionPage({
       {/* Mobile Cards (< md) */}
       <div className="space-y-3 md:hidden">
         {filteredSubmissions.length === 0 ? (
-          <div className="rounded-md border border-[#E3E8E4] bg-white p-6 text-center text-xs text-[#6B756F]">
+          <div className="rounded-lg border border-[#D8DFDA] bg-white p-6 text-center text-xs text-[#54625B]">
             Belum ada catatan kontribusi pada filter atau pencarian ini.
           </div>
         ) : (
@@ -1049,14 +1152,14 @@ export function EcobrickContributionPage({
             return (
               <div
                 key={s.submissionId}
-                className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2.5"
+                className="rounded-lg border border-[#D8DFDA] bg-white p-4 space-y-2.5"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-mono text-xs font-semibold text-[#245C45]">
+                    <p className="font-mono text-xs font-semibold text-[#166549]">
                       {s.submissionId}
                     </p>
-                    <p className="font-mono text-[11px] text-[#6B756F]">
+                    <p className="font-mono text-[11px] text-[#54625B]">
                       {s.date}
                       {!isContributorView && ctr ? ` · ${ctr.name}` : ''}
                     </p>
@@ -1064,18 +1167,18 @@ export function EcobrickContributionPage({
                   <StatusTag status={s.status} />
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#EEF2EF] pt-2 text-xs">
-                  <span className="font-medium text-[#252B28]">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#EAEFEA] pt-2 text-xs">
+                  <span className="font-medium text-[#17201C]">
                     {s.quantitySubmitted} unit
                     {s.weightKg ? ` · ${s.weightKg.toFixed(2)} kg` : ''}
                   </span>
-                  <span className="font-mono font-semibold text-[#245C45]">
+                  <span className="font-mono font-semibold text-[#166549]">
                     {pts > 0 ? `+${pts} GP` : '-'}
                   </span>
                 </div>
 
                 {ver?.rejectionReason && (
-                  <p className="text-[11px] text-[#991B1B]">
+                  <p className="text-[11px] text-[#B91C1C]">
                     Alasan: {ver.rejectionReason}
                   </p>
                 )}

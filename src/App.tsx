@@ -32,6 +32,7 @@ import {
   createDistributionRequestInFirestore,
   createDropOffPointInFirestore,
   createRewardCatalogItemInFirestore,
+  deleteRewardCatalogItemInFirestore,
   fetchUserProfile,
   initializeMasterCatalogInFirestore,
   markAllNotificationsReadInFirestore,
@@ -48,6 +49,7 @@ import {
   updateDistributionStatusInFirestore,
   updateIncentiveStatusInFirestore,
   updateRedemptionStatusInFirestore,
+  updateRewardCatalogItemInFirestore,
   verifySubmissionInFirestore,
 } from './services/tracecoFirestore';
 import { AppShell, type ToastNotice } from './components/layout/AppShell';
@@ -607,6 +609,48 @@ export default function App() {
     }
   };
 
+  const handleUpdateRewardItem = async (
+    rewardId: string,
+    payload: {
+      title: string;
+      category: RewardCatalogItem['category'];
+      pointsCost: number;
+      description: string;
+      stockNote: string;
+    }
+  ): Promise<{ error?: string }> => {
+    try {
+      await updateRewardCatalogItemInFirestore(rewardId, payload);
+      showToast(
+        `Item "${payload.title.trim()}" diperbarui (${payload.pointsCost.toLocaleString('id-ID')} GP).`
+      );
+      return {};
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message);
+      return { error: message };
+    }
+  };
+
+  const handleDeleteRewardItem = async (
+    rewardId: string,
+    rewardTitle?: string
+  ): Promise<{ error?: string }> => {
+    try {
+      await deleteRewardCatalogItemInFirestore(rewardId);
+      showToast(
+        rewardTitle
+          ? `Barang "${rewardTitle}" dihapus dari Green Marketplace.`
+          : `Item ${rewardId} dihapus dari Green Marketplace.`
+      );
+      return {};
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message);
+      return { error: message };
+    }
+  };
+
   const handleInitializeMasterCatalog = async (): Promise<{ error?: string }> => {
     try {
       const res = await initializeMasterCatalogInFirestore(
@@ -792,10 +836,10 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#F2F4F2] flex items-center justify-center p-6">
         <div className="text-center space-y-3">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#245C45] border-r-transparent" />
-          <p className="text-sm font-medium text-[#6B756F]">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#166549] border-r-transparent" />
+          <p className="text-sm font-medium text-[#54625B]">
             Memuat sesi TRACECO...
           </p>
         </div>
@@ -917,6 +961,8 @@ export default function App() {
           onUpdateRedemptionStatus={handleUpdateRedemptionStatus}
           onUpdateIncentiveStatus={handleUpdateIncentiveStatus}
           onCreateRewardItem={handleCreateRewardItem}
+          onUpdateRewardItem={handleUpdateRewardItem}
+          onDeleteRewardItem={handleDeleteRewardItem}
           onInitializeMasterCatalog={handleInitializeMasterCatalog}
         />
       )}

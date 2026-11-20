@@ -14,18 +14,18 @@ export function PageHeader({
   footer,
 }: PageHeaderProps) {
   return (
-    <header className="border-b border-[#E3E8E4] pb-5">
+    <header className="border-b border-[#D8DFDA] pb-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-3xl space-y-1.5">
-          <h1 className="font-display text-[22px] font-semibold leading-tight tracking-tight text-[#252B28] sm:text-[26px] [text-wrap:balance]">
+          <h1 className="font-display text-[22px] font-semibold leading-tight tracking-tight text-[#111E19] sm:text-[26px] [text-wrap:balance]">
             {title}
           </h1>
-          <p className="text-[13px] leading-relaxed text-[#6B756F]">
+          <p className="text-[13px] leading-relaxed text-[#54625B]">
             {description}
           </p>
         </div>
         {actions && (
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             {actions}
           </div>
         )}
@@ -53,11 +53,11 @@ export function SectionHeader({
       className={`flex flex-wrap items-start justify-between gap-3 ${className}`}
     >
       <div className="min-w-[220px] flex-1 space-y-0.5">
-        <h2 className="font-display text-base font-semibold tracking-tight text-[#252B28]">
+        <h2 className="font-display text-base font-semibold tracking-tight text-[#111E19]">
           {title}
         </h2>
         {description && (
-          <p className="text-xs leading-relaxed text-[#6B756F]">
+          <p className="text-xs leading-relaxed text-[#54625B]">
             {description}
           </p>
         )}

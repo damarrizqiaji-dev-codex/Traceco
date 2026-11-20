@@ -131,6 +131,7 @@ export function EcoMonitorPage({
     {
       key: 'submissionId',
       header: 'Submission & Batch',
+      sortValue: (s) => s.submissionId,
       render: (s) => {
         const ver = verificationMap.get(s.submissionId);
         return (
@@ -141,12 +142,12 @@ export function EcoMonitorPage({
                 e.stopPropagation();
                 openDetail(s.submissionId);
               }}
-              className="font-mono text-xs font-semibold text-[#245C45] hover:underline"
+              className="font-mono text-xs font-semibold text-[#166549] hover:underline"
             >
               {s.submissionId}
             </button>
             {ver?.batchId && (
-              <p className="font-mono text-[11px] text-[#6B756F]">
+              <p className="font-mono text-[11px] text-[#54625B]">
                 Batch {ver.batchId}
               </p>
             )}
@@ -157,11 +158,12 @@ export function EcoMonitorPage({
     {
       key: 'contributor',
       header: 'Kontributor',
+      sortValue: (s) => contributorMap.get(s.contributorId)?.name ?? '',
       render: (s) => {
         const ctr = contributorMap.get(s.contributorId);
         return (
           <div className="space-y-0.5 text-xs">
-            <p className="font-medium text-[#252B28]">{ctr?.name ?? '-'}</p>
+            <p className="font-medium text-[#17201C]">{ctr?.name ?? '-'}</p>
             {ctr && <RoleTag role={ctr.role} segment={ctr.segment} />}
           </div>
         );
@@ -171,6 +173,7 @@ export function EcoMonitorPage({
       key: 'submitted',
       header: 'Diserahkan',
       align: 'right',
+      sortValue: (s) => s.quantitySubmitted,
       render: (s) => (
         <span className="font-mono text-xs tabular-nums whitespace-nowrap">
           {s.quantitySubmitted} unit
@@ -181,8 +184,9 @@ export function EcoMonitorPage({
       key: 'verified',
       header: 'Terverifikasi',
       align: 'right',
+      sortValue: (s) => s.verifiedQuantity,
       render: (s) => (
-        <span className="font-mono text-xs font-medium text-[#245C45] tabular-nums whitespace-nowrap">
+        <span className="font-mono text-xs font-medium text-[#166549] tabular-nums whitespace-nowrap">
           {s.verifiedQuantity} unit
         </span>
       ),
@@ -191,8 +195,9 @@ export function EcoMonitorPage({
       key: 'rejected',
       header: 'Ditolak',
       align: 'right',
+      sortValue: (s) => s.rejectedQuantity,
       render: (s) => (
-        <span className="font-mono text-xs text-[#991B1B] tabular-nums whitespace-nowrap">
+        <span className="font-mono text-xs text-[#B91C1C] tabular-nums whitespace-nowrap">
           {s.rejectedQuantity} unit
         </span>
       ),
@@ -200,6 +205,7 @@ export function EcoMonitorPage({
     {
       key: 'status',
       header: 'Status',
+      sortValue: (s) => s.status,
       render: (s) => <StatusTag status={s.status} />,
     },
     {
@@ -213,7 +219,7 @@ export function EcoMonitorPage({
             e.stopPropagation();
             openDetail(s.submissionId);
           }}
-          className="inline-flex items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2.5 py-1 text-[11px] font-medium text-[#245C45] transition-colors hover:bg-[#E7F0E8] active:scale-[0.985] whitespace-nowrap"
+          className="inline-flex items-center gap-1 rounded-md border border-[#C6D1CA] bg-white px-2.5 py-1 text-[11px] font-medium text-[#166549] transition-colors duration-150 hover:bg-[#EBF4EF] active:scale-[0.985] whitespace-nowrap"
         >
           <Eye className="h-3 w-3" aria-hidden="true" />
           <span>Detail</span>
@@ -242,17 +248,19 @@ export function EcoMonitorPage({
             value: `${metrics.ecobricksVerifiedCount} unit`,
             hint: `${metrics.verificationRatePercent}% tingkat lolos`,
             accent: 'primary',
+            progressPercent: metrics.verificationRatePercent,
           },
           {
             label: 'Didistribusikan',
             value: `${metrics.ecobricksDistributedCount} unit`,
             hint: `${metrics.inventoryAvailableCount} tersedia di stok`,
+            accent: 'teal',
           },
           {
             label: 'Dimanfaatkan',
             value: `${metrics.ecobricksUtilizedCount} unit`,
             hint: `${state.utilization_records.length} proyek selesai`,
-            accent: 'primary',
+            accent: 'teal',
           },
         ]}
       />
@@ -275,24 +283,24 @@ export function EcoMonitorPage({
       {currentTab === 'trends' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-7">
+            <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-7">
               <ContributionTrendChart
                 submissions={state.ecobrick_submissions}
                 title="Tren Kontribusi Ekosistem"
                 defaultRange="3m"
               />
             </section>
-            <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-5 lg:col-span-5">
+            <section className="space-y-5 rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-5">
               <SectionHeader title="Komposisi Hasil Verifikasi" />
               <VerificationOutcomeBar metrics={metrics} />
-              <div className="border-t border-[#EEF2EF] pt-4 space-y-1">
-                <p className="text-xs font-medium text-[#6B756F]">
-                  Konteks Lingkungan (Ecobrick Terverifikasi)
+              <div className="space-y-1.5 rounded-lg border border-[#243A31] bg-[#111E19] p-4 text-[#ECF2EE]">
+                <p className="text-xs font-medium text-[#6EE7B7]">
+                  Dampak Pengalihan Plastik Terverifikasi
                 </p>
-                <p className="font-display text-2xl font-semibold text-[#245C45] tabular-nums">
+                <p className="font-display text-2xl font-semibold text-white tabular-nums">
                   {metrics.plasticDivertedContextKg.toFixed(1)} kg
                 </p>
-                <p className="text-[11px] text-[#6B756F]">
+                <p className="text-[11px] text-[#9EB5AA]">
                   Akumulasi berat plastik terkemas dari{' '}
                   {state.ecobrick_batches.length} batch terverifikasi.
                 </p>
@@ -305,11 +313,11 @@ export function EcoMonitorPage({
       {currentTab === 'users' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <section className="rounded-md border border-[#E3E8E4] bg-white p-5 lg:col-span-5">
+            <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-5">
               <ActiveContributorsChart breakdown={contributorBreakdown} />
             </section>
 
-            <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-3 lg:col-span-7">
+            <section className="space-y-3 rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-7">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <SectionHeader
                   title="Aktivitas Ekosistem Terbaru"
@@ -325,7 +333,7 @@ export function EcoMonitorPage({
                 </SecondaryButton>
               </div>
 
-              <div className="divide-y divide-[#EEF2EF]">
+              <div className="divide-y divide-[#EAEFEA]">
                 {state.recent_activities.slice(0, 6).map((act) => (
                   <ActivityItem
                     key={act.id}
@@ -338,7 +346,7 @@ export function EcoMonitorPage({
           </div>
 
           {showCommunityHub && (
-            <div className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4">
+            <div className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5">
               <SectionHeader
                 title="Koordinasi Community Hub"
                 description="Kelola agenda komunitas, moderasi forum tanya-jawab, uji kelayakan, dan kemitraan."
@@ -364,12 +372,12 @@ export function EcoMonitorPage({
       {currentTab === 'utilization' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4 lg:col-span-7">
+            <section className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-7">
               <SectionHeader title="Perbandingan Tahapan Pipeline Ecobrick" />
               <EcobrickPipelineComparisonChart metrics={metrics} />
             </section>
 
-            <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4 lg:col-span-5">
+            <section className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-5">
               <SectionHeader title="Distribusi & Pemanfaatan" />
               <DistributionUtilizationChart metrics={metrics} />
             </section>
@@ -378,7 +386,7 @@ export function EcoMonitorPage({
           <section className="space-y-3">
             <SectionHeader title="Audit Keterlacakan Submission & Batch" />
 
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E3E8E4] bg-white px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
               <FilterBar
                 ariaLabel="Filter status submission audit"
                 value={auditStatusFilter}
@@ -415,7 +423,7 @@ export function EcoMonitorPage({
 
               <div className="relative w-full sm:w-64">
                 <Search
-                  className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+                  className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
                   aria-hidden="true"
                 />
                 <input
@@ -424,7 +432,7 @@ export function EcoMonitorPage({
                   value={auditSearch}
                   onChange={(e) => setAuditSearch(e.target.value)}
                   placeholder="Cari ID, batch, atau nama..."
-                  className="w-full rounded border border-[#CFD8D2] bg-[#F7F9F7] py-1.5 pr-3 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] transition-colors focus:border-[#245C45] focus:bg-white focus:outline-none"
+                  className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] transition-colors focus:border-[#166549] focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
@@ -437,22 +445,22 @@ export function EcoMonitorPage({
                 return (
                   <div
                     key={s.submissionId}
-                    className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2"
+                    className="space-y-2 rounded-lg border border-[#D8DFDA] bg-white p-4"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-mono text-xs font-semibold text-[#245C45]">
+                        <p className="font-mono text-xs font-semibold text-[#166549]">
                           {s.submissionId}
                           {ver?.batchId ? ` · ${ver.batchId}` : ''}
                         </p>
-                        <p className="text-xs font-medium text-[#252B28]">
+                        <p className="text-xs font-medium text-[#17201C]">
                           {ctr?.name ?? '-'}
                         </p>
                       </div>
                       <StatusTag status={s.status} />
                     </div>
-                    <div className="flex items-center justify-between border-t border-[#EEF2EF] pt-2 text-xs">
-                      <span className="font-mono text-[#6B756F]">
+                    <div className="flex items-center justify-between border-t border-[#EAEFEA] pt-2 text-xs">
+                      <span className="font-mono text-[#54625B]">
                         {s.verifiedQuantity}/{s.quantitySubmitted} unit lolos
                       </span>
                       <SecondaryButton

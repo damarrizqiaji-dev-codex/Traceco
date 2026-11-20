@@ -291,16 +291,16 @@ export function AuthPages({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F9F7] text-[#252B28]">
-      <header className="border-b border-[#E3E8E4] bg-white px-4 py-3.5 sm:px-8">
-        <div className="mx-auto flex max-w-[1040px] items-center justify-between gap-4">
+    <div className="min-h-screen flex flex-col bg-[#F2F4F2] text-[#17201C]">
+      <header className="border-b border-[#D8DFDA] bg-white px-4 py-3 sm:px-8">
+        <div className="mx-auto flex max-w-[1060px] items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
             <TracecoLogo size="sm" />
-            <span className="font-display text-[16px] font-bold tracking-tight text-[#252B28] whitespace-nowrap">
+            <span className="font-display text-[16px] font-bold tracking-tight text-[#111E19] whitespace-nowrap">
               TRACECO
             </span>
           </div>
-          <span className="text-xs font-medium text-[#6B756F]">
+          <span className="font-mono text-[11px] font-medium text-[#54625B]">
             Pesantren Al-Amanah · Eco-Hub
           </span>
         </div>
@@ -308,176 +308,177 @@ export function AuthPages({
 
       <main className="flex flex-1 items-start justify-center px-4 py-6 sm:px-8 lg:items-center lg:py-10">
         {pendingGoogleUser ? (
-          <section className="animate-traceco-enter w-full max-w-[780px] rounded-md border border-[#E3E8E4] bg-white p-5 sm:p-8">
-            <div className="space-y-1.5 border-b border-[#E3E8E4] pb-5">
-              <p className="text-xs font-semibold text-[#245C45]">
-                Akun Google Terautentikasi ·{' '}
-                <span className="font-mono text-[#6B756F] break-all">
+          <section className="animate-traceco-enter w-full max-w-[780px] overflow-hidden rounded-lg border border-[#D8DFDA] bg-white">
+            <div className="bg-[#111E19] px-6 py-5 text-white sm:px-8">
+              <p className="font-mono text-[11px] font-semibold text-[#6EE7B7]">
+                TERAUTENTIKASI ·{' '}
+                <span className="text-[#C8D8D0] break-all">
                   {pendingGoogleUser.email}
                 </span>
               </p>
-              <h1 className="font-display text-xl font-semibold text-[#252B28] sm:text-2xl">
+              <h1 className="mt-1 font-display text-xl font-semibold text-white sm:text-2xl">
                 Pilih Peran &amp; Lengkapi Profil
               </h1>
-              <p className="text-xs text-[#6B756F]">
+              <p className="mt-1 text-xs text-[#9EB5AA]">
                 Setiap akun terikat pada satu peran tetap untuk menjaga
                 integritas data kontribusi dan verifikasi.
               </p>
             </div>
 
-            {displayedError && (
-              <div
-                role="alert"
-                className="mt-5 rounded border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#991B1B]"
-              >
-                {displayedError}
-              </div>
-            )}
-
-            <form
-              onSubmit={handleOnboardingSubmit}
-              className="mt-6 space-y-5"
-            >
-              <FormField id="onboard-name" label="Nama Lengkap / Panggilan">
-                <input
-                  id="onboard-name"
-                  type="text"
-                  required
-                  value={regName}
-                  onChange={(e) => setRegName(e.target.value)}
-                  placeholder="Contoh: Muhammad Rizqi"
-                  className={fieldInputClass}
-                />
-              </FormField>
-
-              <div className="space-y-2">
-                <span
-                  id="onboard-role-label"
-                  className="text-xs font-medium text-[#252B28]"
-                >
-                  Peran Ekosistem
-                </span>
+            <div className="p-6 sm:p-8">
+              {displayedError && (
                 <div
-                  role="radiogroup"
-                  aria-labelledby="onboard-role-label"
-                  className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+                  role="alert"
+                  className="mb-5 rounded-md border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#B91C1C]"
                 >
-                  {ROLE_OPTIONS.map((option) => {
-                    const isSelected = regRole === option.role;
-                    return (
-                      <button
-                        key={option.role}
-                        type="button"
-                        role="radio"
-                        aria-checked={isSelected}
-                        onClick={() => setRegRole(option.role)}
-                        className={`flex min-h-[44px] flex-col justify-between rounded-md border p-4 text-left transition-colors duration-150 cursor-pointer touch-manipulation ${
-                          isSelected
-                            ? 'border-[#245C45] bg-[#E7F0E8]/70'
-                            : 'border-[#E3E8E4] bg-white hover:border-[#CFD8D2]'
-                        }`}
-                      >
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <span
-                              className={`text-sm font-semibold ${
-                                isSelected ? 'text-[#245C45]' : 'text-[#252B28]'
-                              }`}
-                            >
-                              {option.role}
-                            </span>
-                            {isSelected && (
-                              <CheckCircle2
-                                className="h-4 w-4 shrink-0 text-[#245C45]"
-                                aria-hidden="true"
-                              />
-                            )}
-                          </div>
-                          <p className="text-[11px] font-medium text-[#4F8A68]">
-                            {option.scope}
-                          </p>
-                          <p className="text-xs leading-relaxed text-[#6B756F]">
-                            {option.summary}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {displayedError}
                 </div>
+              )}
 
-                {regRole === 'Kontributor' && (
-                  <div className="pt-2">
-                    <FormField
-                      id="onboard-segment"
-                      label="Kategori Kontributor"
-                    >
-                      <select
-                        id="onboard-segment"
-                        value={regSegment}
-                        onChange={(e) =>
-                          setRegSegment(e.target.value as ContributorSegment)
-                        }
-                        className={fieldInputClass}
-                      >
-                        {KONTRIBUTOR_SEGMENTS.map((seg) => (
-                          <option key={seg.value} value={seg.value}>
-                            {seg.label}
-                          </option>
-                        ))}
-                      </select>
-                    </FormField>
-                  </div>
-                )}
-              </div>
+              <form onSubmit={handleOnboardingSubmit} className="space-y-5">
+                <FormField id="onboard-name" label="Nama Lengkap / Panggilan">
+                  <input
+                    id="onboard-name"
+                    type="text"
+                    required
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    placeholder="Contoh: Muhammad Rizqi"
+                    className={fieldInputClass}
+                  />
+                </FormField>
 
-              <FormField
-                id="onboard-unit"
-                label="Unit Asrama / Lembaga / Alamat RT-RW"
-              >
-                <input
-                  id="onboard-unit"
-                  type="text"
-                  required
-                  value={regUnit}
-                  onChange={(e) => setRegUnit(e.target.value)}
-                  placeholder={selectedRoleOption.unitPlaceholder}
-                  className={fieldInputClass}
-                />
-              </FormField>
-
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E3E8E4] pt-4">
-                {onCancelOnboarding && (
-                  <button
-                    type="button"
-                    onClick={onCancelOnboarding}
-                    className="min-h-[40px] text-xs font-medium text-[#6B756F] hover:text-[#252B28] touch-manipulation"
+                <div className="space-y-2">
+                  <span
+                    id="onboard-role-label"
+                    className="text-xs font-medium text-[#17201C]"
                   >
-                    Batal / Ganti Akun
-                  </button>
-                )}
-                <div className="ml-auto">
-                  <PrimaryButton type="submit" disabled={loading}>
-                    <span>
-                      {loading ? 'Menyimpan...' : 'Simpan & Mulai TRACECO'}
-                    </span>
-                  </PrimaryButton>
+                    Peran Ekosistem
+                  </span>
+                  <div
+                    role="radiogroup"
+                    aria-labelledby="onboard-role-label"
+                    className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+                  >
+                    {ROLE_OPTIONS.map((option) => {
+                      const isSelected = regRole === option.role;
+                      return (
+                        <button
+                          key={option.role}
+                          type="button"
+                          role="radio"
+                          aria-checked={isSelected}
+                          onClick={() => setRegRole(option.role)}
+                          className={`flex min-h-[44px] flex-col justify-between rounded-lg border p-4 text-left transition-all duration-150 cursor-pointer touch-manipulation ${
+                            isSelected
+                              ? 'border-[#166549] bg-[#EBF4EF]'
+                              : 'border-[#D8DFDA] bg-white hover:border-[#9EB0A6]'
+                          }`}
+                        >
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span
+                                className={`text-sm font-semibold ${
+                                  isSelected
+                                    ? 'text-[#166549]'
+                                    : 'text-[#17201C]'
+                                }`}
+                              >
+                                {option.role}
+                              </span>
+                              {isSelected && (
+                                <CheckCircle2
+                                  className="h-4 w-4 shrink-0 text-[#166549]"
+                                  aria-hidden="true"
+                                />
+                              )}
+                            </div>
+                            <p className="text-[11px] font-medium text-[#1D6373]">
+                              {option.scope}
+                            </p>
+                            <p className="text-xs leading-relaxed text-[#54625B]">
+                              {option.summary}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {regRole === 'Kontributor' && (
+                    <div className="pt-2">
+                      <FormField
+                        id="onboard-segment"
+                        label="Kategori Kontributor"
+                      >
+                        <select
+                          id="onboard-segment"
+                          value={regSegment}
+                          onChange={(e) =>
+                            setRegSegment(e.target.value as ContributorSegment)
+                          }
+                          className={fieldInputClass}
+                        >
+                          {KONTRIBUTOR_SEGMENTS.map((seg) => (
+                            <option key={seg.value} value={seg.value}>
+                              {seg.label}
+                            </option>
+                          ))}
+                        </select>
+                      </FormField>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </form>
+
+                <FormField
+                  id="onboard-unit"
+                  label="Unit Asrama / Lembaga / Alamat RT-RW"
+                >
+                  <input
+                    id="onboard-unit"
+                    type="text"
+                    required
+                    value={regUnit}
+                    onChange={(e) => setRegUnit(e.target.value)}
+                    placeholder={selectedRoleOption.unitPlaceholder}
+                    className={fieldInputClass}
+                  />
+                </FormField>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EAEFEA] pt-4">
+                  {onCancelOnboarding && (
+                    <button
+                      type="button"
+                      onClick={onCancelOnboarding}
+                      className="min-h-[40px] text-xs font-medium text-[#54625B] hover:text-[#17201C] touch-manipulation"
+                    >
+                      Batal / Ganti Akun
+                    </button>
+                  )}
+                  <div className="ml-auto">
+                    <PrimaryButton type="submit" disabled={loading}>
+                      <span>
+                        {loading ? 'Menyimpan...' : 'Simpan & Mulai TRACECO'}
+                      </span>
+                    </PrimaryButton>
+                  </div>
+                </div>
+              </form>
+            </div>
           </section>
         ) : signedInFallback ? (
-          <section className="animate-traceco-enter w-full max-w-[480px] rounded-md border border-[#E3E8E4] bg-white p-6 sm:p-8 space-y-5">
+          <section className="animate-traceco-enter w-full max-w-[480px] rounded-lg border border-[#D8DFDA] bg-white p-6 sm:p-8 space-y-5">
             <div className="space-y-1.5 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md border border-[#E3E8E4] bg-[#F7F9F7]">
-                <TracecoLogo size="sm" />
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg border border-[#243A31] bg-[#111E19]">
+                <TracecoLogo size="sm" tone="dark" />
               </div>
-              <h1 className="font-display text-xl font-semibold text-[#252B28]">
+              <h1 className="font-display text-xl font-semibold text-[#17201C]">
                 Akun Google Sudah Terhubung
               </h1>
-              <p className="font-mono text-xs text-[#245C45] break-all">
+              <p className="font-mono text-xs text-[#166549] break-all">
                 {signedInFallback.email}
               </p>
-              <p className="text-xs text-[#6B756F]">
+              <p className="text-xs text-[#54625B]">
                 Sesi login aktif, tetapi profil database gagal dimuat. Ketuk
                 tombol di bawah untuk memuat ulang atau ganti akun.
               </p>
@@ -486,7 +487,7 @@ export function AuthPages({
             {displayedError && (
               <div
                 role="alert"
-                className="rounded border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs text-[#991B1B]"
+                className="rounded-md border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs text-[#B91C1C]"
               >
                 {displayedError}
               </div>
@@ -496,7 +497,7 @@ export function AuthPages({
               <button
                 type="button"
                 onClick={signedInFallback.onRetry}
-                className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-md bg-[#245C45] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#1B4735] cursor-pointer touch-manipulation"
+                className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-md bg-[#166549] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#0F4C36] active:scale-[0.985] cursor-pointer touch-manipulation transition-all duration-150"
               >
                 <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Muat Ulang Profil</span>
@@ -504,7 +505,7 @@ export function AuthPages({
               <button
                 type="button"
                 onClick={signedInFallback.onLogout}
-                className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-md border border-[#CFD8D2] bg-white px-4 py-2.5 text-xs font-semibold text-[#252B28] hover:bg-[#F7F9F7] cursor-pointer touch-manipulation"
+                className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-md border border-[#C6D1CA] bg-white px-4 py-2.5 text-xs font-semibold text-[#17201C] hover:bg-[#F2F4F2] cursor-pointer touch-manipulation transition-colors duration-150"
               >
                 <LogOut className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Keluar / Ganti Akun</span>
@@ -512,32 +513,34 @@ export function AuthPages({
             </div>
           </section>
         ) : (
-          <div className="mx-auto grid w-full max-w-[960px] grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-14">
+          <div className="mx-auto grid w-full max-w-[1000px] grid-cols-1 items-stretch gap-6 lg:grid-cols-12">
             {/* Sign-In Card FIRST on mobile for immediate access */}
-            <section className="order-1 lg:order-2 lg:col-span-6">
-              <div className="animate-traceco-enter rounded-md border border-[#E3E8E4] bg-white p-6 sm:p-10 space-y-5">
+            <section className="order-1 flex flex-col lg:order-2 lg:col-span-6">
+              <div className="animate-traceco-enter flex h-full flex-col justify-between rounded-lg border border-[#D8DFDA] bg-white p-6 sm:p-10 space-y-6">
                 <div className="space-y-2 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md border border-[#E3E8E4] bg-[#F7F9F7]">
-                    <TracecoLogo size="sm" />
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg border border-[#243A31] bg-[#111E19]">
+                    <TracecoLogo size="sm" tone="dark" />
                   </div>
-                  <h2 className="font-display text-xl font-semibold text-[#252B28] sm:text-2xl">
+                  <h2 className="font-display text-xl font-semibold text-[#17201C] sm:text-2xl">
                     Masuk ke TRACECO
                   </h2>
-                  <p className="text-xs text-[#6B756F]">
-                    Autentikasi dengan akun Google Anda untuk melanjutkan.
+                  <p className="text-xs text-[#54625B]">
+                    Autentikasi dengan akun Google Anda untuk mengakses
+                    platform.
                   </p>
                 </div>
 
                 {inAppWebView && (
-                  <div className="rounded border border-[#FDE68A] bg-[#FFFBEB] p-3 text-xs text-[#92400E] space-y-2">
+                  <div className="rounded-md border border-[#FCD34D] bg-[#FFFBEB] p-3 text-xs text-[#B45309] space-y-2">
                     <p className="font-medium">
-                      Anda membuka tautan di browser bawaan aplikasi (WhatsApp/IG).
-                      Google Login hanya berfungsi di Chrome atau Safari.
+                      Anda membuka tautan di browser bawaan aplikasi
+                      (WhatsApp/IG). Google Login hanya berfungsi di Chrome atau
+                      Safari.
                     </p>
                     <button
                       type="button"
                       onClick={handleCopyCurrentUrl}
-                      className="inline-flex items-center gap-1.5 rounded border border-[#FCD34D] bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#92400E] touch-manipulation"
+                      className="inline-flex items-center gap-1.5 rounded border border-[#F59E0B] bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#B45309] touch-manipulation"
                     >
                       {copiedPageUrl ? (
                         <>
@@ -557,7 +560,7 @@ export function AuthPages({
                 {displayedError && (
                   <div
                     role="alert"
-                    className="rounded border border-[#FECACA] bg-[#FEF2F2] p-3.5 text-xs text-[#991B1B] space-y-2.5"
+                    className="rounded-md border border-[#FECACA] bg-[#FEF2F2] p-3.5 text-xs text-[#B91C1C] space-y-2.5"
                   >
                     <div className="flex items-start gap-2 font-medium">
                       <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
@@ -565,8 +568,8 @@ export function AuthPages({
                     </div>
 
                     {unauthorizedHost && (
-                      <div className="rounded border border-[#FCA5A5]/60 bg-white/90 p-3 space-y-2 text-[11px] text-[#7F1D1D]">
-                        <p className="font-semibold text-[#991B1B]">
+                      <div className="rounded border border-[#FCA5A5]/60 bg-white/95 p-3 space-y-2 text-[11px] text-[#7F1D1D]">
+                        <p className="font-semibold text-[#B91C1C]">
                           Aktifkan domain ini di Firebase Console:
                         </p>
                         <ol className="list-decimal pl-4 space-y-1 leading-relaxed">
@@ -576,7 +579,7 @@ export function AuthPages({
                               href={`https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 font-semibold text-[#245C45] underline"
+                              className="inline-flex items-center gap-1 font-semibold text-[#166549] underline"
                             >
                               <span>Firebase Console · Authorized domains</span>
                               <ExternalLink
@@ -586,22 +589,23 @@ export function AuthPages({
                             </a>
                           </li>
                           <li>
-                            Pilih <strong>Add domain</strong> lalu masukkan hostname berikut:
+                            Pilih <strong>Add domain</strong> lalu masukkan
+                            hostname berikut:
                           </li>
                         </ol>
-                        <div className="flex items-center justify-between gap-2 rounded border border-[#E3E8E4] bg-[#F7F9F7] px-2.5 py-1.5">
-                          <code className="font-mono text-[11px] font-semibold text-[#252B28] break-all">
+                        <div className="flex items-center justify-between gap-2 rounded border border-[#D8DFDA] bg-[#F2F4F2] px-2.5 py-1.5">
+                          <code className="font-mono text-[11px] font-semibold text-[#17201C] break-all">
                             {unauthorizedHost}
                           </code>
                           <button
                             type="button"
                             onClick={handleCopyHost}
-                            className="inline-flex shrink-0 items-center gap-1 rounded border border-[#CFD8D2] bg-white px-2 py-1 text-[11px] font-medium text-[#252B28] hover:border-[#245C45]"
+                            className="inline-flex shrink-0 items-center gap-1 rounded border border-[#C6D1CA] bg-white px-2 py-1 text-[11px] font-medium text-[#17201C] hover:border-[#166549]"
                           >
                             {copiedHost ? (
                               <>
                                 <Check
-                                  className="h-3 w-3 text-[#245C45]"
+                                  className="h-3 w-3 text-[#166549]"
                                   aria-hidden="true"
                                 />
                                 <span>Tersalin</span>
@@ -624,7 +628,7 @@ export function AuthPages({
                     type="button"
                     disabled={loading}
                     onClick={handleGoogleSignIn}
-                    className="flex min-h-[46px] w-full items-center justify-center gap-3 rounded-md border border-[#CFD8D2] bg-white px-5 py-3 text-sm font-semibold text-[#252B28] transition-colors duration-150 hover:border-[#245C45] hover:bg-[#F7F9F7] cursor-pointer disabled:opacity-60 touch-manipulation"
+                    className="flex min-h-[48px] w-full items-center justify-center gap-3 rounded-md border border-[#C6D1CA] bg-white px-5 py-3 text-sm font-semibold text-[#17201C] transition-all duration-150 hover:border-[#166549] hover:bg-[#F8FAF8] active:scale-[0.99] cursor-pointer disabled:opacity-60 touch-manipulation"
                   >
                     <svg className="h-4.5 w-4.5 shrink-0" viewBox="0 0 24 24">
                       <path
@@ -654,53 +658,61 @@ export function AuthPages({
                       type="button"
                       disabled={loading}
                       onClick={handleRedirectSignIn}
-                      className="flex min-h-[40px] w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-[#245C45] hover:bg-[#E7F0E8]/60 cursor-pointer disabled:opacity-60 touch-manipulation"
+                      className="flex min-h-[42px] w-full items-center justify-center rounded-md px-3 py-2 text-xs font-medium text-[#166549] hover:bg-[#EBF4EF] cursor-pointer disabled:opacity-60 touch-manipulation transition-colors duration-150"
                     >
                       Masuk Mode Pengalihan (jika popup ponsel bermasalah)
                     </button>
                   )}
                 </div>
+
+                <div className="border-t border-[#EAEFEA] pt-4 text-center text-[11px] text-[#54625B]">
+                  Pengguna baru dapat memilih peran Kontributor, Admin, atau Mitra
+                  setelah autentikasi Google berhasil.
+                </div>
               </div>
             </section>
 
-            {/* Editorial Summary SECOND on mobile, LEFT on desktop */}
-            <section className="order-2 space-y-5 lg:order-1 lg:col-span-6">
-              <div className="space-y-2.5">
-                <p className="text-xs font-semibold text-[#245C45]">
-                  Traceable Eco-Contribution
+            {/* Editorial Obsidian Frame SECOND on mobile, LEFT on desktop */}
+            <section className="order-2 flex flex-col justify-between rounded-lg border border-[#243A31] bg-[#111E19] p-6 text-[#ECF2EE] sm:p-8 lg:order-1 lg:col-span-6 space-y-6">
+              <div className="space-y-3">
+                <p className="font-mono text-xs font-medium text-[#6EE7B7]">
+                  Pesantren Al-Amanah · Ekosistem Ecobrick
                 </p>
-                <h1 className="font-display text-2xl font-semibold leading-[1.15] tracking-tight text-[#252B28] sm:text-[34px] [text-wrap:balance]">
+                <h1 className="font-display text-2xl font-semibold leading-[1.15] tracking-tight text-white sm:text-[32px] [text-wrap:balance]">
                   Pencatatan &amp; Verifikasi Ecobrick Terpadu
                 </h1>
-                <p className="text-sm leading-relaxed text-[#6B756F]">
+                <p className="text-sm leading-relaxed text-[#9EB5AA]">
                   Satu platform akuntabel untuk penyetoran, inspeksi 8 kriteria,
                   inventori terverifikasi, dan penyaluran pemanfaatan.
                 </p>
               </div>
 
-              <div className="divide-y divide-[#E3E8E4] border-y border-[#E3E8E4]">
+              <div className="divide-y divide-[#243A31] border-y border-[#243A31]">
                 {ROLE_OPTIONS.map((item, idx) => (
                   <div
                     key={item.role}
-                    className="flex items-baseline justify-between gap-4 py-3"
+                    className="flex items-baseline justify-between gap-4 py-3.5"
                   >
                     <div className="flex items-baseline gap-3">
-                      <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums">
+                      <span className="font-mono text-xs font-semibold text-[#6EE7B7] tabular-nums">
                         {String(idx + 1).padStart(2, '0')}
                       </span>
-                      <span className="font-display text-sm font-semibold text-[#252B28]">
+                      <span className="font-display text-sm font-semibold text-white">
                         {item.role}
                       </span>
                     </div>
-                    <span className="text-right text-xs text-[#6B756F]">
+                    <span className="text-right text-xs text-[#9EB5AA]">
                       {item.scope}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <p className="flex items-center gap-2 text-xs text-[#6B756F]">
-                <Lock className="h-3.5 w-3.5 shrink-0 text-[#245C45]" aria-hidden="true" />
+              <p className="flex items-center gap-2 text-xs text-[#A6BCB1]">
+                <Lock
+                  className="h-3.5 w-3.5 shrink-0 text-[#6EE7B7]"
+                  aria-hidden="true"
+                />
                 <span>Satu akun Google terikat pada satu peran tetap.</span>
               </p>
             </section>

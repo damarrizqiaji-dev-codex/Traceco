@@ -34,18 +34,38 @@ interface GreenMarketplacePageProps {
   onNavigate: (page: AppPageId, sub?: string) => void;
 }
 
-function getCategoryIcon(category: RewardCatalogItem['category']) {
+function getCategoryVisual(category: RewardCatalogItem['category']) {
   switch (category) {
     case 'Merchandise Ramah Lingkungan':
-      return ShoppingBag;
+      return {
+        Icon: ShoppingBag,
+        boxClass: 'bg-[#EBF4EF] text-[#166549] border border-[#B5CEC0]',
+        labelClass: 'text-[#166549]',
+      };
     case 'Voucher Kegiatan':
-      return Ticket;
+      return {
+        Icon: Ticket,
+        boxClass: 'bg-[#EAF3F5] text-[#1D6373] border border-[#B2D3DC]',
+        labelClass: 'text-[#1D6373]',
+      };
     case 'Perlengkapan Belajar':
-      return BookOpen;
+      return {
+        Icon: BookOpen,
+        boxClass: 'bg-[#FEF3C7] text-[#B45309] border border-[#FCD34D]',
+        labelClass: 'text-[#B45309]',
+      };
     case 'Benefit Komunitas':
-      return Gift;
+      return {
+        Icon: Gift,
+        boxClass: 'bg-[#111E19] text-[#6EE7B7] border border-[#243A31]',
+        labelClass: 'text-[#17201C]',
+      };
     default:
-      return Award;
+      return {
+        Icon: Award,
+        boxClass: 'bg-[#EBF4EF] text-[#166549] border border-[#B5CEC0]',
+        labelClass: 'text-[#166549]',
+      };
   }
 }
 
@@ -80,6 +100,10 @@ export function GreenMarketplacePage({
   const myRedemptions = state.redemptions.filter(
     (r) => r.contributorId === actorId
   );
+
+  const affordableTotal = state.rewards.filter(
+    (r) => balanceSummary.balance >= r.pointsCost
+  ).length;
 
   const categories = Array.from(new Set(state.rewards.map((r) => r.category)));
   const filteredRewards = state.rewards.filter((item) => {
@@ -146,22 +170,54 @@ export function GreenMarketplacePage({
         title="Green Marketplace"
         description={`Tukarkan Green Points Anda (+${POINTS_PER_ECOBRICK} GP per ecobrick terverifikasi) dengan produk dan manfaat komunitas.`}
         actions={
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="text-right">
-              <p className="text-[11px] text-[#6B756F]">Saldo Anda</p>
-              <p className="font-mono text-sm font-semibold text-[#245C45] tabular-nums">
-                {balanceSummary.balance.toLocaleString('id-ID')} GP
-              </p>
-            </div>
-            <SecondaryButton
-              size="sm"
-              onClick={() => onNavigate('transactions', 'ledger')}
-            >
-              Riwayat Transaksi
-            </SecondaryButton>
-          </div>
+          <SecondaryButton
+            size="sm"
+            onClick={() => onNavigate('transactions', 'ledger')}
+          >
+            Riwayat Transaksi
+          </SecondaryButton>
         }
       />
+
+      {/* Obsidian GP Wallet Banner */}
+      <section className="rounded-lg border border-[#243A31] bg-[#111E19] p-5 text-[#ECF2EE]">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="font-mono text-xs font-medium text-[#6EE7B7]">
+              Dompet Green Points Aktif
+            </p>
+            <div className="flex flex-wrap items-baseline gap-3">
+              <p className="font-display text-3xl font-semibold text-white tabular-nums">
+                {balanceSummary.balance.toLocaleString('id-ID')} GP
+              </p>
+              <span className="text-xs text-[#9EB5AA]">
+                {affordableTotal} dari {state.rewards.length} item siap ditukar saat ini
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setOnlyAffordable((v) => !v);
+                if (currentTab !== 'catalog') onChangeSubTab('catalog');
+              }}
+              className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors duration-150 ${
+                onlyAffordable
+                  ? 'border-[#6EE7B7] bg-[#1F352C] text-[#6EE7B7]'
+                  : 'border-[#2D473B] bg-[#1A2C25] text-[#ECF2EE] hover:border-[#6EE7B7]'
+              }`}
+            >
+              <span>
+                {onlyAffordable
+                  ? 'Menampilkan Item Terjangkau'
+                  : `Saring Item Terjangkau (${affordableTotal})`}
+              </span>
+            </button>
+          </div>
+        </div>
+      </section>
 
       <SubNavTabs
         ariaLabel="Submenu Green Marketplace"
@@ -201,19 +257,19 @@ export function GreenMarketplacePage({
               />
 
               <div className="flex flex-wrap items-center gap-2.5">
-                <label className="inline-flex items-center gap-2 rounded border border-[#E3E8E4] bg-white px-3 py-1.5 text-xs text-[#252B28] cursor-pointer hover:border-[#C6DBC9] transition-colors duration-150">
+                <label className="inline-flex items-center gap-2 rounded-md border border-[#D8DFDA] bg-white px-3 py-1.5 text-xs text-[#17201C] cursor-pointer hover:border-[#166549] transition-colors duration-150">
                   <input
                     type="checkbox"
                     checked={onlyAffordable}
                     onChange={(e) => setOnlyAffordable(e.target.checked)}
-                    className="h-3.5 w-3.5 accent-[#245C45]"
+                    className="h-3.5 w-3.5 accent-[#166549]"
                   />
                   <span>Saldo mencukupi saja</span>
                 </label>
 
                 <div className="relative w-full sm:w-56">
                   <Search
-                    className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+                    className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
                     aria-hidden="true"
                   />
                   <input
@@ -222,15 +278,15 @@ export function GreenMarketplacePage({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari reward..."
-                    className="w-full rounded border border-[#CFD8D2] bg-white py-1.5 pr-3 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] focus:border-[#245C45] focus:outline-none"
+                    className="w-full rounded-md border border-[#C6D1CA] bg-white py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] focus:border-[#166549] focus:outline-none"
                   />
                 </div>
               </div>
             </div>
 
             {filteredRewards.length === 0 ? (
-              <div className="rounded-md border border-[#E3E8E4] bg-white p-8 text-center space-y-2">
-                <p className="text-xs font-medium text-[#252B28]">
+              <div className="rounded-lg border border-[#D8DFDA] bg-white p-8 text-center space-y-2">
+                <p className="text-xs font-medium text-[#17201C]">
                   Tidak ada item reward yang cocok dengan filter saat ini.
                 </p>
                 <SecondaryButton
@@ -247,7 +303,9 @@ export function GreenMarketplacePage({
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {filteredRewards.map((item) => {
-                  const Icon = getCategoryIcon(item.category);
+                  const { Icon, boxClass, labelClass } = getCategoryVisual(
+                    item.category
+                  );
                   const enough = balanceSummary.balance >= item.pointsCost;
                   const pct = Math.min(
                     100,
@@ -262,27 +320,31 @@ export function GreenMarketplacePage({
                   return (
                     <div
                       key={item.id}
-                      className="flex flex-col justify-between gap-4 rounded-md border border-[#E3E8E4] bg-white p-5 transition-[border-color,box-shadow] duration-150 hover:border-[#95BCA4]"
+                      className="group flex flex-col justify-between gap-4 rounded-lg border border-[#D8DFDA] bg-white p-5 transition-colors duration-150 hover:border-[#166549]"
                     >
                       <div className="flex items-start gap-3.5">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-[#E7F0E8]/70 text-[#245C45]">
+                        <div
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${boxClass}`}
+                        >
                           <Icon className="h-5 w-5" aria-hidden="true" />
                         </div>
                         <div className="min-w-0 flex-1 space-y-1">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <p className="text-[11px] font-medium text-[#4F8A68]">
+                              <p
+                                className={`text-[11px] font-semibold ${labelClass}`}
+                              >
                                 {item.category}
                               </p>
-                              <h3 className="font-display text-[15px] font-semibold text-[#252B28]">
+                              <h3 className="font-display text-[15px] font-semibold text-[#17201C]">
                                 {item.title}
                               </h3>
                             </div>
-                            <span className="shrink-0 font-mono text-sm font-semibold text-[#245C45] tabular-nums">
+                            <span className="shrink-0 font-mono text-sm font-semibold text-[#111E19] tabular-nums">
                               {item.pointsCost} GP
                             </span>
                           </div>
-                          <p className="text-xs leading-relaxed text-[#6B756F]">
+                          <p className="text-xs leading-relaxed text-[#54625B]">
                             {item.description}
                           </p>
                         </div>
@@ -294,30 +356,30 @@ export function GreenMarketplacePage({
                           <span
                             className={
                               enough
-                                ? 'font-medium text-[#245C45]'
-                                : 'text-[#6B756F]'
+                                ? 'font-semibold text-[#166549]'
+                                : 'text-[#54625B]'
                             }
                           >
                             {enough
                               ? 'Saldo Anda mencukupi untuk ditukar'
                               : `Kurang ${missingGp} GP (≈ ${unitsNeeded} ecobrick terverifikasi)`}
                           </span>
-                          <span className="font-mono text-[#6B756F] tabular-nums">
+                          <span className="font-mono text-[#54625B] tabular-nums">
                             {pct}%
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EEF2EF]">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E3E9E5]">
                           <div
-                            className={`h-full rounded-full transition-all duration-300 ${
-                              enough ? 'bg-[#245C45]' : 'bg-[#95BCA4]'
+                            className={`h-full rounded-full transition-[width] duration-300 ${
+                              enough ? 'bg-[#166549]' : 'bg-[#1D6373]'
                             }`}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EEF2EF] pt-3">
-                        <span className="text-[11px] text-[#6B756F]">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EAEFEA] pt-3">
+                        <span className="text-[11px] text-[#54625B]">
                           {item.stockNote}
                         </span>
                         <PrimaryButton
@@ -343,17 +405,17 @@ export function GreenMarketplacePage({
                 title="Status Penukaran Terbaru Anda"
                 description="Penukaran yang telah dikonfirmasi diproses oleh Admin Eco-Hub."
               />
-              <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
+              <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
                 {myRedemptions.slice(0, 5).map((r) => (
                   <div
                     key={r.id}
                     className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
                   >
                     <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-[#252B28]">
+                      <p className="text-xs font-semibold text-[#17201C]">
                         {r.rewardTitle}
                       </p>
-                      <p className="font-mono text-[11px] text-[#6B756F]">
+                      <p className="font-mono text-[11px] text-[#54625B]">
                         {r.id} · {r.requestedAt} · -{r.pointsCost} GP
                       </p>
                     </div>
@@ -369,8 +431,8 @@ export function GreenMarketplacePage({
       {currentTab === 'detail' && selectedReward && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
           {/* Selected Reward Detail */}
-          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 sm:p-6 space-y-5 lg:col-span-7">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#EEF2EF] pb-4">
+          <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 sm:p-6 space-y-5 lg:col-span-7">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#EAEFEA] pb-4">
               <SecondaryButton
                 size="sm"
                 onClick={() => {
@@ -391,7 +453,7 @@ export function GreenMarketplacePage({
                   setRedeemSuccess(null);
                   setRedeemError(null);
                 }}
-                className="rounded border border-[#CFD8D2] bg-white px-2.5 py-1.5 text-xs font-medium text-[#252B28] focus:border-[#245C45] focus:outline-none"
+                className="rounded-md border border-[#C6D1CA] bg-white px-2.5 py-1.5 text-xs font-medium text-[#17201C] focus:border-[#166549] focus:outline-none"
               >
                 {state.rewards.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -402,25 +464,29 @@ export function GreenMarketplacePage({
             </div>
 
             {(() => {
-              const Icon = getCategoryIcon(selectedReward.category);
+              const { Icon, boxClass, labelClass } = getCategoryVisual(
+                selectedReward.category
+              );
               return (
                 <div className="flex items-start gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-[#E7F0E8] text-[#245C45]">
+                  <div
+                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-lg ${boxClass}`}
+                  >
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-xs font-medium text-[#4F8A68]">
+                    <p className={`text-xs font-semibold ${labelClass}`}>
                       {selectedReward.category}
                     </p>
-                    <h2 className="font-display text-lg font-semibold text-[#252B28]">
+                    <h2 className="font-display text-lg font-semibold text-[#17201C]">
                       {selectedReward.title}
                     </h2>
-                    <p className="text-xs leading-relaxed text-[#6B756F]">
+                    <p className="text-xs leading-relaxed text-[#54625B]">
                       {selectedReward.description}
                     </p>
-                    <p className="pt-1 text-xs font-medium text-[#252B28]">
+                    <p className="pt-1 text-xs font-medium text-[#17201C]">
                       Ketersediaan:{' '}
-                      <span className="text-[#245C45]">
+                      <span className="text-[#166549]">
                         {selectedReward.stockNote}
                       </span>
                     </p>
@@ -431,7 +497,7 @@ export function GreenMarketplacePage({
           </section>
 
           {/* Confirmation Card */}
-          <section className="rounded-md border border-[#E3E8E4] bg-white p-5 sm:p-6 space-y-5 lg:col-span-5">
+          <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 sm:p-6 space-y-5 lg:col-span-5">
             <SectionHeader
               title="Konfirmasi Penukaran"
               description="Periksa rincian Green Points Anda sebelum menekan Konfirmasi Penukaran."
@@ -440,7 +506,7 @@ export function GreenMarketplacePage({
             {redeemError && (
               <div
                 role="alert"
-                className="rounded border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-medium text-[#991B1B]"
+                className="rounded-md border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-medium text-[#B91C1C]"
               >
                 {redeemError}
               </div>
@@ -450,7 +516,7 @@ export function GreenMarketplacePage({
               <div className="space-y-4">
                 <div
                   role="status"
-                  className="flex items-start gap-2.5 rounded border border-[#C6DBC9] bg-[#E7F0E8] p-4 text-xs text-[#245C45]"
+                  className="flex items-start gap-2.5 rounded-md border border-[#B5CEC0] bg-[#EBF4EF] p-4 text-xs text-[#166549]"
                 >
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
                   <div className="space-y-1">
@@ -471,7 +537,7 @@ export function GreenMarketplacePage({
                     size="sm"
                     onClick={() => onNavigate('transactions', 'ledger')}
                   >
-                    Lihat Transaksi & Saldo
+                    Lihat Transaksi &amp; Saldo
                   </PrimaryButton>
                   <SecondaryButton
                     size="sm"
@@ -486,32 +552,32 @@ export function GreenMarketplacePage({
               </div>
             ) : (
               <div className="space-y-4">
-                <dl className="divide-y divide-[#EEF2EF] border-y border-[#E3E8E4] text-xs">
+                <dl className="divide-y divide-[#EAEFEA] border-y border-[#D8DFDA] text-xs">
                   <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-[#6B756F]">Reward</dt>
-                    <dd className="text-right font-semibold text-[#252B28]">
+                    <dt className="text-[#54625B]">Reward</dt>
+                    <dd className="text-right font-semibold text-[#17201C]">
                       {selectedReward.title}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-[#6B756F]">Biaya Poin</dt>
-                    <dd className="font-mono font-semibold text-[#92400E] tabular-nums">
+                    <dt className="text-[#54625B]">Biaya Poin</dt>
+                    <dd className="font-mono font-semibold text-[#B45309] tabular-nums">
                       {selectedReward.pointsCost.toLocaleString('id-ID')} GP
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-[#6B756F]">Saldo Saat Ini</dt>
-                    <dd className="font-mono font-semibold text-[#252B28] tabular-nums">
+                    <dt className="text-[#54625B]">Saldo Saat Ini</dt>
+                    <dd className="font-mono font-semibold text-[#17201C] tabular-nums">
                       {balanceSummary.balance.toLocaleString('id-ID')} GP
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="font-medium text-[#252B28]">
+                    <dt className="font-medium text-[#17201C]">
                       Saldo Setelah Penukaran
                     </dt>
                     <dd
                       className={`font-mono font-semibold tabular-nums ${
-                        hasEnoughBalance ? 'text-[#245C45]' : 'text-[#991B1B]'
+                        hasEnoughBalance ? 'text-[#166549]' : 'text-[#B91C1C]'
                       }`}
                     >
                       {hasEnoughBalance

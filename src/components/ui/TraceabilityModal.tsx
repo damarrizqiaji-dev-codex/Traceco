@@ -69,12 +69,12 @@ export function TraceabilityModal({
       titleId="traceability-modal-title"
       leadingIcon={<TracecoLogo size="md" className="mt-0.5" />}
       title={
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="font-mono text-base font-semibold text-[#252B28]">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h2 className="font-mono text-base font-semibold text-[#111E19]">
             {submission.submissionId}
           </h2>
           {batch && (
-            <span className="font-mono text-xs font-medium text-[#245C45]">
+            <span className="font-mono text-xs font-medium text-[#1D6373]">
               · Batch {batch.batchId}
             </span>
           )}
@@ -84,7 +84,7 @@ export function TraceabilityModal({
       subtitle={`Penyerah: ${contributor?.name ?? '-'} (${contributor ? (contributor.unitOrAddress ? `${contributor.role} · ${contributor.unitOrAddress}` : contributor.role) : '-'}) · Diserahkan ${submission.quantitySubmitted} unit · Terverifikasi ${submission.verifiedQuantity} unit`}
       footer={
         <>
-          <span className="text-xs text-[#6B756F]">
+          <span className="text-xs text-[#54625B]">
             Audit Keterlacakan TRACECO: Submission → Verification → Reward → Inventory → Distribution.
           </span>
           <PrimaryButton size="sm" onClick={onClose}>
@@ -93,14 +93,14 @@ export function TraceabilityModal({
         </>
       }
     >
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-[190px_1fr]">
-        <div className="flex flex-col items-center rounded border border-[#E3E8E4] bg-[#F7F9F7] p-4">
-          <p className="mb-2 text-xs font-medium text-[#6B756F]">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[200px_1fr]">
+        <div className="flex flex-col items-center rounded-lg border border-[#243A31] bg-[#111E19] p-4 text-[#ECF2EE]">
+          <p className="mb-2.5 text-[11px] font-medium text-[#9EB5AA]">
             QR Identitas Batch
           </p>
           <svg
             viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}
-            className="h-32 w-32 rounded border border-[#E3E8E4] bg-white p-2"
+            className="h-32 w-32 rounded border border-[#243A31] bg-white p-2"
             role="img"
             aria-label={`Kode QR keterlacakan ${identityCode}`}
           >
@@ -113,34 +113,34 @@ export function TraceabilityModal({
                     y={rIdx}
                     width={1}
                     height={1}
-                    fill="#252B28"
+                    fill="#111E19"
                   />
                 ) : null
               )
             )}
           </svg>
-          <p className="mt-2 font-mono text-xs font-medium text-[#252B28]">
+          <p className="mt-2.5 font-mono text-xs font-semibold text-[#6EE7B7]">
             {identityCode}
           </p>
-          <p className="mt-1.5 text-center text-[11px] leading-relaxed text-[#6B756F]">
+          <p className="mt-1.5 text-center text-[11px] leading-relaxed text-[#9EB5AA]">
             Penelusuran dari kontributor hingga pemanfaatan aktual.
           </p>
           {submission.photoDataUrl && (
-            <div className="mt-3 w-full border-t border-[#E3E8E4] pt-3">
-              <p className="mb-1 text-[11px] font-medium text-[#6B756F]">
+            <div className="mt-3 w-full border-t border-[#243A31] pt-3">
+              <p className="mb-1 text-[11px] font-medium text-[#9EB5AA]">
                 Foto Ecobrick
               </p>
               <img
                 src={submission.photoDataUrl}
                 alt={submission.photoLabel ?? `Foto ${submission.submissionId}`}
-                className="h-20 w-full rounded border border-[#E3E8E4] bg-white object-cover"
+                className="h-20 w-full rounded border border-[#243A31] bg-white object-cover"
               />
             </div>
           )}
         </div>
 
         <div>
-          <h3 className="mb-3 font-display text-sm font-semibold text-[#252B28]">
+          <h3 className="mb-3 font-display text-sm font-semibold text-[#111E19]">
             Alur Keterlacakan 6 Tahap
           </h3>
           <Timeline stages={stages} />

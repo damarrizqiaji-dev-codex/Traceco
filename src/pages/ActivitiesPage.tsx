@@ -121,7 +121,7 @@ export function ActivitiesPage({
             description="Ringkasan peristiwa terbaru di ekosistem TRACECO."
           />
 
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#E3E8E4] bg-white px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
             <FilterBar
               ariaLabel="Filter kategori aktivitas"
               value={categoryFilter}
@@ -165,7 +165,7 @@ export function ActivitiesPage({
 
             <div className="relative w-full sm:w-64">
               <Search
-                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#6B756F]"
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
                 aria-hidden="true"
               />
               <input
@@ -174,14 +174,14 @@ export function ActivitiesPage({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari aktivitas atau ID..."
-                className="w-full rounded border border-[#CFD8D2] bg-[#F7F9F7] py-1.5 pr-3 pl-8 text-xs text-[#252B28] placeholder:text-[#8A948E] transition-colors focus:border-[#245C45] focus:bg-white focus:outline-none"
+                className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] transition-colors focus:border-[#166549] focus:bg-white focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white p-4 sm:p-5">
+          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white p-4 sm:px-5">
             {filteredActivities.length === 0 ? (
-              <p className="py-6 text-center text-xs text-[#6B756F]">
+              <p className="py-6 text-center text-xs text-[#54625B]">
                 Tidak ada aktivitas yang cocok dengan filter atau pencarian.
               </p>
             ) : (

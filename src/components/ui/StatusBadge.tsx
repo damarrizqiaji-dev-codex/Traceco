@@ -1,4 +1,9 @@
-import { CheckCircle2, Clock, XCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  Clock,
+  Layers,
+  XCircle,
+} from 'lucide-react';
 import type { ContributorSegment, UserRole } from '../../types/traceco';
 
 const STATUS_DISPLAY_LABELS: Record<string, string> = {
@@ -32,8 +37,8 @@ export function StatusTag({ status }: { status: string }) {
     normalized === 'available'
   ) {
     return (
-      <span className="inline-flex items-center gap-1 rounded border border-[#C6DBC9] bg-[#E7F0E8] px-2 py-0.5 text-[11px] font-medium text-[#245C45] whitespace-nowrap shrink-0">
-        <CheckCircle2 className="h-3 w-3 text-[#245C45]" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#166549] whitespace-nowrap shrink-0">
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#166549]" aria-hidden="true" />
         <span>{displayLabel}</span>
       </span>
     );
@@ -45,8 +50,8 @@ export function StatusTag({ status }: { status: string }) {
     normalized === 'distributed'
   ) {
     return (
-      <span className="inline-flex items-center gap-1 rounded border border-[#BFDBFE] bg-[#EFF6FF] px-2 py-0.5 text-[11px] font-medium text-[#1E40AF] whitespace-nowrap shrink-0">
-        <CheckCircle2 className="h-3 w-3 text-[#2563EB]" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D6373] whitespace-nowrap shrink-0">
+        <Layers className="h-3.5 w-3.5 shrink-0 text-[#1D6373]" aria-hidden="true" />
         <span>{displayLabel}</span>
       </span>
     );
@@ -59,8 +64,8 @@ export function StatusTag({ status }: { status: string }) {
     normalized === 'partially verified'
   ) {
     return (
-      <span className="inline-flex items-center gap-1 rounded border border-[#C6DBC9] bg-[#F2F7F3] px-2 py-0.5 text-[11px] font-medium text-[#245C45] whitespace-nowrap shrink-0">
-        <CheckCircle2 className="h-3 w-3 text-[#4F8A68]" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D6373] whitespace-nowrap shrink-0">
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#1D6373]" aria-hidden="true" />
         <span>{displayLabel}</span>
       </span>
     );
@@ -68,16 +73,16 @@ export function StatusTag({ status }: { status: string }) {
 
   if (normalized === 'rejected') {
     return (
-      <span className="inline-flex items-center gap-1 rounded border border-[#FECACA] bg-[#FEF2F2] px-2 py-0.5 text-[11px] font-medium text-[#991B1B] whitespace-nowrap shrink-0">
-        <XCircle className="h-3 w-3 text-[#B91C1C]" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B91C1C] whitespace-nowrap shrink-0">
+        <XCircle className="h-3.5 w-3.5 shrink-0 text-[#B91C1C]" aria-hidden="true" />
         <span>{displayLabel}</span>
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1 rounded border border-[#E5D3B3] bg-[#FFFBEB] px-2 py-0.5 text-[11px] font-medium text-[#92400E] whitespace-nowrap shrink-0">
-      <Clock className="h-3 w-3 text-[#B45309]" aria-hidden="true" />
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B45309] whitespace-nowrap shrink-0">
+      <Clock className="h-3.5 w-3.5 shrink-0 text-[#B45309]" aria-hidden="true" />
       <span>{displayLabel}</span>
     </span>
   );
@@ -95,45 +100,30 @@ export function RoleTag({
   const label =
     segment && segment !== role ? `${role} · ${segment}` : role;
 
-  if (variant === 'badge') {
-    const styles: Record<string, string> = {
-      Kontributor: 'bg-[#E7F0E8] text-[#245C45] border-[#C6DBC9]',
-      Santri: 'bg-[#E7F0E8] text-[#245C45] border-[#C6DBC9]',
-      Warga: 'bg-[#F7F9F7] text-[#252B28] border-[#DCE4DE]',
-      'Keluarga Rentan': 'bg-[#EFF6FF] text-[#1E40AF] border-[#BFDBFE]',
-      Admin: 'bg-[#245C45] text-white border-[#245C45]',
-      Mitra: 'bg-[#F3F4F6] text-[#374151] border-[#D1D5DB]',
-    };
+  const toneClass =
+    role === 'Admin'
+      ? 'text-[#111E19] font-semibold'
+      : role === 'Mitra'
+        ? 'text-[#1D6373] font-medium'
+        : role === 'Keluarga Rentan'
+          ? 'text-[#1D6373] font-medium'
+          : 'text-[#54625B] font-medium';
 
+  if (variant === 'badge') {
     return (
       <span
-        className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap shrink-0 ${
-          styles[role] ?? 'bg-[#F7F9F7] text-[#252B28] border-[#DCE4DE]'
-        }`}
+        className={`inline-flex items-center text-xs whitespace-nowrap shrink-0 ${toneClass}`}
       >
         {label}
       </span>
     );
   }
 
-  const dotColors: Record<string, string> = {
-    Kontributor: 'bg-[#4F8A68]',
-    Santri: 'bg-[#4F8A68]',
-    Warga: 'bg-[#6B756F]',
-    'Keluarga Rentan': 'bg-[#2563EB]',
-    Admin: 'bg-[#245C45]',
-    Mitra: 'bg-[#475569]',
-  };
-
   return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#5A655F] whitespace-nowrap shrink-0">
-      <span
-        className={`h-1.5 w-1.5 rounded-full shrink-0 ${
-          dotColors[role] ?? 'bg-[#6B756F]'
-        }`}
-        aria-hidden="true"
-      />
-      <span>{label}</span>
+    <span
+      className={`inline-flex items-center text-[11px] whitespace-nowrap shrink-0 ${toneClass}`}
+    >
+      {label}
     </span>
   );
 }

@@ -28,6 +28,7 @@ import {
   updateCollaborationStatusInState,
   updateCommunityActivityStatusInState,
   updateDistributionStatusInState,
+  validateRewardCatalogPayload,
   verifySubmissionInState,
 } from './tracecoLogic';
 import { EMPTY_TRACECO_STATE } from '../data/seedData';
@@ -70,3 +71,56 @@ test('Admin cannot verify their own submission', () => {
   assert.equal(selfCheck.allowed, false);
   assert.match(selfCheck.reason ?? '', /tidak diperbolehkan memverifikasi/i);
 });
+
+test('validateRewardCatalogPayload enforces Firestore reward bounds and normalizes fields', () => {
+  const validResult = validateRewardCatalogPayload({
+    title: '  Tumbler Eco-Hub Stainless  ',
+    category: 'Merchandise Ramah Lingkungan',
+    pointsCost: 250,
+    description: '  Tumbler 500ml untuk santri & warga aktif.  ',
+    stockNote: '  Tersedia di Koperasi Pesantren  ',
+  });
+  assert.equal(validResult.valid, true);
+  if (validResult.valid) {
+    assert.equal(validResult.normalized.title, 'Tumbler Eco-Hub Stainless');
+    assert.equal(validResult.normalized.pointsCost, 250);
+    assert.equal(validResult.normalized.stockNote, 'Tersedia di Koperasi Pesantren');
+  }
+
+  const zeroPrice = validateRewardCatalogPayload({
+    title: 'Item Gratis',
+    category: 'Benefit Komunitas',
+    pointsCost: 0,
+    description: 'Deskripsi valid',
+    stockNote: 'Tersedia',
+  });
+  assert.equal(zeroPrice.valid, false);
+
+  const overMaxPrice = validateRewardCatalogPayload({
+    title: 'Item Terlalu Mahal',
+    category: 'Benefit Komunitas',
+    pointsCost: 100001,
+    description: 'Deskripsi valid',
+    stockNote: 'Tersedia',
+  });
+  assert.equal(overMaxPrice.valid, false);
+
+  const decimalPrice = validateRewardCatalogPayload({
+    title: 'Item Desimal',
+    category: 'Voucher Kegiatan',
+    pointsCost: 120.5,
+    description: 'Deskripsi valid',
+    stockNote: 'Tersedia',
+  });
+  assert.equal(decimalPrice.valid, false);
+
+  const shortTitle = validateRewardCatalogPayload({
+    title: 'A',
+    category: 'Perlengkapan Belajar',
+    pointsCost: 100,
+    description: 'Deskripsi valid',
+    stockNote: 'Tersedia',
+  });
+  assert.equal(shortTitle.valid, false);
+});
+

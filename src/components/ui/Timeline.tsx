@@ -6,16 +6,16 @@ interface TimelineProps {
 
 export function Timeline({ stages }: TimelineProps) {
   return (
-    <ol className="relative space-y-0 border-l border-[#DCE4DE] ml-2">
+    <ol className="relative ml-2.5 space-y-0 border-l border-[#D8DFDA]">
       {stages.map((stage, idx) => {
-        const dotStyles =
+        const markerStyles =
           stage.state === 'completed'
-            ? 'border-[#245C45] bg-[#245C45]'
+            ? 'border-[#166549] bg-[#166549] text-white'
             : stage.state === 'current'
-              ? 'border-[#B45309] bg-[#FEF3C7]'
+              ? 'border-[#B45309] bg-[#FEF6E6] text-[#B45309]'
               : stage.state === 'rejected'
-                ? 'border-[#B91C1C] bg-[#FEE2E2]'
-                : 'border-[#CFD8D2] bg-white';
+                ? 'border-[#B91C1C] bg-[#FEF2F2] text-[#B91C1C]'
+                : 'border-[#C6D1CA] bg-white text-[#54625B]';
 
         const stateLabel =
           stage.state === 'completed'
@@ -27,37 +27,39 @@ export function Timeline({ stages }: TimelineProps) {
                 : 'Belum Dimulai';
 
         return (
-          <li key={stage.key} className="relative pl-5 pb-4 last:pb-0">
+          <li key={stage.key} className="relative pb-5 pl-6 last:pb-0">
             <span
-              className={`absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full border-2 ${dotStyles}`}
+              className={`absolute -left-[9px] top-0.5 flex h-4.5 w-4.5 items-center justify-center rounded border font-mono text-[9px] font-semibold ${markerStyles}`}
               aria-hidden="true"
-            />
+            >
+              {idx + 1}
+            </span>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-[13px] font-medium text-[#252B28]">
-                  {idx + 1}. {stage.label}
+                <span className="text-[13px] font-semibold text-[#17201C]">
+                  {stage.label}
                 </span>
                 <span
-                  className={`text-[11px] font-medium ${
+                  className={`text-[11px] font-semibold ${
                     stage.state === 'completed'
-                      ? 'text-[#245C45]'
+                      ? 'text-[#166549]'
                       : stage.state === 'current'
-                        ? 'text-[#92400E]'
+                        ? 'text-[#B45309]'
                         : stage.state === 'rejected'
-                          ? 'text-[#991B1B]'
-                          : 'text-[#6B756F]'
+                          ? 'text-[#B91C1C]'
+                          : 'text-[#54625B]'
                   }`}
                 >
-                  {stateLabel}
+                  · {stateLabel}
                 </span>
               </div>
               {stage.timestamp && (
-                <span className="font-mono text-[11px] text-[#6B756F] tabular-nums">
+                <span className="font-mono text-[11px] text-[#54625B] tabular-nums">
                   {stage.timestamp}
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-xs leading-relaxed text-[#6B756F]">
+            <p className="mt-1 text-xs leading-relaxed text-[#54625B]">
               {stage.detail}
             </p>
           </li>
