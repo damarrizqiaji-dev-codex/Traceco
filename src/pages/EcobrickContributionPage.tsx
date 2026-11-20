@@ -50,7 +50,7 @@ interface EcobrickContributionPageProps {
     photoDataUrl?: string;
     photoLabel?: string;
     notes?: string;
-  }) => { error?: string; submissionId?: string };
+  }) => Promise<{ error?: string; submissionId?: string }> | { error?: string; submissionId?: string };
   onVerifySubmission: (params: {
     submissionId: string;
     verifierId: string;
@@ -58,7 +58,7 @@ interface EcobrickContributionPageProps {
     verifiedCount: number;
     rejectionReason?: string;
     verifiedWeightKg?: number;
-  }) => { error?: string; batchId?: string };
+  }) => Promise<{ error?: string; batchId?: string }> | { error?: string; batchId?: string };
   onInspectTarget: (targetId: string) => void;
 }
 
@@ -94,7 +94,7 @@ export function EcobrickContributionPage({
   onInspectTarget,
 }: EcobrickContributionPageProps) {
   const isContributorView = isPenyerahRole(state.activeRole);
-  const activeActorId = state.activeActorIdByRole[state.activeRole];
+  const activeActorId = state.currentUserId ?? '';
 
   const eligibleContributors = state.contributors.filter(
     (c) => isPenyerahRole(c.role) || c.role === 'Admin'
@@ -111,12 +111,17 @@ export function EcobrickContributionPage({
   const [selectedContributorId, setSelectedContributorId] = useState(
     isContributorView
       ? activeActorId
-      : eligibleContributors[0]?.id ?? 'CTR-SAN-01'
+      : eligibleContributors[0]?.id ?? activeActorId
   );
   const [dropoffPointId, setDropoffPointId] = useState(
-    state.dropoff_points[0]?.id ?? 'DP-01'
+    state.dropoff_points[0]?.id ?? ''
   );
-  const [date, setDate] = useState('2026-11-18');
+  const resolvedDropoffPointId = state.dropoff_points.some(
+    (dp) => dp.id === dropoffPointId
+  )
+    ? dropoffPointId
+    : state.dropoff_points[0]?.id ?? '';
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [bottleSize, setBottleSize] = useState(BOTTLE_STANDARDS[0].label);
   const [quantitySubmitted, setQuantitySubmitted] = useState('10');
   const [weightKg, setWeightKg] = useState('');
@@ -129,6 +134,7 @@ export function EcobrickContributionPage({
   const [photoLabel, setPhotoLabel] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<
     'Semua' | EcobrickSubmission['status']
   >('Semua');
@@ -142,7 +148,7 @@ export function EcobrickContributionPage({
     (c) => c.id === effectiveContributorId
   );
   const selectedDropoff = state.dropoff_points.find(
-    (dp) => dp.id === dropoffPointId
+    (dp) => dp.id === resolvedDropoffPointId
   );
 
   const contributorMap = new Map(state.contributors.map((c) => [c.id, c]));
@@ -165,17 +171,48 @@ export function EcobrickContributionPage({
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setFormError('Ukuran foto maksimal 2 MB.');
+    if (file.size > 5 * 1024 * 1024) {
+      setFormError('Ukuran file foto maksimal 5 MB.');
       return;
     }
     setFormError(null);
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setPhotoDataUrl(reader.result);
+      if (typeof reader.result !== 'string') return;
+      const rawDataUrl = reader.result;
+      if (rawDataUrl.length <= 360000) {
+        setPhotoDataUrl(rawDataUrl);
         setPhotoLabel(file.name);
+        return;
       }
+
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 760;
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          setFormError('Gagal memproses foto. Coba pilih file yang lebih kecil.');
+          return;
+        }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.72);
+        if (compressed.length > 440000) {
+          setFormError(
+            'Foto terlalu detail untuk disimpan di database. Gunakan foto beresolusi lebih kecil.'
+          );
+          return;
+        }
+        setPhotoDataUrl(compressed);
+        setPhotoLabel(file.name);
+      };
+      img.onerror = () => {
+        setFormError('Format foto tidak didukung. Gunakan JPG atau PNG.');
+      };
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
   };
@@ -205,6 +242,13 @@ export function EcobrickContributionPage({
     e.preventDefault();
     setFormError(null);
 
+    if (!resolvedDropoffPointId) {
+      setFormError(
+        'Belum ada Pos Serah Eco-Hub yang tersedia di database. Hubungi Admin untuk menambahkan pos serah terlebih dahulu.'
+      );
+      return;
+    }
+
     const parsedQty = parseInt(quantitySubmitted, 10);
     if (!Number.isInteger(parsedQty) || parsedQty <= 0) {
       setFormError('Jumlah ecobrick yang diserahkan minimal 1 unit.');
@@ -224,36 +268,42 @@ export function EcobrickContributionPage({
     setSubmitStep('review');
   };
 
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
+    if (isSubmitting) return;
     setFormError(null);
+    setIsSubmitting(true);
     const parsedQty = parseInt(quantitySubmitted, 10);
     const parsedWeight =
       weightKg.trim() !== '' ? parseFloat(weightKg) : undefined;
 
-    const res = onSubmitContribution({
-      contributorId: effectiveContributorId,
-      dropoffPointId,
-      date,
-      bottleSize,
-      quantitySubmitted: parsedQty,
-      weightKg: parsedWeight,
-      iotSimulatedWeightKg,
-      photoDataUrl,
-      photoLabel,
-      notes,
-    });
+    try {
+      const res = await onSubmitContribution({
+        contributorId: effectiveContributorId,
+        dropoffPointId: resolvedDropoffPointId,
+        date,
+        bottleSize,
+        quantitySubmitted: parsedQty,
+        weightKg: parsedWeight,
+        iotSimulatedWeightKg,
+        photoDataUrl,
+        photoLabel,
+        notes,
+      });
 
-    if (res.error) {
-      setFormError(res.error);
-      setSubmitStep('form');
-      return;
-    }
+      if (res.error) {
+        setFormError(res.error);
+        setSubmitStep('form');
+        return;
+      }
 
-    setLastSubmittedId(res.submissionId ?? null);
-    if (res.submissionId) {
-      onSelectTraceTargetId(res.submissionId);
+      setLastSubmittedId(res.submissionId ?? null);
+      if (res.submissionId) {
+        onSelectTraceTargetId(res.submissionId);
+      }
+      setSubmitStep('done');
+    } finally {
+      setIsSubmitting(false);
     }
-    setSubmitStep('done');
   };
 
   const resetSubmitFlow = () => {
@@ -553,18 +603,25 @@ export function EcobrickContributionPage({
               )}
 
               <FormField id="dropoff-select" label="Lokasi Penyerahan (Drop-off)">
-                <select
-                  id="dropoff-select"
-                  value={dropoffPointId}
-                  onChange={(e) => setDropoffPointId(e.target.value)}
-                  className={fieldInputClass}
-                >
-                  {state.dropoff_points.map((dp) => (
-                    <option key={dp.id} value={dp.id}>
-                      {dp.name}
-                    </option>
-                  ))}
-                </select>
+                {state.dropoff_points.length === 0 ? (
+                  <p className="rounded border border-[#E5D3B3] bg-[#FFFBEB] px-3 py-2 text-xs text-[#92400E]">
+                    Belum ada Pos Serah aktif di database. Admin dapat
+                    menambahkannya melalui menu Pengaturan → Profil Pesantren.
+                  </p>
+                ) : (
+                  <select
+                    id="dropoff-select"
+                    value={resolvedDropoffPointId}
+                    onChange={(e) => setDropoffPointId(e.target.value)}
+                    className={fieldInputClass}
+                  >
+                    {state.dropoff_points.map((dp) => (
+                      <option key={dp.id} value={dp.id}>
+                        {dp.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </FormField>
             </div>
 
@@ -807,7 +864,7 @@ export function EcobrickContributionPage({
             <div className="flex items-center justify-between gap-3 py-2.5">
               <dt className="text-[#6B756F]">Lokasi Penyerahan</dt>
               <dd className="font-medium text-[#252B28]">
-                {selectedDropoff?.name ?? dropoffPointId}
+                {selectedDropoff?.name ?? resolvedDropoffPointId}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3 py-2.5">
@@ -839,13 +896,23 @@ export function EcobrickContributionPage({
           </dl>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <SecondaryButton onClick={() => setSubmitStep('form')}>
+            <SecondaryButton
+              disabled={isSubmitting}
+              onClick={() => setSubmitStep('form')}
+            >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Ubah Data</span>
             </SecondaryButton>
-            <PrimaryButton onClick={handleConfirmSubmit}>
+            <PrimaryButton
+              disabled={isSubmitting}
+              onClick={handleConfirmSubmit}
+            >
               <PackagePlus className="h-4 w-4" aria-hidden="true" />
-              <span>Konfirmasi & Kirim Kontribusi</span>
+              <span>
+                {isSubmitting
+                  ? 'Menyimpan ke Pos...'
+                  : 'Konfirmasi & Kirim Kontribusi'}
+              </span>
             </PrimaryButton>
           </div>
         </section>

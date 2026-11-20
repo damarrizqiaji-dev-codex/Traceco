@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
 import type {
   AppPageId,
@@ -201,6 +202,8 @@ interface AppShellProps {
   state: TracecoState;
   toast?: ToastNotice | null;
   onDismissToast?: () => void;
+  syncError?: string | null;
+  onDismissSyncError?: () => void;
   children: ReactNode;
 }
 
@@ -214,6 +217,8 @@ export function AppShell({
   state,
   toast,
   onDismissToast,
+  syncError,
+  onDismissSyncError,
   children,
 }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -452,28 +457,8 @@ export function AppShell({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center gap-1.5 rounded border border-[#E3E8E4] bg-[#F7F9F7] px-2 py-1 text-xs">
-                <label
-                  htmlFor="prototype-role-preview"
-                  className="hidden sm:inline text-[#6B756F] whitespace-nowrap"
-                >
-                  Preview Peran:
-                </label>
-                <select
-                  id="prototype-role-preview"
-                  aria-label="Prototype Role Preview"
-                  value={state.activeRole}
-                  onChange={(e) =>
-                    onPreviewRoleChange(e.target.value as UserRole)
-                  }
-                  className="rounded border border-[#CFD8D2] bg-white px-2 py-0.5 text-xs font-medium text-[#245C45] focus:border-[#245C45] focus:outline-none"
-                >
-                  {ALL_ROLES.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </select>
+              <div className="inline-flex items-center gap-1.5 rounded border border-[#C6DBC9] bg-[#E7F0E8] px-2.5 py-1 text-xs font-semibold text-[#245C45]">
+                <span>Peran: {state.activeRole}</span>
               </div>
 
               <button
@@ -524,6 +509,27 @@ export function AppShell({
           key={`${activePage}:${activeSubTab ?? ''}`}
           className="animate-traceco-enter mx-auto w-full max-w-[1360px] flex-1 px-4 py-5 sm:px-8 sm:py-7"
         >
+          {syncError && (
+            <div
+              role="alert"
+              className="mb-5 flex items-start justify-between gap-3 rounded-md border border-[#FECACA] bg-[#FEF2F2] px-4 py-3 text-xs text-[#991B1B]"
+            >
+              <div className="flex items-start gap-2.5">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{syncError}</span>
+              </div>
+              {onDismissSyncError && (
+                <button
+                  type="button"
+                  onClick={onDismissSyncError}
+                  aria-label="Tutup pesan gangguan sinkronisasi"
+                  className="rounded p-0.5 text-[#991B1B] hover:bg-[#FEE2E2]"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          )}
           {children}
         </main>
       </div>

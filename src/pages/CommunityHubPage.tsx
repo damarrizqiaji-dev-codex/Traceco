@@ -180,7 +180,7 @@ export function CommunityHubPage({
   onCreateCollaboration,
   onUpdateCollaborationStatus,
 }: CommunityHubPageProps) {
-  const activeActorId = state.activeActorIdByRole[state.activeRole];
+  const activeActorId = state.currentUserId ?? '';
   const activeActor = state.contributors.find((c) => c.id === activeActorId);
   const isHubCoordinator = isVerifierRole(state.activeRole);
   const canProposeCollab =

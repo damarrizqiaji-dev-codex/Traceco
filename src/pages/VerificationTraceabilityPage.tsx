@@ -43,7 +43,7 @@ interface VerificationTraceabilityPageProps {
     verifiedCount: number;
     rejectionReason?: string;
     verifiedWeightKg?: number;
-  }) => { error?: string; batchId?: string };
+  }) => Promise<{ error?: string; batchId?: string }> | { error?: string; batchId?: string };
   onInspectTarget: (targetId: string) => void;
   onOpenTraceDetail?: (targetId: string) => void;
 }
@@ -108,10 +108,10 @@ export function VerificationTraceabilityPage({
     isVerifierRole(c.role)
   );
   const canVerifyRole = isVerifierRole(state.activeRole);
-  const activeActorId = state.activeActorIdByRole[state.activeRole];
+  const activeActorId = state.currentUserId ?? '';
 
   const [selectedVerifierId, setSelectedVerifierId] = useState(
-    canVerifyRole ? activeActorId : verifierList[0]?.id ?? 'CTR-VER-01'
+    canVerifyRole ? activeActorId : verifierList[0]?.id ?? activeActorId
   );
 
   useEffect(() => {
@@ -122,7 +122,7 @@ export function VerificationTraceabilityPage({
 
   const effectiveVerifierId = canVerifyRole
     ? selectedVerifierId
-    : verifierList[0]?.id ?? 'CTR-VER-01';
+    : verifierList[0]?.id ?? activeActorId;
 
   const firstPending = state.ecobrick_submissions.find(
     (s) => s.status === 'Pending'
@@ -410,8 +410,10 @@ export function VerificationTraceabilityPage({
     }
   };
 
-  const handleSubmitVerification = () => {
-    if (!selectedSubmission) return;
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleSubmitVerification = async () => {
+    if (!selectedSubmission || isVerifying) return;
     setFormError(null);
     setFeedbackMessage(null);
 
@@ -427,35 +429,40 @@ export function VerificationTraceabilityPage({
         ? parseFloat(verifiedWeightInput)
         : undefined;
 
-    const res = onVerifySubmission({
-      submissionId: selectedSubmission.submissionId,
-      verifierId: effectiveVerifierId,
-      checklist,
-      verifiedCount: parsedVerifiedCount,
-      rejectionReason,
-      verifiedWeightKg:
-        parsedWeight && !Number.isNaN(parsedWeight) && parsedWeight > 0
-          ? parsedWeight
-          : undefined,
-    });
+    setIsVerifying(true);
+    try {
+      const res = await onVerifySubmission({
+        submissionId: selectedSubmission.submissionId,
+        verifierId: effectiveVerifierId,
+        checklist,
+        verifiedCount: parsedVerifiedCount,
+        rejectionReason,
+        verifiedWeightKg:
+          parsedWeight && !Number.isNaN(parsedWeight) && parsedWeight > 0
+            ? parsedWeight
+            : undefined,
+      });
 
-    if (res.error) {
-      setFormError(res.error);
-      return;
-    }
+      if (res.error) {
+        setFormError(res.error);
+        return;
+      }
 
-    if (parsedVerifiedCount > 0 && computedRejectedCount === 0) {
-      setFeedbackMessage(
-        `${selectedSubmission.submissionId} disetujui penuh (${parsedVerifiedCount} unit) → Batch ${res.batchId} dibuat & +${parsedVerifiedCount * POINTS_PER_ECOBRICK} Green Points dicatat.`
-      );
-    } else if (parsedVerifiedCount > 0 && computedRejectedCount > 0) {
-      setFeedbackMessage(
-        `${selectedSubmission.submissionId} diverifikasi sebagian: ${parsedVerifiedCount} unit Terverifikasi (Batch ${res.batchId}, +${parsedVerifiedCount * POINTS_PER_ECOBRICK} Green Points) dan ${computedRejectedCount} unit Ditolak.`
-      );
-    } else {
-      setFeedbackMessage(
-        `${selectedSubmission.submissionId} ditolak seluruhnya (${computedRejectedCount} unit Ditolak) dengan alasan penolakan tercatat.`
-      );
+      if (parsedVerifiedCount > 0 && computedRejectedCount === 0) {
+        setFeedbackMessage(
+          `${selectedSubmission.submissionId} disetujui penuh (${parsedVerifiedCount} unit) → Batch ${res.batchId ?? '-'} dibuat & +${parsedVerifiedCount * POINTS_PER_ECOBRICK} Green Points dicatat.`
+        );
+      } else if (parsedVerifiedCount > 0 && computedRejectedCount > 0) {
+        setFeedbackMessage(
+          `${selectedSubmission.submissionId} diverifikasi sebagian: ${parsedVerifiedCount} unit Terverifikasi (Batch ${res.batchId ?? '-'}, +${parsedVerifiedCount * POINTS_PER_ECOBRICK} Green Points) dan ${computedRejectedCount} unit Ditolak.`
+        );
+      } else {
+        setFeedbackMessage(
+          `${selectedSubmission.submissionId} ditolak seluruhnya (${computedRejectedCount} unit Ditolak) dengan alasan penolakan tercatat.`
+        );
+      }
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -1106,25 +1113,29 @@ export function VerificationTraceabilityPage({
                   <div className="pt-1">
                     {parsedVerifiedCount > 0 ? (
                       <PrimaryButton
-                        disabled={!canVerifyRole || !guard.allowed}
+                        disabled={!canVerifyRole || !guard.allowed || isVerifying}
                         onClick={handleSubmitVerification}
                         className="w-full"
                       >
                         <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                         <span>
-                          {computedRejectedCount > 0
-                            ? `Verifikasi Sebagian (${parsedVerifiedCount} Lolos)`
-                            : `Verifikasi & Terbitkan Batch`}
+                          {isVerifying
+                            ? 'Menyimpan Verifikasi...'
+                            : computedRejectedCount > 0
+                              ? `Verifikasi Sebagian (${parsedVerifiedCount} Lolos)`
+                              : `Verifikasi & Terbitkan Batch`}
                         </span>
                       </PrimaryButton>
                     ) : (
                       <DangerButton
-                        disabled={!canVerifyRole || !guard.allowed}
+                        disabled={!canVerifyRole || !guard.allowed || isVerifying}
                         onClick={handleSubmitVerification}
                         className="w-full"
                       >
                         <span>
-                          Tolak Submission ({computedRejectedCount} Ditolak)
+                          {isVerifying
+                            ? 'Menyimpan Penolakan...'
+                            : `Tolak Submission (${computedRejectedCount} Ditolak)`}
                         </span>
                       </DangerButton>
                     )}

@@ -1,0 +1,547 @@
+{
+  "entities": {
+    "AdminMarker": {
+      "title": "AdminMarker",
+      "description": "Authorized Traceco administrator role marker document.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 160 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "name", "createdAt"]
+    },
+    "UserPublic": {
+      "title": "UserPublic",
+      "description": "Public non-PII ecosystem profile for Kontributor, Admin, or Mitra.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "role": { "type": "string", "enum": ["Kontributor", "Admin", "Mitra"] },
+        "segment": { "type": "string", "enum": ["Santri", "Warga", "Keluarga Rentan", "Admin", "Mitra"] },
+        "unitOrAddress": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "activeSince": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "participationRole": { "type": "string", "maxLength": 180 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "role", "segment", "unitOrAddress", "activeSince", "createdAt", "updatedAt"]
+    },
+    "UserPrivate": {
+      "title": "UserPrivate",
+      "description": "Isolated PII account data containing verified email and immutable role binding.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "minLength": 3, "maxLength": 160 },
+        "role": { "type": "string", "enum": ["Kontributor", "Admin", "Mitra"] },
+        "registeredAt": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "role", "registeredAt", "createdAt", "updatedAt"]
+    },
+    "DropOffPoint": {
+      "title": "DropOffPoint",
+      "description": "Official Eco-Hub drop-off point configured by Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "area": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "schedule": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "coordinator": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "area", "schedule", "coordinator", "createdAt"]
+    },
+    "RewardCatalogItem": {
+      "title": "RewardCatalogItem",
+      "description": "Green Marketplace reward item managed by Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Merchandise Ramah Lingkungan",
+            "Voucher Kegiatan",
+            "Perlengkapan Belajar",
+            "Benefit Komunitas",
+            "Reward Program Pesantren"
+          ]
+        },
+        "pointsCost": { "type": "integer" },
+        "description": { "type": "string", "minLength": 2, "maxLength": 400 },
+        "stockNote": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "category", "pointsCost", "description", "stockNote", "createdAt"]
+    },
+    "EcobrickSubmission": {
+      "title": "EcobrickSubmission",
+      "description": "Finished ecobrick contribution submitted by a contributor to a drop-off point.",
+      "type": "object",
+      "properties": {
+        "submissionId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "contributorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "dropoffPointId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "dropoffPointName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "date": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "bottleSize": { "type": "string", "minLength": 3, "maxLength": 100 },
+        "quantitySubmitted": { "type": "integer" },
+        "weightKg": { "type": "number" },
+        "iotSimulatedWeightKg": { "type": "number" },
+        "photoDataUrl": { "type": "string", "maxLength": 450000 },
+        "photoLabel": { "type": "string", "maxLength": 120 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["Pending", "Verified", "Partially Verified", "Rejected"] },
+        "verifiedQuantity": { "type": "integer" },
+        "rejectedQuantity": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "submissionId",
+        "contributorId",
+        "dropoffPointId",
+        "dropoffPointName",
+        "date",
+        "bottleSize",
+        "quantitySubmitted",
+        "status",
+        "verifiedQuantity",
+        "rejectedQuantity",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "VerificationRecord": {
+      "title": "VerificationRecord",
+      "description": "Immutable 8-criteria physical inspection log created by Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "submissionId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "contributorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "batchId": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "checklist": { "type": "object" },
+        "verifierId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "verifierName": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "verifiedAt": { "type": "string", "minLength": 10, "maxLength": 30 },
+        "verifiedCount": { "type": "integer" },
+        "rejectedCount": { "type": "integer" },
+        "decision": { "type": "string", "enum": ["Verified", "Partially Verified", "Rejected"] },
+        "rejectionReason": { "type": "string", "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "submissionId",
+        "contributorId",
+        "checklist",
+        "verifierId",
+        "verifierName",
+        "verifiedAt",
+        "verifiedCount",
+        "rejectedCount",
+        "decision",
+        "createdAt"
+      ]
+    },
+    "EcobrickBatch": {
+      "title": "EcobrickBatch",
+      "description": "Verified ecobrick batch available in Community Hub inventory.",
+      "type": "object",
+      "properties": {
+        "batchId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "submissionId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "contributorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "date": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "verifiedAt": { "type": "string", "minLength": 10, "maxLength": 30 },
+        "bottleSize": { "type": "string", "minLength": 3, "maxLength": 100 },
+        "quantity": { "type": "integer" },
+        "weightKg": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["batchId", "submissionId", "contributorId", "date", "verifiedAt", "bottleSize", "quantity", "weightKg", "createdAt"]
+    },
+    "GreenPointEntry": {
+      "title": "GreenPointEntry",
+      "description": "Append-only Green Points ledger mutation tied to verification or reward redemption.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "contributorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "date": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "type": { "type": "string", "enum": ["Earned", "Redeemed"] },
+        "points": { "type": "integer" },
+        "sourceLabel": { "type": "string", "minLength": 2, "maxLength": 220 },
+        "submissionId": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "batchId": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "redemptionId": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "contributorId", "date", "type", "points", "sourceLabel", "createdAt"]
+    },
+    "RewardRedemption": {
+      "title": "RewardRedemption",
+      "description": "Contributor Green Marketplace reward redemption request.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "contributorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "rewardId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "rewardTitle": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "pointsCost": { "type": "integer" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Completed"] },
+        "requestedAt": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "updatedAt": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "serverUpdatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "contributorId", "rewardId", "rewardTitle", "pointsCost", "status", "requestedAt", "updatedAt", "createdAt", "serverUpdatedAt"]
+    },
+    "FinancialIncentive": {
+      "title": "FinancialIncentive",
+      "description": "Conditional program financial incentive record managed by Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "contributorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "batchId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "amountIdr": { "type": "integer" },
+        "fundingSource": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "conditionNote": { "type": "string", "minLength": 2, "maxLength": 300 },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Paid"] },
+        "updatedAt": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "serverUpdatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "contributorId", "batchId", "amountIdr", "fundingSource", "conditionNote", "status", "updatedAt", "createdAt", "serverUpdatedAt"]
+    },
+    "DistributionRequest": {
+      "title": "DistributionRequest",
+      "description": "Request for verified ecobricks from inventory by Mitra or Admin.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "batchId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "batchContributorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "requesterId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "requesterName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "requesterType": { "type": "string", "enum": ["Pesantren", "Komunitas", "Pengrajin", "Mitra Pemanfaat"] },
+        "requestedCount": { "type": "integer" },
+        "utilizationCategory": { "type": "string", "enum": ["Fasilitas Pesantren", "Kegiatan Komunitas", "Produk Kerajinan", "Proyek Mitra"] },
+        "location": { "type": "string", "maxLength": 160 },
+        "neededDate": { "type": "string", "maxLength": 20 },
+        "utilizationDetail": { "type": "string", "minLength": 3, "maxLength": 400 },
+        "status": { "type": "string", "enum": ["Pending Review", "Approved", "Rejected", "Handed Over", "Utilized"] },
+        "requestedAt": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "reviewedBy": { "type": "string", "maxLength": 100 },
+        "handoverDate": { "type": "string", "maxLength": 20 },
+        "receiverName": { "type": "string", "maxLength": 120 },
+        "documentationNote": { "type": "string", "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "batchId",
+        "batchContributorId",
+        "requesterId",
+        "requesterName",
+        "requesterType",
+        "requestedCount",
+        "utilizationCategory",
+        "utilizationDetail",
+        "status",
+        "requestedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UtilizationRecord": {
+      "title": "UtilizationRecord",
+      "description": "Documented final utilization of verified ecobricks in the field.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "requestId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "batchId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "batchContributorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "requesterId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recipientName": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "utilizationCategory": { "type": "string", "enum": ["Fasilitas Pesantren", "Kegiatan Komunitas", "Produk Kerajinan", "Proyek Mitra"] },
+        "location": { "type": "string", "maxLength": 160 },
+        "purpose": { "type": "string", "minLength": 2, "maxLength": 400 },
+        "quantityUtilized": { "type": "integer" },
+        "documentedAt": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "documentationNote": { "type": "string", "minLength": 2, "maxLength": 400 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "requestId",
+        "batchId",
+        "batchContributorId",
+        "requesterId",
+        "recipientName",
+        "utilizationCategory",
+        "purpose",
+        "quantityUtilized",
+        "documentedAt",
+        "documentationNote",
+        "createdAt"
+      ]
+    },
+    "CommunityActivity": {
+      "title": "CommunityActivity",
+      "description": "Community Hub agenda with RSVP participant counter backed by subcollection.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 4, "maxLength": 140 },
+        "category": { "type": "string", "enum": ["Edukasi Ecobrick", "Pelatihan", "Kampanye Komunitas", "Pemanfaatan Bersama"] },
+        "date": { "type": "string", "minLength": 10, "maxLength": 20 },
+        "location": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "participantSummary": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "participantCount": { "type": "integer" },
+        "inclusiveParticipationNote": { "type": "string", "minLength": 2, "maxLength": 360 },
+        "status": { "type": "string", "enum": ["Terjadwal", "Berlangsung", "Selesai"] },
+        "createdBy": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "title",
+        "category",
+        "date",
+        "location",
+        "participantSummary",
+        "participantCount",
+        "inclusiveParticipationNote",
+        "status",
+        "createdBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CommunityActivityRsvp": {
+      "title": "CommunityActivityRsvp",
+      "description": "Per-user RSVP attendance marker inside community_activities subcollection.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "activityId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "activityId", "joinedAt"]
+    },
+    "CommunityPost": {
+      "title": "CommunityPost",
+      "description": "Community Hub forum topic.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "authorRole": { "type": "string", "enum": ["Kontributor", "Admin", "Mitra"] },
+        "authorSegment": { "type": "string", "enum": ["Santri", "Warga", "Keluarga Rentan", "Admin", "Mitra"] },
+        "category": { "type": "string", "enum": ["Tanya Standar", "Koordinasi Pos", "Ide Pemanfaatan", "Dukungan Komunitas"] },
+        "title": { "type": "string", "minLength": 4, "maxLength": 160 },
+        "body": { "type": "string", "minLength": 8, "maxLength": 1200 },
+        "timestamp": { "type": "string", "minLength": 10, "maxLength": 30 },
+        "status": { "type": "string", "enum": ["Terbuka", "Terjawab"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "authorId",
+        "authorName",
+        "authorRole",
+        "authorSegment",
+        "category",
+        "title",
+        "body",
+        "timestamp",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CommunityReply": {
+      "title": "CommunityReply",
+      "description": "Forum reply stored inside community_posts subcollection.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "postId": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "authorRole": { "type": "string", "enum": ["Kontributor", "Admin", "Mitra"] },
+        "authorSegment": { "type": "string", "enum": ["Santri", "Warga", "Keluarga Rentan", "Admin", "Mitra"] },
+        "timestamp": { "type": "string", "minLength": 10, "maxLength": 30 },
+        "body": { "type": "string", "minLength": 3, "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "postId", "authorId", "authorName", "authorRole", "authorSegment", "timestamp", "body", "createdAt"]
+    },
+    "CollaborationPartner": {
+      "title": "CollaborationPartner",
+      "description": "Partner collaboration proposal coordinated with Community Hub.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "partnerName": { "type": "string", "minLength": 3, "maxLength": 120 },
+        "collaborationType": { "type": "string", "minLength": 3, "maxLength": 120 },
+        "activity": { "type": "string", "minLength": 8, "maxLength": 400 },
+        "proposedByUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "proposedByRole": { "type": "string", "enum": ["Kontributor", "Admin", "Mitra"] },
+        "status": { "type": "string", "enum": ["Aktif", "Dalam Koordinasi", "Selesai"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "partnerName", "collaborationType", "activity", "proposedByUid", "proposedByRole", "status", "createdAt", "updatedAt"]
+    },
+    "AppNotification": {
+      "title": "AppNotification",
+      "description": "Role- and user-scoped notification.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recipientUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "recipientRole": { "type": "string", "enum": ["Kontributor", "Admin", "Mitra"] },
+        "title": { "type": "string", "minLength": 2, "maxLength": 160 },
+        "detail": { "type": "string", "minLength": 2, "maxLength": 400 },
+        "timestamp": { "type": "string", "minLength": 10, "maxLength": 30 },
+        "category": { "type": "string", "enum": ["Submission", "Verification", "Reward", "Distribution", "Community"] },
+        "read": { "type": "boolean" },
+        "targetPage": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "createdByUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "recipientUid",
+        "recipientRole",
+        "title",
+        "detail",
+        "timestamp",
+        "category",
+        "read",
+        "targetPage",
+        "createdByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ActivityFeedItem": {
+      "title": "ActivityFeedItem",
+      "description": "Chronological activity log item scoped to owner or public community category.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actorUid": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "targetContributorUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "timestamp": { "type": "string", "minLength": 10, "maxLength": 30 },
+        "category": { "type": "string", "enum": ["Kontribusi", "Verifikasi", "Reward", "Distribusi", "Komunitas"] },
+        "title": { "type": "string", "minLength": 2, "maxLength": 180 },
+        "detail": { "type": "string", "minLength": 2, "maxLength": 400 },
+        "submissionId": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "batchId": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "actorUid", "timestamp", "category", "title", "detail", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/admins/{uid}": {
+      "schema": { "$ref": "#/entities/AdminMarker" },
+      "description": "Verified administrator role documents."
+    },
+    "/users_public/{uid}": {
+      "schema": { "$ref": "#/entities/UserPublic" },
+      "description": "Non-PII profile and permanent immutable role binding per UID."
+    },
+    "/users_private/{uid}": {
+      "schema": { "$ref": "#/entities/UserPrivate" },
+      "description": "Isolated PII email & registration metadata readable only by owner or Admin."
+    },
+    "/dropoff_points/{pointId}": {
+      "schema": { "$ref": "#/entities/DropOffPoint" },
+      "description": "Official Eco-Hub drop-off stations managed by Admin."
+    },
+    "/rewards/{rewardId}": {
+      "schema": { "$ref": "#/entities/RewardCatalogItem" },
+      "description": "Green Marketplace reward catalog items managed by Admin."
+    },
+    "/ecobrick_submissions/{submissionId}": {
+      "schema": { "$ref": "#/entities/EcobrickSubmission" },
+      "description": "Finished ecobrick contributions isolated per contributorId or Admin."
+    },
+    "/verification_records/{recordId}": {
+      "schema": { "$ref": "#/entities/VerificationRecord" },
+      "description": "8-criteria physical verification records isolated per contributorId or Admin."
+    },
+    "/ecobrick_batches/{batchId}": {
+      "schema": { "$ref": "#/entities/EcobrickBatch" },
+      "description": "Verified inventory batches readable by contributor owner, Mitra (available stock), and Admin."
+    },
+    "/green_points/{entryId}": {
+      "schema": { "$ref": "#/entities/GreenPointEntry" },
+      "description": "Append-only Green Points ledger isolated per contributorId or Admin."
+    },
+    "/redemptions/{redemptionId}": {
+      "schema": { "$ref": "#/entities/RewardRedemption" },
+      "description": "Reward redemption transactions isolated per contributorId or Admin."
+    },
+    "/financial_incentives/{incentiveId}": {
+      "schema": { "$ref": "#/entities/FinancialIncentive" },
+      "description": "Conditional financial incentives isolated per contributorId or Admin."
+    },
+    "/distribution_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/DistributionRequest" },
+      "description": "Batch distribution requests isolated to requesterId (Mitra), batchContributorId (Kontributor traceability), or Admin."
+    },
+    "/utilization_records/{recordId}": {
+      "schema": { "$ref": "#/entities/UtilizationRecord" },
+      "description": "Final field utilization documentation isolated to requesterId (Mitra), batchContributorId (Kontributor traceability), or Admin."
+    },
+    "/community_activities/{activityId}": {
+      "schema": { "$ref": "#/entities/CommunityActivity" },
+      "description": "Community Hub agenda documents."
+    },
+    "/community_activities/{activityId}/rsvps/{rsvpUid}": {
+      "schema": { "$ref": "#/entities/CommunityActivityRsvp" },
+      "description": "User RSVP markers synchronized atomically with parent participantCount."
+    },
+    "/community_posts/{postId}": {
+      "schema": { "$ref": "#/entities/CommunityPost" },
+      "description": "Community Hub discussion forum posts."
+    },
+    "/community_posts/{postId}/replies/{replyId}": {
+      "schema": { "$ref": "#/entities/CommunityReply" },
+      "description": "Replies under a Community Hub discussion post."
+    },
+    "/collaborations/{collabId}": {
+      "schema": { "$ref": "#/entities/CollaborationPartner" },
+      "description": "Community Hub partnership proposals."
+    },
+    "/notifications/{notifId}": {
+      "schema": { "$ref": "#/entities/AppNotification" },
+      "description": "Role- and user-isolated notifications."
+    },
+    "/activities_feed/{actId}": {
+      "schema": { "$ref": "#/entities/ActivityFeedItem" },
+      "description": "Role- and user-isolated chronological activity feed items."
+    }
+  }
+}

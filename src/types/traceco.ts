@@ -22,8 +22,6 @@ export type AppPageId =
 
 export type UserRole = 'Kontributor' | 'Admin' | 'Mitra';
 
-export type PreviewRole = UserRole;
-
 export type ContributorSegment =
   | 'Santri'
   | 'Warga'
@@ -35,7 +33,6 @@ export interface UserAccount {
   id: string;
   name: string;
   email: string;
-  password: string;
   role: UserRole;
   segment: ContributorSegment;
   unitOrAddress: string;
@@ -98,6 +95,7 @@ export interface PhysicalChecklist {
 export interface VerificationRecord {
   id: string;
   submissionId: string;
+  contributorId: string;
   batchId?: string;
   checklist: PhysicalChecklist;
   verifierId: string;
@@ -130,6 +128,7 @@ export interface GreenPointEntry {
   sourceLabel: string;
   submissionId?: string;
   batchId?: string;
+  redemptionId?: string;
 }
 
 export interface RewardCatalogItem {
@@ -200,6 +199,7 @@ export type UtilizationCategory =
 export interface DistributionRequest {
   id: string;
   batchId: string;
+  batchContributorId?: string;
   requesterId?: string;
   requesterName: string;
   requesterType: RequesterType;
@@ -220,6 +220,8 @@ export interface UtilizationRecord {
   id: string;
   requestId: string;
   batchId: string;
+  batchContributorId?: string;
+  requesterId?: string;
   recipientName: string;
   utilizationCategory: UtilizationCategory;
   location?: string;
@@ -263,6 +265,7 @@ export type CommunityPostCategory =
 
 export interface CommunityReply {
   id: string;
+  postId: string;
   authorId: string;
   authorName: string;
   authorRole: UserRole;
@@ -287,6 +290,8 @@ export interface CommunityPost {
 
 export interface AppNotification {
   id: string;
+  recipientUid?: string;
+  recipientRole?: UserRole;
   title: string;
   detail: string;
   timestamp: string;
@@ -302,6 +307,8 @@ export interface AppNotification {
 
 export interface ActivityFeedItem {
   id: string;
+  actorUid?: string;
+  targetContributorUid?: string;
   timestamp: string;
   category:
     | 'Kontribusi'
@@ -318,7 +325,6 @@ export interface ActivityFeedItem {
 export interface TracecoState {
   currentUserId: string | null;
   activeRole: UserRole;
-  activeActorIdByRole: Record<UserRole, string>;
   accounts: UserAccount[];
   contributors: Contributor[];
   dropoff_points: DropOffPoint[];

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import type {
   AppPageId,
   CollaborationPartner,
@@ -10,32 +11,39 @@ import type {
   PhysicalChecklist,
   RedemptionStatus,
   RequesterType,
+  RewardCatalogItem,
   TracecoState,
+  UserAccount,
   UserRole,
   UtilizationCategory,
 } from './types/traceco';
-import { INITIAL_TRACECO_STATE } from './data/seedData';
+import { EMPTY_TRACECO_STATE } from './data/seedData';
+import { auth, BOOTSTRAPPED_ADMIN_EMAIL } from './firebase';
 import {
-  ALL_ROLES,
-  authenticateUser,
-  createCollaborationProposalInState,
-  createCommunityActivityInState,
-  createCommunityPostInState,
-  createDistributionRequestInState,
-  logoutUser,
-  redeemRewardInState,
-  registerUserAccount,
-  replyCommunityPostInState,
-  submitEcobrickContributionInState,
-  switchPreviewRole,
-  toggleCommunityPostStatusInState,
-  toggleJoinCommunityActivityInState,
-  updateCollaborationStatusInState,
-  updateCommunityActivityStatusInState,
-  updateDistributionStatusInState,
-  updateRedemptionStatusInState,
-  verifySubmissionInState,
-} from './utils/tracecoLogic';
+  completeOnboardingProfile,
+  createCollaborationInFirestore,
+  createCommunityActivityInFirestore,
+  createCommunityPostInFirestore,
+  createDistributionRequestInFirestore,
+  createDropOffPointInFirestore,
+  createRewardCatalogItemInFirestore,
+  fetchUserProfile,
+  initializeMasterCatalogInFirestore,
+  markAllNotificationsReadInFirestore,
+  markNotificationReadInFirestore,
+  redeemRewardInFirestore,
+  replyCommunityPostInFirestore,
+  submitEcobrickContributionInFirestore,
+  subscribeRoleScopedState,
+  toggleCommunityPostStatusInFirestore,
+  toggleJoinCommunityActivityInFirestore,
+  updateCollaborationStatusInFirestore,
+  updateCommunityActivityStatusInFirestore,
+  updateDistributionStatusInFirestore,
+  updateIncentiveStatusInFirestore,
+  updateRedemptionStatusInFirestore,
+  verifySubmissionInFirestore,
+} from './services/tracecoFirestore';
 import { AppShell, type ToastNotice } from './components/layout/AppShell';
 import { TraceabilityModal } from './components/ui/TraceabilityModal';
 import { ActivitiesPage } from './pages/ActivitiesPage';
@@ -52,10 +60,6 @@ import {
   ProfilePage,
   SettingsPage,
 } from './pages/UtilityPages';
-
-const STORAGE_KEY = 'traceco_app_state_v7';
-
-const VALID_ROLES: UserRole[] = ALL_ROLES;
 
 const ALLOWED_PAGES_BY_ROLE: Record<UserRole, AppPageId[]> = {
   Kontributor: [
@@ -77,19 +81,10 @@ const ALLOWED_PAGES_BY_ROLE: Record<UserRole, AppPageId[]> = {
     'settings',
     'notifications',
   ],
-  Mitra: [
-    'dashboard',
-    'requests',
-    'distribution',
-    'profile',
-    'notifications',
-  ],
+  Mitra: ['dashboard', 'requests', 'distribution', 'profile', 'notifications'],
 };
 
-function getDefaultSubTab(
-  role: UserRole,
-  page: AppPageId
-): string {
+function getDefaultSubTab(role: UserRole, page: AppPageId): string {
   if (role === 'Kontributor') {
     if (page === 'contribution') return 'submit';
     if (page === 'marketplace') return 'catalog';
@@ -120,7 +115,6 @@ function normalizeRoute(
   let targetPage = page;
   let targetSub = subTab;
 
-  // Map legacy notification/deep-link page IDs cleanly
   if (page === 'verification') {
     if (role === 'Admin') {
       targetPage = 'contribution';
@@ -197,51 +191,18 @@ function normalizeRoute(
   };
 }
 
-function loadInitialState(): TracecoState {
-  if (typeof window === 'undefined') return INITIAL_TRACECO_STATE;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return INITIAL_TRACECO_STATE;
-    const parsed = JSON.parse(raw) as Partial<TracecoState>;
-    if (
-      !parsed ||
-      !Array.isArray(parsed.accounts) ||
-      !Array.isArray(parsed.contributors) ||
-      !Array.isArray(parsed.ecobrick_submissions) ||
-      !Array.isArray(parsed.dropoff_points) ||
-      !Array.isArray(parsed.redemptions) ||
-      !Array.isArray(parsed.utilization_records) ||
-      !VALID_ROLES.includes(parsed.activeRole as UserRole)
-    ) {
-      return INITIAL_TRACECO_STATE;
-    }
-    return {
-      ...INITIAL_TRACECO_STATE,
-      ...parsed,
-      activeRole: parsed.activeRole as UserRole,
-      community_activities: Array.isArray(parsed.community_activities)
-        ? parsed.community_activities.map((act) => ({
-            ...act,
-            registeredParticipantIds: Array.isArray(
-              act.registeredParticipantIds
-            )
-              ? act.registeredParticipantIds
-              : [],
-          }))
-        : INITIAL_TRACECO_STATE.community_activities,
-      community_posts: Array.isArray(parsed.community_posts)
-        ? parsed.community_posts
-        : INITIAL_TRACECO_STATE.community_posts,
-      currentUserId:
-        typeof parsed.currentUserId === 'string' ? parsed.currentUserId : null,
-    };
-  } catch {
-    return INITIAL_TRACECO_STATE;
-  }
-}
-
 export default function App() {
-  const [state, setState] = useState<TracecoState>(loadInitialState);
+  const [firebaseUser, setFirebaseUser] = useState<any | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<{
+    account: UserAccount;
+    isAdminMarkerPresent: boolean;
+  } | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  const [state, setState] = useState<TracecoState>(EMPTY_TRACECO_STATE);
   const [activePage, setActivePage] = useState<AppPageId>('dashboard');
   const [activeSubTab, setActiveSubTab] = useState<string>('');
   const [inspectingTargetId, setInspectingTargetId] = useState<string | null>(
@@ -249,7 +210,7 @@ export default function App() {
   );
   const [selectedTraceTargetId, setSelectedTraceTargetId] = useState<
     string | null
-  >('TRC-2026-004');
+  >(null);
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastNotice | null>(null);
 
@@ -267,27 +228,124 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  // Firebase Auth Observer + Profile Hydration
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // Ignore storage quota errors in restricted environments
-    }
-  }, [state]);
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      setAuthLoading(true);
+      setAuthError(null);
+      if (!user) {
+        setFirebaseUser(null);
+        setCurrentUserProfile(null);
+        setNeedsOnboarding(false);
+        setSyncError(null);
+        setState(EMPTY_TRACECO_STATE);
+        setAuthLoading(false);
+        return;
+      }
 
-  const currentUser = state.currentUserId
-    ? state.accounts.find((a) => a.id === state.currentUserId) ?? null
-    : null;
+      setFirebaseUser(user);
+      const email = user.email ?? '';
+      try {
+        const profileResult = await fetchUserProfile(user.uid, email);
+
+        if (!profileResult) {
+          setNeedsOnboarding(true);
+          setCurrentUserProfile(null);
+          return;
+        }
+
+        setNeedsOnboarding(false);
+        setCurrentUserProfile({
+          account: profileResult.account,
+          isAdminMarkerPresent: profileResult.isAdminMarkerPresent,
+        });
+      } catch (err) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Gagal memuat profil pengguna dari database.';
+        setAuthError(msg);
+        setCurrentUserProfile(null);
+      } finally {
+        setAuthLoading(false);
+      }
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  // Role-Scoped Firestore real-time synchronization listener
+  useEffect(() => {
+    if (!firebaseUser || !currentUserProfile || needsOnboarding) return;
+    const uid = firebaseUser.uid;
+    const role = currentUserProfile.account.role;
+
+    const unsubscribeSync = subscribeRoleScopedState(
+      uid,
+      role,
+      currentUserProfile.account,
+      (nextState) => {
+        setSyncError(null);
+        setState(nextState);
+      },
+      (errorMessage) => {
+        setSyncError(errorMessage);
+      }
+    );
+
+    return () => {
+      unsubscribeSync();
+    };
+  }, [firebaseUser, currentUserProfile, needsOnboarding]);
+
+  const handleCompleteOnboarding = async (payload: {
+    name: string;
+    role: UserRole;
+    segment?: ContributorSegment;
+    unitOrAddress: string;
+  }) => {
+    if (!firebaseUser) return;
+    const result = await completeOnboardingProfile({
+      uid: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      emailVerified: Boolean(firebaseUser.emailVerified),
+      name: payload.name,
+      role: payload.role,
+      segment: payload.segment,
+      unitOrAddress: payload.unitOrAddress,
+    });
+
+    setAuthError(null);
+    setCurrentUserProfile({
+      account: result.account,
+      isAdminMarkerPresent: result.isAdminMarkerPresent,
+    });
+    setNeedsOnboarding(false);
+    showToast(`Akun berhasil diatur dengan peran ${result.account.role}.`);
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setFirebaseUser(null);
+    setCurrentUserProfile(null);
+    setNeedsOnboarding(false);
+    setAuthError(null);
+    setSyncError(null);
+    setState(EMPTY_TRACECO_STATE);
+    setActivePage('dashboard');
+    setActiveSubTab('');
+  };
 
   const handleNavigate = (page: AppPageId, subTab?: string) => {
-    const resolved = normalizeRoute(state.activeRole, page, subTab);
+    const role = currentUserProfile?.account.role ?? 'Kontributor';
+    const resolved = normalizeRoute(role, page, subTab);
     setActivePage(resolved.page);
     setActiveSubTab(resolved.sub);
   };
 
   const handleOpenTraceDetail = (targetId: string) => {
     setSelectedTraceTargetId(targetId);
-    if (state.activeRole === 'Kontributor') {
+    if (currentUserProfile?.account.role === 'Kontributor') {
       setActivePage('contribution');
       setActiveSubTab('trace');
     } else {
@@ -295,58 +353,7 @@ export default function App() {
     }
   };
 
-  const handleLogin = (email: string, password: string): { error?: string } => {
-    const res = authenticateUser(state, email, password);
-    if (res.error) {
-      return { error: res.error };
-    }
-    setState(res.nextState);
-    setActivePage('dashboard');
-    setActiveSubTab('');
-    setInspectingTargetId(null);
-    return {};
-  };
-
-  const handleRegister = (payload: {
-    name: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    role: UserRole;
-    segment?: ContributorSegment;
-    unitOrAddress: string;
-  }): { error?: string } => {
-    const res = registerUserAccount(state, payload);
-    if (res.error) {
-      return { error: res.error };
-    }
-    setState(res.nextState);
-    setActivePage('dashboard');
-    setActiveSubTab('');
-    setInspectingTargetId(null);
-    return {};
-  };
-
-  const handlePreviewRoleChange = (role: UserRole) => {
-    setState((prev) => switchPreviewRole(prev, role));
-    const allowed = ALLOWED_PAGES_BY_ROLE[role];
-    if (!allowed.includes(activePage)) {
-      setActivePage('dashboard');
-      setActiveSubTab('');
-    } else {
-      setActiveSubTab(getDefaultSubTab(role, activePage));
-    }
-    showToast(`Tampilan peran dialihkan ke ${role}.`);
-  };
-
-  const handleLogout = () => {
-    setState((prev) => logoutUser(prev));
-    setActivePage('dashboard');
-    setActiveSubTab('');
-    setInspectingTargetId(null);
-  };
-
-  const handleSubmitContribution = (payload: {
+  const handleSubmitContribution = async (payload: {
     contributorId: string;
     dropoffPointId: string;
     date: string;
@@ -357,90 +364,102 @@ export default function App() {
     photoDataUrl?: string;
     photoLabel?: string;
     notes?: string;
-  }): { error?: string; submissionId?: string } => {
-    const res = submitEcobrickContributionInState(state, payload);
-    if (res.error) {
-      return { error: res.error };
-    }
-    setState(res.nextState);
-    if (res.submission) {
-      showToast(
-        `Kontribusi ${res.submission.submissionId} (${res.submission.quantitySubmitted} unit) berhasil dicatat.`
+  }): Promise<{ error?: string; submissionId?: string }> => {
+    try {
+      const submissionId = await submitEcobrickContributionInFirestore(
+        state,
+        payload
       );
+      showToast(
+        `Kontribusi ${submissionId} (${payload.quantitySubmitted} unit) berhasil dicatat ke pos.`
+      );
+      return { submissionId };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message);
+      return { error: message };
     }
-    return { submissionId: res.submission?.submissionId };
   };
 
-  const handleVerifySubmission = (params: {
+  const handleVerifySubmission = async (params: {
     submissionId: string;
     verifierId: string;
     checklist: PhysicalChecklist;
     verifiedCount: number;
     rejectionReason?: string;
     verifiedWeightKg?: number;
-  }): { error?: string; batchId?: string } => {
-    const res = verifySubmissionInState(state, {
-      ...params,
-      verifiedAt: '2026-11-18 11:30',
-    });
-    if (res.error) {
-      return { error: res.error };
+  }): Promise<{ error?: string; batchId?: string }> => {
+    try {
+      const res = await verifySubmissionInFirestore(state, params);
+      showToast(
+        res.batchId
+          ? `Verifikasi tersimpan · Batch ${res.batchId} diterbitkan.`
+          : `Verifikasi ${params.submissionId} tersimpan.`
+      );
+      return { batchId: res.batchId };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message);
+      return { error: message };
     }
-    setState(res.nextState);
-    showToast(
-      res.batch
-        ? `Verifikasi tersimpan · Batch ${res.batch.batchId} diterbitkan.`
-        : `Verifikasi ${params.submissionId} tersimpan.`
-    );
-    return { batchId: res.batch?.batchId };
   };
 
-  const handleRedeemReward = (params: {
+  const handleRedeemReward = async (params: {
     contributorId: string;
     rewardId: string;
-  }): { error?: string } => {
-    const res = redeemRewardInState(state, {
-      ...params,
-      requestedAt: '2026-11-18',
-    });
-    if (res.error) {
-      return { error: res.error };
+  }): Promise<{ error?: string }> => {
+    try {
+      const redemptionId = await redeemRewardInFirestore(state, params);
+      const rewardTitle =
+        state.rewards.find((r) => r.id === params.rewardId)?.title ?? 'Reward';
+      showToast(
+        `Penukaran "${rewardTitle}" (${redemptionId}) berhasil diajukan.`,
+        'Lihat Saldo',
+        () => handleNavigate('transactions', 'ledger')
+      );
+      return {};
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message);
+      return { error: message };
     }
-    setState(res.nextState);
-    const rewardTitle =
-      state.rewards.find((r) => r.id === params.rewardId)?.title ?? 'Reward';
-    showToast(`Penukaran "${rewardTitle}" berhasil dicatat.`, 'Lihat Saldo', () =>
-      handleNavigate('transactions', 'ledger')
-    );
-    return {};
   };
 
-  const handleUpdateRedemptionStatus = (
+  const handleUpdateRedemptionStatus = async (
     redemptionId: string,
     status: RedemptionStatus
   ) => {
-    setState((prev) =>
-      updateRedemptionStatusInState(prev, redemptionId, status, '2026-11-18')
-    );
-    showToast(`Status penukaran ${redemptionId} diperbarui ke ${status}.`);
+    try {
+      await updateRedemptionStatusInFirestore(
+        state,
+        redemptionId,
+        status,
+        firebaseUser?.uid ?? ''
+      );
+      showToast(`Status penukaran ${redemptionId} diperbarui ke ${status}.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : String(err));
+    }
   };
 
-  const handleUpdateIncentiveStatus = (
+  const handleUpdateIncentiveStatus = async (
     incentiveId: string,
     status: IncentiveStatus
   ) => {
-    setState((prev) => ({
-      ...prev,
-      financial_incentives: prev.financial_incentives.map((fin) =>
-        fin.id === incentiveId
-          ? { ...fin, status, updatedAt: '2026-11-18' }
-          : fin
-      ),
-    }));
-    showToast(`Status insentif ${incentiveId} diperbarui ke ${status}.`);
+    try {
+      await updateIncentiveStatusInFirestore(
+        state,
+        incentiveId,
+        status,
+        firebaseUser?.uid ?? ''
+      );
+      showToast(`Status insentif ${incentiveId} diperbarui ke ${status}.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : String(err));
+    }
   };
 
-  const handleCreateDistributionRequest = (payload: {
+  const handleCreateDistributionRequest = async (payload: {
     batchId: string;
     requesterId?: string;
     requesterName: string;
@@ -450,62 +469,118 @@ export default function App() {
     location?: string;
     neededDate?: string;
     utilizationDetail: string;
-  }): { error?: string } => {
-    const res = createDistributionRequestInState(state, {
-      ...payload,
-      requestedAt: '2026-11-18',
-    });
-    if (res.error) {
-      return { error: res.error };
+  }): Promise<{ error?: string }> => {
+    if (!firebaseUser) return { error: 'Pengguna belum masuk.' };
+    try {
+      await createDistributionRequestInFirestore(state, {
+        ...payload,
+        requesterId: firebaseUser.uid,
+      });
+      showToast(
+        `Pengajuan ${payload.requestedCount} unit dari Batch ${payload.batchId} terkirim.`
+      );
+      return {};
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message);
+      return { error: message };
     }
-    setState(res.nextState);
-    showToast(
-      `Pengajuan ${payload.requestedCount} unit dari Batch ${payload.batchId} dikirim.`
-    );
-    return {};
   };
 
-  const handleUpdateDistributionStatus = (
+  const handleUpdateDistributionStatus = async (
     requestId: string,
     nextStatus: DistributionStatus,
     receiverName?: string,
     documentationNote?: string
   ) => {
-    setState((prev) => {
-      const reviewerName =
-        prev.accounts.find((a) => a.id === prev.currentUserId)?.name ??
-        'Ustadz Hendra Saputra';
-      return updateDistributionStatusInState(prev, {
+    try {
+      const reviewerName = currentUserProfile?.account.name ?? 'Admin Eco-Hub';
+      await updateDistributionStatusInFirestore(state, {
         requestId,
         nextStatus,
+        actorUid: firebaseUser?.uid ?? '',
         reviewerName,
         receiverName,
         documentationNote,
-        actionDate: '2026-11-18',
       });
-    });
-    showToast(`Distribusi ${requestId} diperbarui: ${nextStatus}.`);
+      showToast(`Distribusi ${requestId} diperbarui: ${nextStatus}.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleCreateDropOffPoint = async (payload: {
+    name: string;
+    area: string;
+    schedule: string;
+    coordinator: string;
+  }): Promise<{ error?: string }> => {
+    try {
+      const id = await createDropOffPointInFirestore(payload);
+      showToast(`Pos serah "${payload.name.trim()}" (${id}) berhasil ditambahkan.`);
+      return {};
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message);
+      return { error: message };
+    }
+  };
+
+  const handleCreateRewardItem = async (payload: {
+    title: string;
+    category: RewardCatalogItem['category'];
+    pointsCost: number;
+    description: string;
+    stockNote: string;
+  }): Promise<{ error?: string }> => {
+    try {
+      const id = await createRewardCatalogItemInFirestore(payload);
+      showToast(`Item reward "${payload.title.trim()}" (${id}) ditambahkan ke katalog.`);
+      return {};
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message);
+      return { error: message };
+    }
+  };
+
+  const handleInitializeMasterCatalog = async (): Promise<{ error?: string }> => {
+    try {
+      const res = await initializeMasterCatalogInFirestore(
+        state.dropoff_points.map((d) => d.id),
+        state.rewards.map((r) => r.id)
+      );
+      if (res.createdDropoffs === 0 && res.createdRewards === 0) {
+        showToast('Pos serah dan katalog reward standar sudah tersedia.');
+      } else {
+        showToast(
+          `Berhasil memuat ${res.createdDropoffs} pos serah dan ${res.createdRewards} item reward standar.`
+        );
+      }
+      return {};
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(message);
+      return { error: message };
+    }
   };
 
   const handleToggleJoinActivity = (
     activityId: string
   ): { joined: boolean; error?: string } => {
-    const actorId = state.activeActorIdByRole[state.activeRole];
-    const res = toggleJoinCommunityActivityInState(state, {
-      activityId,
-      actorId,
-      actionDate: '2026-11-18',
-    });
-    if (res.error) {
-      return { joined: false, error: res.error };
-    }
-    setState(res.nextState);
-    showToast(
-      res.joined
-        ? 'Berhasil mendaftar ke kegiatan komunitas.'
-        : 'Pendaftaran kegiatan komunitas dibatalkan.'
-    );
-    return { joined: res.joined };
+    if (!firebaseUser) return { joined: false, error: 'Pengguna belum masuk.' };
+    toggleJoinCommunityActivityInFirestore(state, activityId, firebaseUser.uid)
+      .then((res) => {
+        showToast(
+          res.joined
+            ? 'Berhasil mendaftar ke kegiatan komunitas.'
+            : 'Pendaftaran kegiatan komunitas dibatalkan.'
+        );
+      })
+      .catch((err) => {
+        showToast(err instanceof Error ? err.message : String(err));
+      });
+    return { joined: true };
   };
 
   const handleCreateCommunityActivity = (payload: {
@@ -516,27 +591,27 @@ export default function App() {
     participantSummary: string;
     inclusiveParticipationNote: string;
   }): { error?: string } => {
-    const creatorId = state.activeActorIdByRole[state.activeRole];
-    const res = createCommunityActivityInState(state, {
-      ...payload,
-      creatorId,
-    });
-    if (res.error) {
-      return { error: res.error };
-    }
-    setState(res.nextState);
-    showToast(`Agenda "${payload.title.trim()}" diterbitkan ke Community Hub.`);
+    if (!firebaseUser) return { error: 'Pengguna belum masuk.' };
+    createCommunityActivityInFirestore(firebaseUser.uid, payload)
+      .then(() => {
+        showToast(`Agenda "${payload.title.trim()}" diterbitkan ke Community Hub.`);
+      })
+      .catch((err) => {
+        showToast(err instanceof Error ? err.message : String(err));
+      });
     return {};
   };
 
-  const handleUpdateCommunityActivityStatus = (
+  const handleUpdateCommunityActivityStatus = async (
     activityId: string,
     status: CommunityActivity['status']
   ) => {
-    setState((prev) =>
-      updateCommunityActivityStatusInState(prev, activityId, status)
-    );
-    showToast(`Status agenda ${activityId} diperbarui ke ${status}.`);
+    try {
+      await updateCommunityActivityStatusInFirestore(activityId, status);
+      showToast(`Status agenda ${activityId} diperbarui ke ${status}.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : String(err));
+    }
   };
 
   const handleCreateCommunityPost = (payload: {
@@ -544,17 +619,14 @@ export default function App() {
     title: string;
     body: string;
   }): { error?: string } => {
-    const authorId = state.activeActorIdByRole[state.activeRole];
-    const res = createCommunityPostInState(state, {
-      ...payload,
-      authorId,
-      timestamp: '2026-11-18 15:10',
-    });
-    if (res.error) {
-      return { error: res.error };
-    }
-    setState(res.nextState);
-    showToast('Topik forum berhasil diterbitkan.');
+    if (!firebaseUser) return { error: 'Pengguna belum masuk.' };
+    createCommunityPostInFirestore(state, firebaseUser.uid, payload)
+      .then(() => {
+        showToast('Topik forum diskusi berhasil diterbitkan.');
+      })
+      .catch((err) => {
+        showToast(err instanceof Error ? err.message : String(err));
+      });
     return {};
   };
 
@@ -562,24 +634,24 @@ export default function App() {
     postId: string,
     body: string
   ): { error?: string } => {
-    const authorId = state.activeActorIdByRole[state.activeRole];
-    const res = replyCommunityPostInState(state, {
-      postId,
-      authorId,
-      body,
-      timestamp: '2026-11-18 15:25',
-    });
-    if (res.error) {
-      return { error: res.error };
-    }
-    setState(res.nextState);
-    showToast('Balasan forum terkirim.');
+    if (!firebaseUser) return { error: 'Pengguna belum masuk.' };
+    replyCommunityPostInFirestore(state, firebaseUser.uid, postId, body)
+      .then(() => {
+        showToast('Balasan forum berhasil terkirim.');
+      })
+      .catch((err) => {
+        showToast(err instanceof Error ? err.message : String(err));
+      });
     return {};
   };
 
   const handleToggleCommunityPostStatus = (postId: string) => {
-    setState((prev) => toggleCommunityPostStatusInState(prev, postId));
-    showToast('Status topik forum diperbarui.');
+    const post = state.community_posts.find((p) => p.id === postId);
+    if (post) {
+      toggleCommunityPostStatusInFirestore(postId, post.status).catch((err) =>
+        showToast(err instanceof Error ? err.message : String(err))
+      );
+    }
   };
 
   const handleCreateCollaboration = (payload: {
@@ -587,90 +659,106 @@ export default function App() {
     collaborationType: string;
     activity: string;
   }): { error?: string } => {
-    const res = createCollaborationProposalInState(state, {
-      ...payload,
-      proposedByRole: state.activeRole,
-      actionDate: '2026-11-18',
-    });
-    if (res.error) {
-      return { error: res.error };
-    }
-    setState(res.nextState);
-    showToast(`Usulan kolaborasi "${payload.partnerName.trim()}" terkirim.`);
+    if (!firebaseUser || !currentUserProfile)
+      return { error: 'Pengguna belum masuk.' };
+    createCollaborationInFirestore(
+      firebaseUser.uid,
+      currentUserProfile.account.role,
+      payload
+    )
+      .then(() => {
+        showToast(`Usulan kolaborasi "${payload.partnerName.trim()}" terkirim.`);
+      })
+      .catch((err) => {
+        showToast(err instanceof Error ? err.message : String(err));
+      });
     return {};
   };
 
-  const handleUpdateCollaborationStatus = (
+  const handleUpdateCollaborationStatus = async (
     collaborationId: string,
     status: CollaborationPartner['status']
   ) => {
-    setState((prev) =>
-      updateCollaborationStatusInState(prev, collaborationId, status)
+    try {
+      await updateCollaborationStatusInFirestore(collaborationId, status);
+      showToast(`Status kolaborasi ${collaborationId} diperbarui ke ${status}.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleMarkNotificationRead = async (id: string) => {
+    try {
+      await markNotificationReadInFirestore(id);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      const unreadIds = state.notifications
+        .filter((n) => !n.read)
+        .map((n) => n.id);
+      await markAllNotificationsReadInFirestore(unreadIds);
+      showToast('Semua notifikasi ditandai sudah dibaca.');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center p-6">
+        <div className="text-center space-y-3">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#245C45] border-r-transparent" />
+          <p className="text-sm font-medium text-[#6B756F]">
+            Memuat sesi TRACECO...
+          </p>
+        </div>
+      </div>
     );
-    showToast(`Status kolaborasi ${collaborationId} diperbarui ke ${status}.`);
-  };
+  }
 
-  const handleMarkNotificationRead = (id: string) => {
-    setState((prev) => ({
-      ...prev,
-      notifications: prev.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
-      ),
-    }));
-  };
-
-  const handleMarkAllNotificationsRead = () => {
-    setState((prev) => ({
-      ...prev,
-      notifications: prev.notifications.map((n) => ({ ...n, read: true })),
-    }));
-    showToast('Semua notifikasi ditandai sudah dibaca.');
-  };
-
-  const handleResetSimulation = () => {
-    setState((prev) => {
-      const customAccounts = prev.accounts.filter(
-        (acc) => !INITIAL_TRACECO_STATE.accounts.some((s) => s.id === acc.id)
-      );
-      const customContributors = prev.contributors.filter(
-        (ctr) => !INITIAL_TRACECO_STATE.contributors.some((s) => s.id === ctr.id)
-      );
-      return {
-        ...INITIAL_TRACECO_STATE,
-        currentUserId: prev.currentUserId,
-        activeRole: prev.activeRole,
-        activeActorIdByRole: prev.activeActorIdByRole,
-        accounts: [...INITIAL_TRACECO_STATE.accounts, ...customAccounts],
-        contributors: [
-          ...INITIAL_TRACECO_STATE.contributors,
-          ...customContributors,
-        ],
-      };
-    });
-    showToast('Data operasional berhasil direset ke kondisi awal.');
-  };
-
-  if (!currentUser) {
+  if (!firebaseUser || needsOnboarding || !currentUserProfile) {
     return (
       <AuthPages
-        accounts={state.accounts}
-        onLogin={handleLogin}
-        onRegister={handleRegister}
+        onCompleteOnboarding={handleCompleteOnboarding}
+        pendingGoogleUser={
+          firebaseUser
+            ? {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email ?? '',
+                emailVerified: Boolean(firebaseUser.emailVerified),
+                name: firebaseUser.displayName ?? '',
+                isAdminAuthorized:
+                  Boolean(currentUserProfile?.isAdminMarkerPresent) ||
+                  firebaseUser.email?.toLowerCase() ===
+                    BOOTSTRAPPED_ADMIN_EMAIL.toLowerCase(),
+              }
+            : null
+        }
+        onCancelOnboarding={firebaseUser ? handleLogout : undefined}
+        authError={authError}
       />
     );
   }
+
+  const currentUser = currentUserProfile.account;
 
   return (
     <AppShell
       activePage={activePage}
       activeSubTab={activeSubTab}
       onNavigate={handleNavigate}
-      onPreviewRoleChange={handlePreviewRoleChange}
+      onPreviewRoleChange={() => {}}
       onLogout={handleLogout}
       currentUser={currentUser}
       state={state}
       toast={toast}
       onDismissToast={() => setToast(null)}
+      syncError={syncError}
+      onDismissSyncError={() => setSyncError(null)}
     >
       {activePage === 'dashboard' && (
         <DashboardPage
@@ -678,6 +766,7 @@ export default function App() {
           onNavigate={handleNavigate}
           onInspectTarget={setInspectingTargetId}
           onOpenTraceDetail={handleOpenTraceDetail}
+          onInitializeMasterCatalog={handleInitializeMasterCatalog}
         />
       )}
 
@@ -744,6 +833,8 @@ export default function App() {
           onRedeemReward={handleRedeemReward}
           onUpdateRedemptionStatus={handleUpdateRedemptionStatus}
           onUpdateIncentiveStatus={handleUpdateIncentiveStatus}
+          onCreateRewardItem={handleCreateRewardItem}
+          onInitializeMasterCatalog={handleInitializeMasterCatalog}
         />
       )}
 
@@ -824,7 +915,8 @@ export default function App() {
           activeSubTab={activeSubTab || 'users'}
           onChangeSubTab={setActiveSubTab}
           onLogout={handleLogout}
-          onResetSimulation={handleResetSimulation}
+          onCreateDropOffPoint={handleCreateDropOffPoint}
+          onInitializeMasterCatalog={handleInitializeMasterCatalog}
         />
       )}
 

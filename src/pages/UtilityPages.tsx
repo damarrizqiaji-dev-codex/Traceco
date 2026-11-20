@@ -4,10 +4,11 @@ import {
   Bell,
   Building2,
   Check,
+  Database,
   Lock,
   LogOut,
   MapPin,
-  RotateCcw,
+  Plus,
   Search,
 } from 'lucide-react';
 import type {
@@ -28,6 +29,7 @@ import {
 import { PrimaryButton, SecondaryButton } from '../components/ui/Button';
 import { DataTable, type DataTableColumn } from '../components/ui/DataTable';
 import { FilterBar } from '../components/ui/FilterBar';
+import { FormField, fieldInputClass } from '../components/ui/FormField';
 import { MetricStrip } from '../components/ui/Metric';
 import { PageHeader, SectionHeader } from '../components/ui/PageHeader';
 import { RoleTag, StatusTag } from '../components/ui/StatusBadge';
@@ -89,7 +91,7 @@ export function ProfilePage({
     status: CollaborationPartner['status']
   ) => void;
 }) {
-  const actorId = state.activeActorIdByRole[state.activeRole];
+  const actorId = state.currentUserId ?? '';
   const actorProfile =
     state.contributors.find((c) => c.id === actorId) ?? currentUser;
   const isKontributor = isPenyerahRole(state.activeRole);
@@ -103,7 +105,7 @@ export function ProfilePage({
   const points = computeContributorPointsBalance(state, actorId);
 
   const mitraRequests = state.distribution_requests.filter(
-    (r) => r.requesterId === actorId || r.requesterType === 'Mitra Pemanfaat'
+    (r) => r.requesterId === actorId
   );
   const mitraUtilizedUnits = mitraRequests
     .filter((r) => r.status === 'Utilized')
@@ -392,26 +394,62 @@ export function SettingsPage({
   activeSubTab = 'users',
   onChangeSubTab = () => {},
   onLogout,
-  onResetSimulation,
+  onCreateDropOffPoint,
+  onInitializeMasterCatalog,
 }: {
   state: TracecoState;
   currentUser: UserAccount;
   activeSubTab?: string;
   onChangeSubTab?: (sub: string) => void;
   onLogout: () => void;
-  onResetSimulation: () => void;
+  onCreateDropOffPoint?: (payload: {
+    name: string;
+    area: string;
+    schedule: string;
+    coordinator: string;
+  }) => Promise<{ error?: string }>;
+  onInitializeMasterCatalog?: () => Promise<{ error?: string }>;
 }) {
   const [notifEnabled, setNotifEnabled] = useState(true);
-  const [resetDone, setResetDone] = useState(false);
   const [roleFilter, setRoleFilter] = useState<'Semua' | UserRole>('Semua');
   const [userSearch, setUserSearch] = useState('');
+
+  const [showAddDropoff, setShowAddDropoff] = useState(false);
+  const [dpName, setDpName] = useState('');
+  const [dpArea, setDpArea] = useState('');
+  const [dpSchedule, setDpSchedule] = useState('');
+  const [dpCoordinator, setDpCoordinator] = useState('');
+  const [dpError, setDpError] = useState<string | null>(null);
+  const [dpSaving, setDpSaving] = useState(false);
+  const [initBusy, setInitBusy] = useState(false);
 
   const currentTab =
     activeSubTab === 'hub' || activeSubTab === 'system' ? activeSubTab : 'users';
 
-  const handleReset = () => {
-    onResetSimulation();
-    setResetDone(true);
+  const handleAddDropoffSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onCreateDropOffPoint || dpSaving) return;
+    setDpError(null);
+    setDpSaving(true);
+    try {
+      const res = await onCreateDropOffPoint({
+        name: dpName,
+        area: dpArea,
+        schedule: dpSchedule,
+        coordinator: dpCoordinator,
+      });
+      if (res.error) {
+        setDpError(res.error);
+        return;
+      }
+      setDpName('');
+      setDpArea('');
+      setDpSchedule('');
+      setDpCoordinator('');
+      setShowAddDropoff(false);
+    } finally {
+      setDpSaving(false);
+    }
   };
 
   const filteredAccounts = state.accounts.filter((u) => {
@@ -605,64 +643,189 @@ export function SettingsPage({
           </section>
 
           <section className="space-y-3">
-            <SectionHeader
-              title="Pos Serah Ecobrick (Drop-off Points)"
-              description="Titik resmi penerimaan ecobrick dan pemeriksaan fisik oleh Admin."
-            />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {state.dropoff_points.map((dp) => (
-                <div
-                  key={dp.id}
-                  className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2">
-                      <MapPin
-                        className="mt-0.5 h-4 w-4 shrink-0 text-[#245C45]"
-                        aria-hidden="true"
-                      />
-                      <div>
-                        <p className="text-xs font-semibold text-[#252B28]">
-                          {dp.name}
-                        </p>
-                        <p className="text-[11px] text-[#6B756F]">
-                          {dp.area}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-mono text-[10px] text-[#6B756F]">
-                      {dp.id}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <SectionHeader
+                title="Pos Serah Ecobrick (Drop-off Points)"
+                description="Titik resmi penerimaan ecobrick dan pemeriksaan fisik oleh Admin."
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                {state.dropoff_points.length === 0 && onInitializeMasterCatalog && (
+                  <SecondaryButton
+                    size="sm"
+                    disabled={initBusy}
+                    onClick={async () => {
+                      setInitBusy(true);
+                      try {
+                        await onInitializeMasterCatalog();
+                      } finally {
+                        setInitBusy(false);
+                      }
+                    }}
+                  >
+                    <Database className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>
+                      {initBusy ? 'Menyiapkan...' : 'Muat Pos Standar'}
                     </span>
-                  </div>
-                  <div className="border-t border-[#EEF2EF] pt-2 text-[11px] text-[#6B756F]">
-                    <p>Koordinator: {dp.coordinator}</p>
-                    <p className="font-mono text-[#245C45]">{dp.schedule}</p>
-                  </div>
-                </div>
-              ))}
+                  </SecondaryButton>
+                )}
+                {onCreateDropOffPoint && (
+                  <PrimaryButton
+                    size="sm"
+                    onClick={() => setShowAddDropoff((v) => !v)}
+                  >
+                    <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>
+                      {showAddDropoff ? 'Tutup Form' : 'Tambah Pos Serah'}
+                    </span>
+                  </PrimaryButton>
+                )}
+              </div>
             </div>
+
+            {showAddDropoff && onCreateDropOffPoint && (
+              <form
+                onSubmit={handleAddDropoffSubmit}
+                className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4"
+              >
+                <SectionHeader
+                  title="Tambah Pos Serah Baru ke Firestore"
+                  description="Pos ini akan langsung muncul pada pilihan lokasi penyerahan Kontributor."
+                />
+                {dpError && (
+                  <div
+                    role="alert"
+                    className="rounded border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#991B1B]"
+                  >
+                    {dpError}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField id="dp-name" label="Nama Pos Serah">
+                    <input
+                      id="dp-name"
+                      type="text"
+                      required
+                      value={dpName}
+                      onChange={(e) => setDpName(e.target.value)}
+                      placeholder="Contoh: Pos Eco-Hub Putri Al-Amanah"
+                      className={fieldInputClass}
+                    />
+                  </FormField>
+                  <FormField id="dp-area" label="Area / Lokasi">
+                    <input
+                      id="dp-area"
+                      type="text"
+                      required
+                      value={dpArea}
+                      onChange={(e) => setDpArea(e.target.value)}
+                      placeholder="Contoh: Halaman Selatan Asrama Putri"
+                      className={fieldInputClass}
+                    />
+                  </FormField>
+                  <FormField id="dp-schedule" label="Jadwal Penerimaan">
+                    <input
+                      id="dp-schedule"
+                      type="text"
+                      required
+                      value={dpSchedule}
+                      onChange={(e) => setDpSchedule(e.target.value)}
+                      placeholder="Contoh: Senin & Kamis · 08.00–11.00 WIB"
+                      className={fieldInputClass}
+                    />
+                  </FormField>
+                  <FormField id="dp-coordinator" label="Koordinator Pos">
+                    <input
+                      id="dp-coordinator"
+                      type="text"
+                      required
+                      value={dpCoordinator}
+                      onChange={(e) => setDpCoordinator(e.target.value)}
+                      placeholder="Contoh: Tim Verifikator Putri"
+                      className={fieldInputClass}
+                    />
+                  </FormField>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <SecondaryButton
+                    size="sm"
+                    onClick={() => setShowAddDropoff(false)}
+                  >
+                    Batal
+                  </SecondaryButton>
+                  <PrimaryButton size="sm" type="submit" disabled={dpSaving}>
+                    <span>{dpSaving ? 'Menyimpan...' : 'Simpan Pos Serah'}</span>
+                  </PrimaryButton>
+                </div>
+              </form>
+            )}
+
+            {state.dropoff_points.length === 0 ? (
+              <div className="rounded-md border border-[#E3E8E4] bg-white p-6 text-center text-xs text-[#6B756F]">
+                Belum ada Pos Serah Ecobrick tersimpan di database `traceco-prod`.
+                Klik "Muat Pos Standar" atau "Tambah Pos Serah" untuk memulai.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {state.dropoff_points.map((dp) => (
+                  <div
+                    key={dp.id}
+                    className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2">
+                        <MapPin
+                          className="mt-0.5 h-4 w-4 shrink-0 text-[#245C45]"
+                          aria-hidden="true"
+                        />
+                        <div>
+                          <p className="text-xs font-semibold text-[#252B28]">
+                            {dp.name}
+                          </p>
+                          <p className="text-[11px] text-[#6B756F]">
+                            {dp.area}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="font-mono text-[10px] text-[#6B756F]">
+                        {dp.id}
+                      </span>
+                    </div>
+                    <div className="border-t border-[#EEF2EF] pt-2 text-[11px] text-[#6B756F]">
+                      <p>Koordinator: {dp.coordinator}</p>
+                      <p className="font-mono text-[#245C45]">{dp.schedule}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           <section className="space-y-3">
             <SectionHeader title="Kemitraan Terdaftar" />
             <div className="divide-y divide-[#EEF2EF] rounded-md border border-[#E3E8E4] bg-white">
-              {state.collaborations.map((colb) => (
-                <div
-                  key={colb.id}
-                  className="flex flex-wrap items-start justify-between gap-3 p-4"
-                >
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-semibold text-[#252B28]">
-                      {colb.partnerName}
-                    </p>
-                    <p className="text-[11px] font-medium text-[#245C45]">
-                      {colb.collaborationType}
-                    </p>
-                    <p className="text-xs text-[#6B756F]">{colb.activity}</p>
+              {state.collaborations.length === 0 ? (
+                <p className="p-6 text-center text-xs text-[#6B756F]">
+                  Belum ada usulan kemitraan tercatat.
+                </p>
+              ) : (
+                state.collaborations.map((colb) => (
+                  <div
+                    key={colb.id}
+                    className="flex flex-wrap items-start justify-between gap-3 p-4"
+                  >
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-semibold text-[#252B28]">
+                        {colb.partnerName}
+                      </p>
+                      <p className="text-[11px] font-medium text-[#245C45]">
+                        {colb.collaborationType}
+                      </p>
+                      <p className="text-xs text-[#6B756F]">{colb.activity}</p>
+                    </div>
+                    <StatusTag status={colb.status} />
                   </div>
-                  <StatusTag status={colb.status} />
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </section>
         </div>
@@ -672,8 +835,8 @@ export function SettingsPage({
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4">
             <SectionHeader
-              title="Akun & Hak Akses Peran"
-              description="Peran akun ditetapkan saat pendaftaran. Gunakan Prototype Role Preview di bilah atas untuk meninjau peran lain."
+              title="Akun & Isolasi Peran Tunggal"
+              description="Setiap akun Google terikat secara permanen pada satu peran di Cloud Firestore."
             />
 
             <div className="border-t border-b border-[#EEF2EF] py-3.5 space-y-2.5">
@@ -694,10 +857,9 @@ export function SettingsPage({
               <div className="flex items-start gap-2 text-[11px] text-[#6B756F]">
                 <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#245C45]" />
                 <span>
-                  Peran permanen dipilih saat mendaftar. Fitur{' '}
-                  <strong>Prototype Role Preview</strong> pada header atas
-                  memungkinkan peninjauan 3 peran ekosistem TRACECO
-                  (Kontributor, Admin, Mitra).
+                  Sistem menerapkan isolasi <strong>1 Akun = 1 Peran</strong>{' '}
+                  (Kontributor, Admin, atau Mitra) dengan pemisahan koleksi PII
+                  dan aturan keamanan Firestore real-time.
                 </span>
               </div>
             </div>
@@ -724,20 +886,57 @@ export function SettingsPage({
 
           <section className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4">
             <SectionHeader
-              title="Reset Data Operasional"
-              description="Mengembalikan data submission, verifikasi, saldo poin, distribusi, dan pemanfaatan ke kondisi awal."
+              title="Kesiapan Database Cloud Firestore"
+              description="Status master data operasional pada database traceco-prod."
             />
 
-            {resetDone && (
-              <p className="rounded border border-[#C6DBC9] bg-[#E7F0E8] px-3 py-2 text-xs font-medium text-[#245C45]">
-                Data operasional berhasil dikembalikan ke kondisi awal.
+            <dl className="divide-y divide-[#EEF2EF] border-y border-[#EEF2EF] text-xs">
+              <div className="flex items-center justify-between py-2.5">
+                <dt className="text-[#6B756F]">Pos Serah Aktif (`dropoff_points`)</dt>
+                <dd className="font-mono font-semibold text-[#252B28]">
+                  {state.dropoff_points.length} pos
+                </dd>
+              </div>
+              <div className="flex items-center justify-between py-2.5">
+                <dt className="text-[#6B756F]">Katalog Reward (`rewards`)</dt>
+                <dd className="font-mono font-semibold text-[#252B28]">
+                  {state.rewards.length} item
+                </dd>
+              </div>
+              <div className="flex items-center justify-between py-2.5">
+                <dt className="text-[#6B756F]">Akun Terdaftar (`users_public`)</dt>
+                <dd className="font-mono font-semibold text-[#252B28]">
+                  {state.accounts.length} akun
+                </dd>
+              </div>
+            </dl>
+
+            {(state.dropoff_points.length === 0 || state.rewards.length === 0) &&
+            onInitializeMasterCatalog ? (
+              <PrimaryButton
+                size="sm"
+                disabled={initBusy}
+                onClick={async () => {
+                  setInitBusy(true);
+                  try {
+                    await onInitializeMasterCatalog();
+                  } finally {
+                    setInitBusy(false);
+                  }
+                }}
+              >
+                <Database className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>
+                  {initBusy
+                    ? 'Menginisialisasi...'
+                    : 'Inisialisasi Pos & Katalog Default'}
+                </span>
+              </PrimaryButton>
+            ) : (
+              <p className="text-xs text-[#245C45] font-medium">
+                Master data pos serah dan katalog reward telah siap digunakan.
               </p>
             )}
-
-            <SecondaryButton onClick={handleReset}>
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>Reset ke Data Awal</span>
-            </SecondaryButton>
           </section>
         </div>
       )}

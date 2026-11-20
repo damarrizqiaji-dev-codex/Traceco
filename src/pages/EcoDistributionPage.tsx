@@ -42,7 +42,7 @@ interface EcoDistributionPageProps {
     location?: string;
     neededDate?: string;
     utilizationDetail: string;
-  }) => { error?: string };
+  }) => Promise<{ error?: string }> | { error?: string };
   onUpdateDistributionStatus: (
     requestId: string,
     nextStatus: DistributionStatus,
@@ -79,7 +79,7 @@ export function EcoDistributionPage({
 }: EcoDistributionPageProps) {
   const isAdmin = isAdminRole(state.activeRole);
   const isMitra = isMitraRole(state.activeRole);
-  const activeActorId = state.activeActorIdByRole[state.activeRole];
+  const activeActorId = state.currentUserId ?? '';
   const activeActor = state.contributors.find((c) => c.id === activeActorId);
 
   const metrics = computePlatformMetrics(state);
@@ -105,10 +105,15 @@ export function EcoDistributionPage({
       isMitra ? 'Proyek Mitra' : 'Fasilitas Pesantren'
     );
   const [location, setLocation] = useState('');
-  const [neededDate, setNeededDate] = useState('2026-11-26');
+  const [neededDate, setNeededDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 10);
+  });
   const [utilizationDetail, setUtilizationDetail] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdminCreateForm, setShowAdminCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -140,8 +145,9 @@ export function EcoDistributionPage({
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setFormError(null);
     setFormSuccess(null);
 
@@ -159,39 +165,42 @@ export function EcoDistributionPage({
       return;
     }
 
-    const res = onCreateDistributionRequest({
-      batchId,
-      requesterId: isMitra ? activeActorId : undefined,
-      requesterName: requesterName.trim(),
-      requesterType,
-      requestedCount: qty,
-      utilizationCategory,
-      location: location.trim() || undefined,
-      neededDate: neededDate || undefined,
-      utilizationDetail: utilizationDetail.trim(),
-    });
+    setIsSubmitting(true);
+    try {
+      const res = await onCreateDistributionRequest({
+        batchId,
+        requesterId: isMitra ? activeActorId : undefined,
+        requesterName: requesterName.trim(),
+        requesterType,
+        requestedCount: qty,
+        utilizationCategory,
+        location: location.trim() || undefined,
+        neededDate: neededDate || undefined,
+        utilizationDetail: utilizationDetail.trim(),
+      });
 
-    if (res.error) {
-      setFormError(res.error);
-      return;
-    }
+      if (res.error) {
+        setFormError(res.error);
+        return;
+      }
 
-    setFormSuccess(
-      `Pengajuan ${qty} unit dari batch ${batchId} berhasil dikirim (Menunggu Review).`
-    );
-    setUtilizationDetail('');
-    setLocation('');
-    setShowAdminCreateForm(false);
-    if (selectedBatch) {
-      const remaining = Math.max(1, selectedBatch.availableCount - qty);
-      setRequestedCount(String(Math.min(5, remaining)));
+      setFormSuccess(
+        `Pengajuan ${qty} unit dari batch ${batchId} berhasil dikirim (Menunggu Review).`
+      );
+      setUtilizationDetail('');
+      setLocation('');
+      setShowAdminCreateForm(false);
+      if (selectedBatch) {
+        const remaining = Math.max(1, selectedBatch.availableCount - qty);
+        setRequestedCount(String(Math.min(5, remaining)));
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const mitraRequests = state.distribution_requests.filter(
-    (r) =>
-      r.requesterId === activeActorId ||
-      r.requesterType === 'Mitra Pemanfaat'
+    (r) => r.requesterId === activeActorId
   );
   const scopedRequests = isMitra ? mitraRequests : state.distribution_requests;
 
@@ -396,9 +405,7 @@ export function EcoDistributionPage({
       align: 'right',
       render: (r) => {
         const isOwnMitraRequest =
-          isMitra &&
-          (r.requesterId === activeActorId ||
-            r.requesterType === 'Mitra Pemanfaat');
+          isMitra && r.requesterId === activeActorId;
 
         if (isAdmin) {
           if (r.status === 'Pending Review') {
@@ -823,9 +830,7 @@ export function EcoDistributionPage({
         ) : (
           rows.map((r) => {
             const isOwnMitraRequest =
-              isMitra &&
-              (r.requesterId === activeActorId ||
-                r.requesterType === 'Mitra Pemanfaat');
+              isMitra && r.requesterId === activeActorId;
             return (
               <div
                 key={r.id}

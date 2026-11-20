@@ -27,7 +27,7 @@ export function TraceabilityPage({
   onBack,
   embedded = false,
 }: TraceabilityPageProps) {
-  const actorId = state.activeActorIdByRole[state.activeRole];
+  const actorId = state.currentUserId ?? '';
   const isPersonal = isPenyerahRole(state.activeRole);
 
   const visibleSubmissions = isPersonal

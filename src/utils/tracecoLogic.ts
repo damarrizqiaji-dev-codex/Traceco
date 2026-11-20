@@ -461,6 +461,7 @@ export function verifySubmissionInState(
   const newVerification: VerificationRecord = {
     id: `VER-${String(state.verification_records.length + 1).padStart(3, '0')}`,
     submissionId: submission.submissionId,
+    contributorId: submission.contributorId,
     batchId: createdBatch?.batchId,
     checklist: params.checklist,
     verifierId: params.verifierId,
@@ -583,6 +584,22 @@ export function computeVerifiedInventory(
       inventoryStatus,
     };
   });
+}
+
+export function getAvailableBatchQuantity(
+  batch: EcobrickBatch,
+  distributions: DistributionRequest[]
+): number {
+  const committedCount = distributions
+    .filter(
+      (d) =>
+        d.batchId === batch.batchId &&
+        ['Pending Review', 'Approved', 'Handed Over', 'Utilized'].includes(
+          d.status
+        )
+    )
+    .reduce((acc, d) => acc + d.requestedCount, 0);
+  return Math.max(0, batch.quantity - committedCount);
 }
 
 export function computeContributorPointsBalance(
@@ -1419,166 +1436,7 @@ export function generateDeterministicQrMatrix(
   return matrix;
 }
 
-export function registerUserAccount(
-  state: TracecoState,
-  payload: {
-    name: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    role: UserRole;
-    segment?: ContributorSegment;
-    unitOrAddress: string;
-    registeredAt?: string;
-  }
-): { nextState: TracecoState; account?: UserAccount; error?: string } {
-  const trimmedName = payload.name.trim();
-  const normalizedEmail = payload.email.trim().toLowerCase();
-  const trimmedUnit = payload.unitOrAddress.trim();
 
-  if (trimmedName.length < 3) {
-    return { nextState: state, error: 'Nama lengkap minimal 3 karakter.' };
-  }
-  if (
-    !normalizedEmail ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
-  ) {
-    return { nextState: state, error: 'Format alamat email tidak valid.' };
-  }
-  if (state.accounts.some((a) => a.email.toLowerCase() === normalizedEmail)) {
-    return {
-      nextState: state,
-      error:
-        'Email sudah terdaftar. Silakan masuk menggunakan akun yang sudah ada.',
-    };
-  }
-  if (!trimmedUnit) {
-    return {
-      nextState: state,
-      error: 'Unit asrama, lembaga, atau alamat wajib diisi.',
-    };
-  }
-  if (payload.password.length < 6) {
-    return {
-      nextState: state,
-      error: 'Kata sandi minimal 6 karakter.',
-    };
-  }
-  if (payload.password !== payload.confirmPassword) {
-    return {
-      nextState: state,
-      error: 'Konfirmasi kata sandi tidak cocok.',
-    };
-  }
-
-  const today = payload.registeredAt ?? '2026-11-18';
-  const nextSeq = state.contributors.length + 1;
-  const newId = `CTR-USR-${String(nextSeq).padStart(3, '0')}`;
-  const resolvedSegment = payload.segment ?? defaultSegmentForRole(payload.role);
-
-  const newAccount: UserAccount = {
-    id: newId,
-    name: trimmedName,
-    email: normalizedEmail,
-    password: payload.password,
-    role: payload.role,
-    segment: resolvedSegment,
-    unitOrAddress: trimmedUnit,
-    registeredAt: today,
-  };
-
-  const newContributor: Contributor = {
-    id: newId,
-    name: trimmedName,
-    role: payload.role,
-    segment: resolvedSegment,
-    unitOrAddress: trimmedUnit,
-    activeSince: today,
-    participationRole: `Terdaftar sebagai ${payload.role}`,
-  };
-
-  return {
-    account: newAccount,
-    nextState: {
-      ...state,
-      currentUserId: newId,
-      activeRole: payload.role,
-      activeActorIdByRole: {
-        ...state.activeActorIdByRole,
-        [payload.role]: newId,
-      },
-      accounts: [...state.accounts, newAccount],
-      contributors: [...state.contributors, newContributor],
-    },
-  };
-}
-
-export function authenticateUser(
-  state: TracecoState,
-  email: string,
-  password: string
-): { nextState: TracecoState; account?: UserAccount; error?: string } {
-  const normalizedEmail = email.trim().toLowerCase();
-  if (!normalizedEmail || !password) {
-    return {
-      nextState: state,
-      error: 'Email dan kata sandi wajib diisi.',
-    };
-  }
-
-  const account = state.accounts.find(
-    (a) => a.email.toLowerCase() === normalizedEmail
-  );
-
-  if (!account || account.password !== password) {
-    return {
-      nextState: state,
-      error: 'Email atau kata sandi tidak sesuai.',
-    };
-  }
-
-  return {
-    account,
-    nextState: {
-      ...state,
-      currentUserId: account.id,
-      activeRole: account.role,
-      activeActorIdByRole: {
-        ...state.activeActorIdByRole,
-        [account.role]: account.id,
-      },
-    },
-  };
-}
-
-export function switchPreviewRole(
-  state: TracecoState,
-  role: UserRole
-): TracecoState {
-  const matchingAccount = state.accounts.find((a) => a.role === role);
-  const matchingContributor = state.contributors.find((c) => c.role === role);
-  const actorId =
-    matchingAccount?.id ??
-    matchingContributor?.id ??
-    state.activeActorIdByRole[role];
-
-  return {
-    ...state,
-    activeRole: role,
-    currentUserId: matchingAccount ? matchingAccount.id : state.currentUserId,
-    activeActorIdByRole: {
-      ...state.activeActorIdByRole,
-      [role]: actorId,
-    },
-  };
-}
-
-export function logoutUser(state: TracecoState): TracecoState {
-  return {
-    ...state,
-    currentUserId: null,
-  };
-}
 
 export function toggleJoinCommunityActivityInState(
   state: TracecoState,
@@ -1834,6 +1692,7 @@ export function replyCommunityPostInState(
 
   const newReply: CommunityReply = {
     id: `RPL-${String(totalReplies + 1).padStart(3, '0')}`,
+    postId: payload.postId,
     authorId: payload.authorId,
     authorName: author?.name ?? 'Anggota Komunitas',
     authorRole,

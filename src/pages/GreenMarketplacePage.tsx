@@ -30,7 +30,7 @@ interface GreenMarketplacePageProps {
   onRedeemReward: (params: {
     contributorId: string;
     rewardId: string;
-  }) => { error?: string };
+  }) => Promise<{ error?: string }> | { error?: string };
   onNavigate: (page: AppPageId, sub?: string) => void;
 }
 
@@ -58,7 +58,7 @@ export function GreenMarketplacePage({
   onRedeemReward,
   onNavigate,
 }: GreenMarketplacePageProps) {
-  const actorId = state.activeActorIdByRole[state.activeRole];
+  const actorId = state.currentUserId ?? '';
   const balanceSummary = computeContributorPointsBalance(state, actorId);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,32 +103,34 @@ export function GreenMarketplacePage({
     onChangeSubTab('detail');
   };
 
-  const handleConfirmRedemption = () => {
+  const handleConfirmRedemption = async () => {
     if (!selectedReward || isConfirming) return;
     setIsConfirming(true);
     setRedeemError(null);
 
-    const res = onRedeemReward({
-      contributorId: actorId,
-      rewardId: selectedReward.id,
-    });
+    try {
+      const res = await onRedeemReward({
+        contributorId: actorId,
+        rewardId: selectedReward.id,
+      });
 
-    if (res.error) {
-      setRedeemError(res.error);
+      if (res.error) {
+        setRedeemError(res.error);
+        return;
+      }
+
+      const nextBalance = Math.max(
+        0,
+        balanceSummary.balance - selectedReward.pointsCost
+      );
+      setRedeemSuccess({
+        rewardTitle: selectedReward.title,
+        pointsCost: selectedReward.pointsCost,
+        newBalance: nextBalance,
+      });
+    } finally {
       setIsConfirming(false);
-      return;
     }
-
-    const nextBalance = Math.max(
-      0,
-      balanceSummary.balance - selectedReward.pointsCost
-    );
-    setRedeemSuccess({
-      rewardTitle: selectedReward.title,
-      pointsCost: selectedReward.pointsCost,
-      newBalance: nextBalance,
-    });
-    setIsConfirming(false);
   };
 
   const balanceAfterPreview = selectedReward

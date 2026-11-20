@@ -1,0 +1,1032 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net — deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================
+    // GLOBAL PRIMITIVES & IDENTITY HELPERS
+    // =========================================================
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'damarrizqiaji@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin()
+        || (isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function hasPublicProfile(uid) {
+      return exists(/databases/$(database)/documents/users_public/$(uid));
+    }
+
+    function getUserRole(uid) {
+      return get(/databases/$(database)/documents/users_public/$(uid)).data.role;
+    }
+
+    function isKontributor(uid) {
+      return isVerifiedUser() && hasPublicProfile(uid) && getUserRole(uid) == 'Kontributor';
+    }
+
+    function isMitra(uid) {
+      return isVerifiedUser() && hasPublicProfile(uid) && getUserRole(uid) == 'Mitra';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidShortId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isBoundedStr(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidRole(role) {
+      return role in ['Kontributor', 'Admin', 'Mitra'];
+    }
+
+    function isValidSegment(segment) {
+      return segment in ['Santri', 'Warga', 'Keluarga Rentan', 'Admin', 'Mitra'];
+    }
+
+    // =========================================================
+    // ENTITY VALIDATION HELPERS (NO existing() / diff() INSIDE)
+    // =========================================================
+    function isValidAdminMarker(data) {
+      return data.keys().hasAll(['uid', 'email', 'name', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'email', 'name', 'createdAt'])
+        && isValidId(data.uid)
+        && isBoundedStr(data.email, 3, 160)
+        && isBoundedStr(data.name, 1, 100)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidUserPublic(data) {
+      return data.keys().hasAll(['id', 'name', 'role', 'segment', 'unitOrAddress', 'activeSince', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'name', 'role', 'segment', 'unitOrAddress', 'activeSince', 'participationRole', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isBoundedStr(data.name, 2, 100)
+        && isValidRole(data.role)
+        && isValidSegment(data.segment)
+        && (
+          (data.role == 'Kontributor' && data.segment in ['Santri', 'Warga', 'Keluarga Rentan'])
+          || (data.role == 'Admin' && data.segment == 'Admin')
+          || (data.role == 'Mitra' && data.segment == 'Mitra')
+        )
+        && isBoundedStr(data.unitOrAddress, 2, 180)
+        && isBoundedStr(data.activeSince, 10, 20)
+        && (!('participationRole' in data) || isBoundedStr(data.participationRole, 0, 180))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivate(data) {
+      return data.keys().hasAll(['id', 'email', 'role', 'registeredAt', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'email', 'role', 'registeredAt', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && isBoundedStr(data.email, 3, 160)
+        && isValidRole(data.role)
+        && isBoundedStr(data.registeredAt, 10, 20)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidDropOffPoint(data) {
+      return data.keys().hasAll(['id', 'name', 'area', 'schedule', 'coordinator', 'createdAt'])
+        && data.keys().hasOnly(['id', 'name', 'area', 'schedule', 'coordinator', 'createdAt'])
+        && isValidShortId(data.id)
+        && isBoundedStr(data.name, 2, 120)
+        && isBoundedStr(data.area, 2, 160)
+        && isBoundedStr(data.schedule, 2, 120)
+        && isBoundedStr(data.coordinator, 2, 100)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidRewardCatalogItem(data) {
+      return data.keys().hasAll(['id', 'title', 'category', 'pointsCost', 'description', 'stockNote', 'createdAt'])
+        && data.keys().hasOnly(['id', 'title', 'category', 'pointsCost', 'description', 'stockNote', 'createdAt'])
+        && isValidShortId(data.id)
+        && isBoundedStr(data.title, 2, 120)
+        && data.category in [
+          'Merchandise Ramah Lingkungan',
+          'Voucher Kegiatan',
+          'Perlengkapan Belajar',
+          'Benefit Komunitas',
+          'Reward Program Pesantren'
+        ]
+        && data.pointsCost is int && data.pointsCost >= 1 && data.pointsCost <= 100000
+        && isBoundedStr(data.description, 2, 400)
+        && isBoundedStr(data.stockNote, 2, 140)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidEcobrickSubmission(data) {
+      return data.keys().hasAll([
+          'submissionId', 'contributorId', 'dropoffPointId', 'dropoffPointName',
+          'date', 'bottleSize', 'quantitySubmitted', 'status',
+          'verifiedQuantity', 'rejectedQuantity', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'submissionId', 'contributorId', 'dropoffPointId', 'dropoffPointName',
+          'date', 'bottleSize', 'quantitySubmitted', 'weightKg', 'iotSimulatedWeightKg',
+          'photoDataUrl', 'photoLabel', 'notes', 'status',
+          'verifiedQuantity', 'rejectedQuantity', 'createdAt', 'updatedAt'
+        ])
+        && isValidShortId(data.submissionId)
+        && isValidId(data.contributorId)
+        && isValidShortId(data.dropoffPointId)
+        && isBoundedStr(data.dropoffPointName, 2, 120)
+        && isBoundedStr(data.date, 10, 20)
+        && isBoundedStr(data.bottleSize, 3, 100)
+        && data.quantitySubmitted is int && data.quantitySubmitted >= 1 && data.quantitySubmitted <= 500
+        && (!('weightKg' in data) || (data.weightKg is number && data.weightKg >= 0 && data.weightKg <= 1000))
+        && (!('iotSimulatedWeightKg' in data) || (data.iotSimulatedWeightKg is number && data.iotSimulatedWeightKg >= 0 && data.iotSimulatedWeightKg <= 1000))
+        && (!('photoDataUrl' in data) || isBoundedStr(data.photoDataUrl, 0, 450000))
+        && (!('photoLabel' in data) || isBoundedStr(data.photoLabel, 0, 120))
+        && (!('notes' in data) || isBoundedStr(data.notes, 0, 500))
+        && data.status in ['Pending', 'Verified', 'Partially Verified', 'Rejected']
+        && data.verifiedQuantity is int && data.verifiedQuantity >= 0 && data.verifiedQuantity <= data.quantitySubmitted
+        && data.rejectedQuantity is int && data.rejectedQuantity >= 0 && data.rejectedQuantity <= data.quantitySubmitted
+        && (data.verifiedQuantity + data.rejectedQuantity) <= data.quantitySubmitted
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidChecklist(cl) {
+      return cl is map
+        && cl.keys().hasAll([
+          'kondisiBotol', 'kebersihan', 'kekeringan', 'kepadatan',
+          'kondisiFisik', 'kesesuaianStandar', 'jumlahSesuai', 'beratSesuai'
+        ])
+        && cl.keys().hasOnly([
+          'kondisiBotol', 'kebersihan', 'kekeringan', 'kepadatan',
+          'kondisiFisik', 'kesesuaianStandar', 'jumlahSesuai', 'beratSesuai'
+        ])
+        && cl.kondisiBotol is bool
+        && cl.kebersihan is bool
+        && cl.kekeringan is bool
+        && cl.kepadatan is bool
+        && cl.kondisiFisik is bool
+        && cl.kesesuaianStandar is bool
+        && cl.jumlahSesuai is bool
+        && cl.beratSesuai is bool;
+    }
+
+    function isValidVerificationRecord(data) {
+      return data.keys().hasAll([
+          'id', 'submissionId', 'contributorId', 'checklist', 'verifierId',
+          'verifierName', 'verifiedAt', 'verifiedCount', 'rejectedCount', 'decision', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'submissionId', 'contributorId', 'batchId', 'checklist', 'verifierId',
+          'verifierName', 'verifiedAt', 'verifiedCount', 'rejectedCount', 'decision', 'rejectionReason', 'createdAt'
+        ])
+        && isValidShortId(data.id)
+        && isValidShortId(data.submissionId)
+        && isValidId(data.contributorId)
+        && (!('batchId' in data) || isValidShortId(data.batchId))
+        && isValidChecklist(data.checklist)
+        && isValidId(data.verifierId)
+        && isBoundedStr(data.verifierName, 2, 100)
+        && isBoundedStr(data.verifiedAt, 10, 30)
+        && data.verifiedCount is int && data.verifiedCount >= 0 && data.verifiedCount <= 500
+        && data.rejectedCount is int && data.rejectedCount >= 0 && data.rejectedCount <= 500
+        && data.decision in ['Verified', 'Partially Verified', 'Rejected']
+        && (!('rejectionReason' in data) || isBoundedStr(data.rejectionReason, 0, 400))
+        && data.createdAt is timestamp;
+    }
+
+    function isValidEcobrickBatch(data) {
+      return data.keys().hasAll([
+          'batchId', 'submissionId', 'contributorId', 'date', 'verifiedAt',
+          'bottleSize', 'quantity', 'weightKg', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'batchId', 'submissionId', 'contributorId', 'date', 'verifiedAt',
+          'bottleSize', 'quantity', 'weightKg', 'notes', 'createdAt'
+        ])
+        && isValidShortId(data.batchId)
+        && isValidShortId(data.submissionId)
+        && isValidId(data.contributorId)
+        && isBoundedStr(data.date, 10, 20)
+        && isBoundedStr(data.verifiedAt, 10, 30)
+        && isBoundedStr(data.bottleSize, 3, 100)
+        && data.quantity is int && data.quantity >= 1 && data.quantity <= 500
+        && data.weightKg is number && data.weightKg >= 0 && data.weightKg <= 1000
+        && (!('notes' in data) || isBoundedStr(data.notes, 0, 400))
+        && data.createdAt is timestamp;
+    }
+
+    function isValidGreenPointEntry(data) {
+      return data.keys().hasAll(['id', 'contributorId', 'date', 'type', 'points', 'sourceLabel', 'createdAt'])
+        && data.keys().hasOnly(['id', 'contributorId', 'date', 'type', 'points', 'sourceLabel', 'submissionId', 'batchId', 'redemptionId', 'createdAt'])
+        && isValidShortId(data.id)
+        && isValidId(data.contributorId)
+        && isBoundedStr(data.date, 10, 20)
+        && data.type in ['Earned', 'Redeemed']
+        && data.points is int && data.points >= 1 && data.points <= 100000
+        && isBoundedStr(data.sourceLabel, 2, 220)
+        && (!('submissionId' in data) || isValidShortId(data.submissionId))
+        && (!('batchId' in data) || isValidShortId(data.batchId))
+        && (!('redemptionId' in data) || isValidShortId(data.redemptionId))
+        && data.createdAt is timestamp;
+    }
+
+    function isValidRewardRedemption(data) {
+      return data.keys().hasAll([
+          'id', 'contributorId', 'rewardId', 'rewardTitle', 'pointsCost',
+          'status', 'requestedAt', 'updatedAt', 'createdAt', 'serverUpdatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'contributorId', 'rewardId', 'rewardTitle', 'pointsCost',
+          'status', 'requestedAt', 'updatedAt', 'createdAt', 'serverUpdatedAt'
+        ])
+        && isValidShortId(data.id)
+        && isValidId(data.contributorId)
+        && isValidShortId(data.rewardId)
+        && isBoundedStr(data.rewardTitle, 2, 120)
+        && data.pointsCost is int && data.pointsCost >= 1 && data.pointsCost <= 100000
+        && data.status in ['Pending', 'Approved', 'Completed']
+        && isBoundedStr(data.requestedAt, 10, 20)
+        && isBoundedStr(data.updatedAt, 10, 20)
+        && data.createdAt is timestamp
+        && data.serverUpdatedAt is timestamp;
+    }
+
+    function isValidFinancialIncentive(data) {
+      return data.keys().hasAll([
+          'id', 'contributorId', 'batchId', 'amountIdr', 'fundingSource',
+          'conditionNote', 'status', 'updatedAt', 'createdAt', 'serverUpdatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'contributorId', 'batchId', 'amountIdr', 'fundingSource',
+          'conditionNote', 'status', 'updatedAt', 'createdAt', 'serverUpdatedAt'
+        ])
+        && isValidShortId(data.id)
+        && isValidId(data.contributorId)
+        && isValidShortId(data.batchId)
+        && data.amountIdr is int && data.amountIdr >= 1000 && data.amountIdr <= 50000000
+        && isBoundedStr(data.fundingSource, 2, 140)
+        && isBoundedStr(data.conditionNote, 2, 300)
+        && data.status in ['Pending', 'Approved', 'Paid']
+        && isBoundedStr(data.updatedAt, 10, 20)
+        && data.createdAt is timestamp
+        && data.serverUpdatedAt is timestamp;
+    }
+
+    function isValidDistributionRequest(data) {
+      return data.keys().hasAll([
+          'id', 'batchId', 'batchContributorId', 'requesterId', 'requesterName', 'requesterType',
+          'requestedCount', 'utilizationCategory', 'utilizationDetail', 'status', 'requestedAt',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'batchId', 'batchContributorId', 'requesterId', 'requesterName', 'requesterType',
+          'requestedCount', 'utilizationCategory', 'location', 'neededDate', 'utilizationDetail',
+          'status', 'requestedAt', 'reviewedBy', 'handoverDate', 'receiverName', 'documentationNote',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidShortId(data.id)
+        && isValidShortId(data.batchId)
+        && isValidId(data.batchContributorId)
+        && isValidId(data.requesterId)
+        && isBoundedStr(data.requesterName, 2, 120)
+        && data.requesterType in ['Pesantren', 'Komunitas', 'Pengrajin', 'Mitra Pemanfaat']
+        && data.requestedCount is int && data.requestedCount >= 1 && data.requestedCount <= 1000
+        && data.utilizationCategory in ['Fasilitas Pesantren', 'Kegiatan Komunitas', 'Produk Kerajinan', 'Proyek Mitra']
+        && (!('location' in data) || isBoundedStr(data.location, 0, 160))
+        && (!('neededDate' in data) || isBoundedStr(data.neededDate, 0, 20))
+        && isBoundedStr(data.utilizationDetail, 3, 400)
+        && data.status in ['Pending Review', 'Approved', 'Rejected', 'Handed Over', 'Utilized']
+        && isBoundedStr(data.requestedAt, 10, 20)
+        && (!('reviewedBy' in data) || isBoundedStr(data.reviewedBy, 0, 100))
+        && (!('handoverDate' in data) || isBoundedStr(data.handoverDate, 0, 20))
+        && (!('receiverName' in data) || isBoundedStr(data.receiverName, 0, 120))
+        && (!('documentationNote' in data) || isBoundedStr(data.documentationNote, 0, 400))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUtilizationRecord(data) {
+      return data.keys().hasAll([
+          'id', 'requestId', 'batchId', 'batchContributorId', 'requesterId', 'recipientName',
+          'utilizationCategory', 'purpose', 'quantityUtilized', 'documentedAt', 'documentationNote', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'requestId', 'batchId', 'batchContributorId', 'requesterId', 'recipientName',
+          'utilizationCategory', 'location', 'purpose', 'quantityUtilized', 'documentedAt', 'documentationNote', 'createdAt'
+        ])
+        && isValidShortId(data.id)
+        && isValidShortId(data.requestId)
+        && isValidShortId(data.batchId)
+        && isValidId(data.batchContributorId)
+        && isValidId(data.requesterId)
+        && isBoundedStr(data.recipientName, 2, 120)
+        && data.utilizationCategory in ['Fasilitas Pesantren', 'Kegiatan Komunitas', 'Produk Kerajinan', 'Proyek Mitra']
+        && (!('location' in data) || isBoundedStr(data.location, 0, 160))
+        && isBoundedStr(data.purpose, 2, 400)
+        && data.quantityUtilized is int && data.quantityUtilized >= 1 && data.quantityUtilized <= 1000
+        && isBoundedStr(data.documentedAt, 10, 20)
+        && isBoundedStr(data.documentationNote, 2, 400)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidCommunityActivity(data) {
+      return data.keys().hasAll([
+          'id', 'title', 'category', 'date', 'location', 'participantSummary',
+          'participantCount', 'inclusiveParticipationNote', 'status', 'createdBy', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'title', 'category', 'date', 'location', 'participantSummary',
+          'participantCount', 'inclusiveParticipationNote', 'status', 'createdBy', 'createdAt', 'updatedAt'
+        ])
+        && isValidShortId(data.id)
+        && isBoundedStr(data.title, 4, 140)
+        && data.category in ['Edukasi Ecobrick', 'Pelatihan', 'Kampanye Komunitas', 'Pemanfaatan Bersama']
+        && isBoundedStr(data.date, 10, 20)
+        && isBoundedStr(data.location, 2, 160)
+        && isBoundedStr(data.participantSummary, 2, 160)
+        && data.participantCount is int && data.participantCount >= 0 && data.participantCount <= 10000
+        && isBoundedStr(data.inclusiveParticipationNote, 2, 360)
+        && data.status in ['Terjadwal', 'Berlangsung', 'Selesai']
+        && isValidId(data.createdBy)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCommunityActivityRsvp(data) {
+      return data.keys().hasAll(['uid', 'activityId', 'joinedAt'])
+        && data.keys().hasOnly(['uid', 'activityId', 'joinedAt'])
+        && isValidId(data.uid)
+        && isValidShortId(data.activityId)
+        && data.joinedAt is timestamp;
+    }
+
+    function isValidCommunityPost(data) {
+      return data.keys().hasAll([
+          'id', 'authorId', 'authorName', 'authorRole', 'authorSegment',
+          'category', 'title', 'body', 'timestamp', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'authorId', 'authorName', 'authorRole', 'authorSegment',
+          'category', 'title', 'body', 'timestamp', 'status', 'createdAt', 'updatedAt'
+        ])
+        && isValidShortId(data.id)
+        && isValidId(data.authorId)
+        && isBoundedStr(data.authorName, 2, 100)
+        && isValidRole(data.authorRole)
+        && isValidSegment(data.authorSegment)
+        && data.category in ['Tanya Standar', 'Koordinasi Pos', 'Ide Pemanfaatan', 'Dukungan Komunitas']
+        && isBoundedStr(data.title, 4, 160)
+        && isBoundedStr(data.body, 8, 1200)
+        && isBoundedStr(data.timestamp, 10, 30)
+        && data.status in ['Terbuka', 'Terjawab']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCommunityReply(data) {
+      return data.keys().hasAll([
+          'id', 'postId', 'authorId', 'authorName', 'authorRole', 'authorSegment',
+          'timestamp', 'body', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'postId', 'authorId', 'authorName', 'authorRole', 'authorSegment',
+          'timestamp', 'body', 'createdAt'
+        ])
+        && isValidShortId(data.id)
+        && isValidShortId(data.postId)
+        && isValidId(data.authorId)
+        && isBoundedStr(data.authorName, 2, 100)
+        && isValidRole(data.authorRole)
+        && isValidSegment(data.authorSegment)
+        && isBoundedStr(data.timestamp, 10, 30)
+        && isBoundedStr(data.body, 3, 1000)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidCollaborationPartner(data) {
+      return data.keys().hasAll([
+          'id', 'partnerName', 'collaborationType', 'activity', 'proposedByUid',
+          'proposedByRole', 'status', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'partnerName', 'collaborationType', 'activity', 'proposedByUid',
+          'proposedByRole', 'status', 'createdAt', 'updatedAt'
+        ])
+        && isValidShortId(data.id)
+        && isBoundedStr(data.partnerName, 3, 120)
+        && isBoundedStr(data.collaborationType, 3, 120)
+        && isBoundedStr(data.activity, 8, 400)
+        && isValidId(data.proposedByUid)
+        && isValidRole(data.proposedByRole)
+        && data.status in ['Aktif', 'Dalam Koordinasi', 'Selesai']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAppNotification(data) {
+      return data.keys().hasAll([
+          'id', 'recipientUid', 'recipientRole', 'title', 'detail', 'timestamp',
+          'category', 'read', 'targetPage', 'createdByUid', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'recipientUid', 'recipientRole', 'title', 'detail', 'timestamp',
+          'category', 'read', 'targetPage', 'createdByUid', 'createdAt', 'updatedAt'
+        ])
+        && isValidShortId(data.id)
+        && isValidId(data.recipientUid)
+        && isValidRole(data.recipientRole)
+        && isBoundedStr(data.title, 2, 160)
+        && isBoundedStr(data.detail, 2, 400)
+        && isBoundedStr(data.timestamp, 10, 30)
+        && data.category in ['Submission', 'Verification', 'Reward', 'Distribution', 'Community']
+        && data.read is bool
+        && isBoundedStr(data.targetPage, 2, 40)
+        && isValidId(data.createdByUid)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidActivityFeedItem(data) {
+      return data.keys().hasAll(['id', 'actorUid', 'timestamp', 'category', 'title', 'detail', 'createdAt'])
+        && data.keys().hasOnly(['id', 'actorUid', 'targetContributorUid', 'timestamp', 'category', 'title', 'detail', 'submissionId', 'batchId', 'createdAt'])
+        && isValidShortId(data.id)
+        && isValidId(data.actorUid)
+        && (!('targetContributorUid' in data) || isValidId(data.targetContributorUid))
+        && isBoundedStr(data.timestamp, 10, 30)
+        && data.category in ['Kontribusi', 'Verifikasi', 'Reward', 'Distribusi', 'Komunitas']
+        && isBoundedStr(data.title, 2, 180)
+        && isBoundedStr(data.detail, 2, 400)
+        && (!('submissionId' in data) || isValidShortId(data.submissionId))
+        && (!('batchId' in data) || isValidShortId(data.batchId))
+        && data.createdAt is timestamp;
+    }
+
+    // =========================================================
+    // COLLECTIONS (ALL 20 BLUEPRINT PATHS)
+    // =========================================================
+
+    match /admins/{uid} {
+      allow get: if isValidId(uid) && (isOwner(uid) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+      allow create: if isValidId(uid)
+        && isBootstrappedAdmin()
+        && isOwner(uid)
+        && isValidAdminMarker(incoming())
+        && incoming().uid == uid
+        && incoming().email == request.auth.token.email
+        && incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /users_public/{uid} {
+      allow get: if isSignedIn() && isValidId(uid);
+      allow list: if isSignedIn() && resource.data.role in ['Kontributor', 'Admin', 'Mitra'];
+      allow create: if isVerifiedUser()
+        && isValidId(uid)
+        && isOwner(uid)
+        && isValidUserPublic(incoming())
+        && incoming().id == uid
+        && (
+          incoming().role in ['Kontributor', 'Mitra']
+          || (
+            incoming().role == 'Admin'
+            && (
+              isBootstrappedAdmin()
+              || exists(/databases/$(database)/documents/admins/$(uid))
+              || existsAfter(/databases/$(database)/documents/admins/$(uid))
+            )
+          )
+        )
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(uid)
+        && isValidUserPublic(incoming())
+        && (isOwner(uid) || isAdmin())
+        && incoming().id == existing().id
+        && incoming().role == existing().role
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'segment', 'unitOrAddress', 'participationRole', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /users_private/{uid} {
+      allow get: if isValidId(uid) && (isOwner(uid) || isAdmin());
+      allow list: if isVerifiedUser() && (resource.data.id == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(uid)
+        && isOwner(uid)
+        && isValidUserPrivate(incoming())
+        && incoming().id == uid
+        && incoming().email == request.auth.token.email
+        && (
+          incoming().role in ['Kontributor', 'Mitra']
+          || (
+            incoming().role == 'Admin'
+            && (
+              isBootstrappedAdmin()
+              || exists(/databases/$(database)/documents/admins/$(uid))
+              || existsAfter(/databases/$(database)/documents/admins/$(uid))
+            )
+          )
+        )
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(uid)
+        && isValidUserPrivate(incoming())
+        && (isOwner(uid) || isAdmin())
+        && incoming().id == existing().id
+        && incoming().role == existing().role
+        && incoming().email == existing().email
+        && incoming().registeredAt == existing().registeredAt
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt']);
+      allow delete: if false;
+    }
+
+    match /dropoff_points/{pointId} {
+      allow get: if isSignedIn() && isValidShortId(pointId);
+      allow list: if isSignedIn() && resource.data.id >= '';
+      allow create: if isAdmin()
+        && isValidShortId(pointId)
+        && isValidDropOffPoint(incoming())
+        && incoming().id == pointId
+        && incoming().createdAt == request.time;
+      allow update: if isAdmin()
+        && isValidShortId(pointId)
+        && isValidDropOffPoint(incoming())
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'area', 'schedule', 'coordinator']);
+      allow delete: if isAdmin() && isValidShortId(pointId);
+    }
+
+    match /rewards/{rewardId} {
+      allow get: if isSignedIn() && isValidShortId(rewardId);
+      allow list: if isSignedIn() && (resource.data.pointsCost > 0 || isBootstrappedAdmin());
+      allow create: if isAdmin()
+        && isValidShortId(rewardId)
+        && isValidRewardCatalogItem(incoming())
+        && incoming().id == rewardId
+        && incoming().createdAt == request.time;
+      allow update: if isAdmin()
+        && isValidShortId(rewardId)
+        && isValidRewardCatalogItem(incoming())
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'pointsCost', 'description', 'stockNote']);
+      allow delete: if isAdmin() && isValidShortId(rewardId);
+    }
+
+    match /ecobrick_submissions/{submissionId} {
+      allow get: if isSignedIn()
+        && isValidShortId(submissionId)
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn()
+        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isValidShortId(submissionId)
+        && isValidEcobrickSubmission(incoming())
+        && isKontributor(request.auth.uid)
+        && incoming().submissionId == submissionId
+        && incoming().contributorId == request.auth.uid
+        && incoming().status == 'Pending'
+        && incoming().verifiedQuantity == 0
+        && incoming().rejectedQuantity == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/dropoff_points/$(incoming().dropoffPointId));
+      allow update: if isValidShortId(submissionId)
+        && isValidEcobrickSubmission(incoming())
+        && isAdmin()
+        && existing().status == 'Pending'
+        && existing().contributorId != request.auth.uid
+        && incoming().submissionId == existing().submissionId
+        && incoming().contributorId == existing().contributorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().status in ['Verified', 'Partially Verified', 'Rejected']
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'verifiedQuantity', 'rejectedQuantity', 'weightKg', 'notes', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /verification_records/{recordId} {
+      allow get: if isSignedIn()
+        && isValidShortId(recordId)
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn()
+        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isValidShortId(recordId)
+        && isValidVerificationRecord(incoming())
+        && isAdmin()
+        && incoming().id == recordId
+        && incoming().verifierId == request.auth.uid
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/ecobrick_submissions/$(incoming().submissionId))
+        && get(/databases/$(database)/documents/ecobrick_submissions/$(incoming().submissionId)).data.status == 'Pending'
+        && get(/databases/$(database)/documents/ecobrick_submissions/$(incoming().submissionId)).data.contributorId == incoming().contributorId
+        && getAfter(/databases/$(database)/documents/ecobrick_submissions/$(incoming().submissionId)).data.status != 'Pending';
+      allow update, delete: if false;
+    }
+
+    match /ecobrick_batches/{batchId} {
+      allow get: if isSignedIn()
+        && isValidShortId(batchId)
+        && (resource.data.contributorId == request.auth.uid || resource.data.quantity > 0 || isAdmin());
+      allow list: if isSignedIn()
+        && (resource.data.contributorId == request.auth.uid || resource.data.quantity > 0 || isBootstrappedAdmin());
+      allow create: if isValidShortId(batchId)
+        && isValidEcobrickBatch(incoming())
+        && isAdmin()
+        && incoming().batchId == batchId
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/ecobrick_submissions/$(incoming().submissionId));
+      allow update: if isValidShortId(batchId)
+        && isValidEcobrickBatch(incoming())
+        && isAdmin()
+        && incoming().batchId == existing().batchId
+        && incoming().submissionId == existing().submissionId
+        && incoming().contributorId == existing().contributorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['notes']);
+      allow delete: if false;
+    }
+
+    match /green_points/{entryId} {
+      allow get: if isSignedIn()
+        && isValidShortId(entryId)
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn()
+        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isValidShortId(entryId)
+        && isValidGreenPointEntry(incoming())
+        && isVerifiedUser()
+        && incoming().id == entryId
+        && incoming().createdAt == request.time
+        && (
+          (incoming().type == 'Earned' && isAdmin())
+          || (
+            incoming().type == 'Redeemed'
+            && isKontributor(request.auth.uid)
+            && incoming().contributorId == request.auth.uid
+            && ('redemptionId' in incoming())
+            && existsAfter(/databases/$(database)/documents/redemptions/$(incoming().redemptionId))
+            && getAfter(/databases/$(database)/documents/redemptions/$(incoming().redemptionId)).data.pointsCost == incoming().points
+          )
+        );
+      allow update, delete: if false;
+    }
+
+    match /redemptions/{redemptionId} {
+      allow get: if isSignedIn()
+        && isValidShortId(redemptionId)
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn()
+        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isValidShortId(redemptionId)
+        && isValidRewardRedemption(incoming())
+        && isKontributor(request.auth.uid)
+        && incoming().id == redemptionId
+        && incoming().contributorId == request.auth.uid
+        && incoming().status == 'Pending'
+        && incoming().createdAt == request.time
+        && incoming().serverUpdatedAt == request.time
+        && exists(/databases/$(database)/documents/rewards/$(incoming().rewardId))
+        && incoming().pointsCost == get(/databases/$(database)/documents/rewards/$(incoming().rewardId)).data.pointsCost;
+      allow update: if isValidShortId(redemptionId)
+        && isValidRewardRedemption(incoming())
+        && isAdmin()
+        && existing().status != 'Completed'
+        && incoming().id == existing().id
+        && incoming().contributorId == existing().contributorId
+        && incoming().rewardId == existing().rewardId
+        && incoming().pointsCost == existing().pointsCost
+        && incoming().createdAt == existing().createdAt
+        && incoming().serverUpdatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'serverUpdatedAt']);
+      allow delete: if false;
+    }
+
+    match /financial_incentives/{incentiveId} {
+      allow get: if isSignedIn()
+        && isValidShortId(incentiveId)
+        && (resource.data.contributorId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn()
+        && (resource.data.contributorId == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isValidShortId(incentiveId)
+        && isValidFinancialIncentive(incoming())
+        && isAdmin()
+        && incoming().id == incentiveId
+        && incoming().createdAt == request.time
+        && incoming().serverUpdatedAt == request.time
+        && exists(/databases/$(database)/documents/ecobrick_batches/$(incoming().batchId));
+      allow update: if isValidShortId(incentiveId)
+        && isValidFinancialIncentive(incoming())
+        && isAdmin()
+        && existing().status != 'Paid'
+        && incoming().id == existing().id
+        && incoming().contributorId == existing().contributorId
+        && incoming().batchId == existing().batchId
+        && incoming().createdAt == existing().createdAt
+        && incoming().serverUpdatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'serverUpdatedAt']);
+      allow delete: if false;
+    }
+
+    match /distribution_requests/{requestId} {
+      allow get: if isSignedIn()
+        && isValidShortId(requestId)
+        && (
+          resource.data.requesterId == request.auth.uid
+          || resource.data.batchContributorId == request.auth.uid
+          || isAdmin()
+        );
+      allow list: if isSignedIn()
+        && (
+          resource.data.requesterId == request.auth.uid
+          || resource.data.batchContributorId == request.auth.uid
+          || isBootstrappedAdmin()
+        );
+      allow create: if isValidShortId(requestId)
+        && isValidDistributionRequest(incoming())
+        && (isMitra(request.auth.uid) || isAdmin())
+        && incoming().id == requestId
+        && incoming().requesterId == request.auth.uid
+        && incoming().status == 'Pending Review'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/ecobrick_batches/$(incoming().batchId))
+        && incoming().batchContributorId == get(/databases/$(database)/documents/ecobrick_batches/$(incoming().batchId)).data.contributorId
+        && incoming().requestedCount <= get(/databases/$(database)/documents/ecobrick_batches/$(incoming().batchId)).data.quantity;
+      allow update: if isValidShortId(requestId)
+        && isValidDistributionRequest(incoming())
+        && isVerifiedUser()
+        && incoming().id == existing().id
+        && incoming().batchId == existing().batchId
+        && incoming().batchContributorId == existing().batchContributorId
+        && incoming().requesterId == existing().requesterId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'status', 'reviewedBy', 'handoverDate', 'receiverName', 'documentationNote', 'updatedAt'
+          ]))
+          || (
+            isMitra(request.auth.uid)
+            && existing().requesterId == request.auth.uid
+            && existing().status == 'Handed Over'
+            && incoming().status == 'Utilized'
+            && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'documentationNote', 'updatedAt'])
+          )
+        );
+      allow delete: if false;
+    }
+
+    match /utilization_records/{recordId} {
+      allow get: if isSignedIn()
+        && isValidShortId(recordId)
+        && (
+          resource.data.requesterId == request.auth.uid
+          || resource.data.batchContributorId == request.auth.uid
+          || isAdmin()
+        );
+      allow list: if isSignedIn()
+        && (
+          resource.data.requesterId == request.auth.uid
+          || resource.data.batchContributorId == request.auth.uid
+          || isBootstrappedAdmin()
+        );
+      allow create: if isValidShortId(recordId)
+        && isValidUtilizationRecord(incoming())
+        && (isMitra(request.auth.uid) || isAdmin())
+        && incoming().id == recordId
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/distribution_requests/$(incoming().requestId))
+        && get(/databases/$(database)/documents/distribution_requests/$(incoming().requestId)).data.status == 'Handed Over'
+        && (
+          incoming().requesterId == request.auth.uid
+          || (isAdmin() && incoming().requesterId == get(/databases/$(database)/documents/distribution_requests/$(incoming().requestId)).data.requesterId)
+        )
+        && incoming().batchId == get(/databases/$(database)/documents/distribution_requests/$(incoming().requestId)).data.batchId
+        && incoming().batchContributorId == get(/databases/$(database)/documents/distribution_requests/$(incoming().requestId)).data.batchContributorId
+        && getAfter(/databases/$(database)/documents/distribution_requests/$(incoming().requestId)).data.status == 'Utilized';
+      allow update, delete: if false;
+    }
+
+    match /community_activities/{activityId} {
+      allow get: if isSignedIn() && isValidShortId(activityId);
+      allow list: if isSignedIn() && resource.data.status in ['Terjadwal', 'Berlangsung', 'Selesai'];
+      allow create: if isValidShortId(activityId)
+        && isValidCommunityActivity(incoming())
+        && isAdmin()
+        && incoming().id == activityId
+        && incoming().createdBy == request.auth.uid
+        && incoming().participantCount == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidShortId(activityId)
+        && isValidCommunityActivity(incoming())
+        && isVerifiedUser()
+        && incoming().id == existing().id
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'category', 'date', 'location', 'participantSummary',
+            'inclusiveParticipationNote', 'status', 'updatedAt'
+          ]))
+          || (
+            incoming().diff(existing()).affectedKeys().hasOnly(['participantCount', 'updatedAt'])
+            && (
+              (
+                incoming().participantCount == existing().participantCount + 1
+                && !exists(/databases/$(database)/documents/community_activities/$(activityId)/rsvps/$(request.auth.uid))
+                && existsAfter(/databases/$(database)/documents/community_activities/$(activityId)/rsvps/$(request.auth.uid))
+              )
+              || (
+                incoming().participantCount == existing().participantCount - 1
+                && exists(/databases/$(database)/documents/community_activities/$(activityId)/rsvps/$(request.auth.uid))
+                && !existsAfter(/databases/$(database)/documents/community_activities/$(activityId)/rsvps/$(request.auth.uid))
+              )
+            )
+          )
+        );
+      allow delete: if isAdmin() && isValidShortId(activityId);
+
+      match /rsvps/{rsvpUid} {
+        allow get: if isValidShortId(activityId) && isValidId(rsvpUid) && (isOwner(rsvpUid) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBootstrappedAdmin());
+        allow create: if isValidShortId(activityId)
+          && isValidId(rsvpUid)
+          && isVerifiedUser()
+          && isOwner(rsvpUid)
+          && isValidCommunityActivityRsvp(incoming())
+          && incoming().uid == request.auth.uid
+          && incoming().activityId == activityId
+          && incoming().joinedAt == request.time
+          && exists(/databases/$(database)/documents/community_activities/$(activityId))
+          && getAfter(/databases/$(database)/documents/community_activities/$(activityId)).data.participantCount
+            == get(/databases/$(database)/documents/community_activities/$(activityId)).data.participantCount + 1;
+        allow update: if false;
+        allow delete: if isValidShortId(activityId)
+          && isValidId(rsvpUid)
+          && isVerifiedUser()
+          && isOwner(rsvpUid)
+          && exists(/databases/$(database)/documents/community_activities/$(activityId))
+          && getAfter(/databases/$(database)/documents/community_activities/$(activityId)).data.participantCount
+            == get(/databases/$(database)/documents/community_activities/$(activityId)).data.participantCount - 1;
+      }
+    }
+
+    match /community_posts/{postId} {
+      allow get: if isSignedIn() && isValidShortId(postId);
+      allow list: if isSignedIn() && resource.data.status in ['Terbuka', 'Terjawab'];
+      allow create: if isValidShortId(postId)
+        && isValidCommunityPost(incoming())
+        && isVerifiedUser()
+        && incoming().id == postId
+        && incoming().authorId == request.auth.uid
+        && incoming().authorRole == getUserRole(request.auth.uid)
+        && incoming().status == 'Terbuka'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidShortId(postId)
+        && isValidCommunityPost(incoming())
+        && isVerifiedUser()
+        && incoming().id == existing().id
+        && incoming().authorId == existing().authorId
+        && incoming().authorRole == existing().authorRole
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && (
+          isAdmin()
+          || (isOwner(existing().authorId) && existing().status == 'Terbuka' && incoming().status == 'Terjawab')
+        );
+      allow delete: if isAdmin() && isValidShortId(postId);
+
+      match /replies/{replyId} {
+        allow get: if isSignedIn() && isValidShortId(postId) && isValidShortId(replyId);
+        allow list: if isSignedIn() && resource.data.postId == postId;
+        allow create: if isValidShortId(postId)
+          && isValidShortId(replyId)
+          && isValidCommunityReply(incoming())
+          && isVerifiedUser()
+          && incoming().id == replyId
+          && incoming().postId == postId
+          && incoming().authorId == request.auth.uid
+          && incoming().authorRole == getUserRole(request.auth.uid)
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/community_posts/$(postId));
+        allow update, delete: if false;
+      }
+    }
+
+    match /collaborations/{collabId} {
+      allow get: if isSignedIn() && isValidShortId(collabId);
+      allow list: if isSignedIn() && resource.data.status in ['Aktif', 'Dalam Koordinasi', 'Selesai'];
+      allow create: if isValidShortId(collabId)
+        && isValidCollaborationPartner(incoming())
+        && (isMitra(request.auth.uid) || isAdmin())
+        && incoming().id == collabId
+        && incoming().proposedByUid == request.auth.uid
+        && incoming().proposedByRole == getUserRole(request.auth.uid)
+        && incoming().status == 'Dalam Koordinasi'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidShortId(collabId)
+        && isValidCollaborationPartner(incoming())
+        && isAdmin()
+        && incoming().id == existing().id
+        && incoming().proposedByUid == existing().proposedByUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'activity', 'updatedAt']);
+      allow delete: if isAdmin() && isValidShortId(collabId);
+    }
+
+    match /notifications/{notifId} {
+      allow get: if isSignedIn()
+        && isValidShortId(notifId)
+        && (resource.data.recipientUid == request.auth.uid || isAdmin());
+      allow list: if isSignedIn()
+        && (resource.data.recipientUid == request.auth.uid || isBootstrappedAdmin());
+      allow create: if isValidShortId(notifId)
+        && isValidAppNotification(incoming())
+        && isVerifiedUser()
+        && incoming().id == notifId
+        && incoming().createdByUid == request.auth.uid
+        && incoming().read == false
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidShortId(notifId)
+        && isValidAppNotification(incoming())
+        && isVerifiedUser()
+        && (isOwner(existing().recipientUid) || isAdmin())
+        && incoming().id == existing().id
+        && incoming().recipientUid == existing().recipientUid
+        && incoming().recipientRole == existing().recipientRole
+        && incoming().createdByUid == existing().createdByUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['read', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /activities_feed/{actId} {
+      allow get: if isSignedIn()
+        && isValidShortId(actId)
+        && (
+          resource.data.actorUid == request.auth.uid
+          || ('targetContributorUid' in resource.data && resource.data.targetContributorUid == request.auth.uid)
+          || resource.data.category == 'Komunitas'
+          || isAdmin()
+        );
+      allow list: if isSignedIn()
+        && (
+          resource.data.actorUid == request.auth.uid
+          || ('targetContributorUid' in resource.data && resource.data.targetContributorUid == request.auth.uid)
+          || resource.data.category == 'Komunitas'
+          || isBootstrappedAdmin()
+        );
+      allow create: if isValidShortId(actId)
+        && isValidActivityFeedItem(incoming())
+        && isVerifiedUser()
+        && incoming().id == actId
+        && incoming().actorUid == request.auth.uid
+        && incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}

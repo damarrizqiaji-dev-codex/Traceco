@@ -1,0 +1,103 @@
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  message: string;
+  detail?: string;
+}
+
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      message: '',
+    };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    let readableMessage =
+      'Terjadi kendala saat menyinkronkan data dengan Cloud Firestore.';
+    let detail = error.message;
+
+    try {
+      const parsed = JSON.parse(error.message) as {
+        error?: string;
+        operationType?: string;
+        path?: string;
+      };
+      if (parsed && parsed.error) {
+        if (parsed.error.toLowerCase().includes('permission')) {
+          readableMessage =
+            'Akses ke data ditolak oleh aturan keamanan peran (Permission Denied).';
+        } else {
+          readableMessage = parsed.error;
+        }
+        detail = `Operasi: ${parsed.operationType ?? '-'} · Path: ${parsed.path ?? '-'}`;
+      }
+    } catch {
+      if (error.message) {
+        readableMessage = error.message;
+      }
+    }
+
+    return {
+      hasError: true,
+      message: readableMessage,
+      detail,
+    };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('TRACECO ErrorBoundary caught error:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#F7F9F7] flex items-center justify-center p-6">
+          <div className="max-w-lg w-full bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-rose-700" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-slate-900">
+                  Gangguan Sinkronisasi Data
+                </h1>
+                <p className="text-sm text-slate-600 mt-1">
+                  {this.state.message}
+                </p>
+                {this.state.detail && (
+                  <p className="text-xs font-mono text-slate-500 mt-2 bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1.5 break-all">
+                    {this.state.detail}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#245C45] text-white text-sm font-medium hover:bg-[#1d4a38] transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Muat Ulang Aplikasi
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}

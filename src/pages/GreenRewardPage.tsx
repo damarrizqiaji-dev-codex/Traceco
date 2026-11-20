@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Award, CheckCircle2, Info, Search, ShieldCheck } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { Award, CheckCircle2, Database, Info, Plus, Search, ShieldCheck } from 'lucide-react';
 import type {
   FinancialIncentive,
   GreenPointEntry,
   IncentiveStatus,
   RedemptionStatus,
+  RewardCatalogItem,
   RewardRedemption,
   TracecoState,
 } from '../types/traceco';
@@ -36,7 +37,7 @@ interface GreenRewardPageProps {
   onRedeemReward: (params: {
     contributorId: string;
     rewardId: string;
-  }) => { error?: string };
+  }) => Promise<{ error?: string }> | { error?: string };
   onUpdateRedemptionStatus: (
     redemptionId: string,
     status: RedemptionStatus
@@ -45,7 +46,23 @@ interface GreenRewardPageProps {
     incentiveId: string,
     status: IncentiveStatus
   ) => void;
+  onCreateRewardItem?: (payload: {
+    title: string;
+    category: RewardCatalogItem['category'];
+    pointsCost: number;
+    description: string;
+    stockNote: string;
+  }) => Promise<{ error?: string }>;
+  onInitializeMasterCatalog?: () => Promise<{ error?: string }>;
 }
+
+const REWARD_CATEGORIES: RewardCatalogItem['category'][] = [
+  'Merchandise Ramah Lingkungan',
+  'Voucher Kegiatan',
+  'Perlengkapan Belajar',
+  'Benefit Komunitas',
+  'Reward Program Pesantren',
+];
 
 export function GreenRewardPage({
   state,
@@ -53,6 +70,8 @@ export function GreenRewardPage({
   onChangeSubTab = () => {},
   onUpdateRedemptionStatus,
   onUpdateIncentiveStatus,
+  onCreateRewardItem,
+  onInitializeMasterCatalog,
 }: GreenRewardPageProps) {
   const canManageRewards = isAdminRole(state.activeRole);
   const participantContributors = state.contributors.filter((c) =>
@@ -60,7 +79,7 @@ export function GreenRewardPage({
   );
 
   const [selectedContributorId, setSelectedContributorId] = useState(
-    participantContributors[0]?.id ?? 'CTR-SAN-01'
+    participantContributors[0]?.id ?? state.currentUserId ?? ''
   );
   const [redemptionFilter, setRedemptionFilter] = useState<
     'Semua' | RedemptionStatus
@@ -68,6 +87,51 @@ export function GreenRewardPage({
   const [redemptionSearch, setRedemptionSearch] = useState('');
   const [ledgerSearch, setLedgerSearch] = useState('');
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null);
+
+  const [showAddReward, setShowAddReward] = useState(false);
+  const [rewardTitle, setRewardTitle] = useState('');
+  const [rewardCategory, setRewardCategory] = useState<RewardCatalogItem['category']>(
+    REWARD_CATEGORIES[0]
+  );
+  const [rewardPointsCost, setRewardPointsCost] = useState('150');
+  const [rewardDesc, setRewardDesc] = useState('');
+  const [rewardStockNote, setRewardStockNote] = useState('');
+  const [rewardFormError, setRewardFormError] = useState<string | null>(null);
+  const [rewardSaving, setRewardSaving] = useState(false);
+  const [initBusy, setInitBusy] = useState(false);
+
+  const handleAddRewardSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!onCreateRewardItem || rewardSaving) return;
+    setRewardFormError(null);
+    const parsedCost = parseInt(rewardPointsCost, 10);
+    if (!Number.isInteger(parsedCost) || parsedCost < 1) {
+      setRewardFormError('Biaya poin harus bilangan bulat minimal 1 GP.');
+      return;
+    }
+    setRewardSaving(true);
+    try {
+      const res = await onCreateRewardItem({
+        title: rewardTitle,
+        category: rewardCategory,
+        pointsCost: parsedCost,
+        description: rewardDesc,
+        stockNote: rewardStockNote,
+      });
+      if (res.error) {
+        setRewardFormError(res.error);
+        return;
+      }
+      setRewardTitle('');
+      setRewardDesc('');
+      setRewardStockNote('');
+      setRewardPointsCost('150');
+      setShowAddReward(false);
+      setStatusFeedback('Item reward baru berhasil ditambahkan ke Green Marketplace.');
+    } finally {
+      setRewardSaving(false);
+    }
+  };
 
   const currentTab =
     activeSubTab === 'policy' || activeSubTab === 'history'
@@ -686,36 +750,177 @@ export function GreenRewardPage({
           </section>
 
           <section className="space-y-3">
-            <SectionHeader
-              title="Katalog Item Green Marketplace Aktif"
-              description="Item yang tersedia untuk ditukar oleh Kontributor menggunakan saldo Green Points."
-            />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {state.rewards.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-[11px] font-medium text-[#4F8A68]">
-                        {item.category}
-                      </p>
-                      <h3 className="font-display text-sm font-semibold text-[#252B28]">
-                        {item.title}
-                      </h3>
-                    </div>
-                    <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums whitespace-nowrap">
-                      {item.pointsCost} GP
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#6B756F]">{item.description}</p>
-                  <p className="border-t border-[#EEF2EF] pt-2 text-[11px] text-[#6B756F]">
-                    {item.stockNote}
-                  </p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <SectionHeader
+                title="Katalog Item Green Marketplace Aktif"
+                description="Item yang tersedia untuk ditukar oleh Kontributor menggunakan saldo Green Points."
+              />
+              {canManageRewards && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {state.rewards.length === 0 && onInitializeMasterCatalog && (
+                    <SecondaryButton
+                      size="sm"
+                      disabled={initBusy}
+                      onClick={async () => {
+                        setInitBusy(true);
+                        try {
+                          await onInitializeMasterCatalog();
+                        } finally {
+                          setInitBusy(false);
+                        }
+                      }}
+                    >
+                      <Database className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>
+                        {initBusy ? 'Menyiapkan...' : 'Muat Katalog Standar'}
+                      </span>
+                    </SecondaryButton>
+                  )}
+                  {onCreateRewardItem && (
+                    <PrimaryButton
+                      size="sm"
+                      onClick={() => setShowAddReward((v) => !v)}
+                    >
+                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span>
+                        {showAddReward ? 'Tutup Form' : 'Tambah Item Reward'}
+                      </span>
+                    </PrimaryButton>
+                  )}
                 </div>
-              ))}
+              )}
             </div>
+
+            {showAddReward && canManageRewards && onCreateRewardItem && (
+              <form
+                onSubmit={handleAddRewardSubmit}
+                className="rounded-md border border-[#E3E8E4] bg-white p-5 space-y-4"
+              >
+                <SectionHeader
+                  title="Tambah Item Green Marketplace"
+                  description="Item ini langsung muncul di katalog penukaran Kontributor."
+                />
+                {rewardFormError && (
+                  <div
+                    role="alert"
+                    className="rounded border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#991B1B]"
+                  >
+                    {rewardFormError}
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField id="reward-title" label="Nama Item Reward">
+                    <input
+                      id="reward-title"
+                      type="text"
+                      required
+                      value={rewardTitle}
+                      onChange={(e) => setRewardTitle(e.target.value)}
+                      placeholder="Contoh: Paket Bibit Sayur Hidroponik"
+                      className={fieldInputClass}
+                    />
+                  </FormField>
+                  <FormField id="reward-category" label="Kategori Reward">
+                    <select
+                      id="reward-category"
+                      value={rewardCategory}
+                      onChange={(e) =>
+                        setRewardCategory(
+                          e.target.value as RewardCatalogItem['category']
+                        )
+                      }
+                      className={fieldInputClass}
+                    >
+                      {REWARD_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                  <FormField id="reward-cost" label="Biaya Green Points (GP)">
+                    <input
+                      id="reward-cost"
+                      type="number"
+                      min={1}
+                      step={1}
+                      required
+                      value={rewardPointsCost}
+                      onChange={(e) => setRewardPointsCost(e.target.value)}
+                      className={fieldInputClass}
+                    />
+                  </FormField>
+                  <FormField id="reward-stock" label="Keterangan Ketersediaan / Lokasi">
+                    <input
+                      id="reward-stock"
+                      type="text"
+                      required
+                      value={rewardStockNote}
+                      onChange={(e) => setRewardStockNote(e.target.value)}
+                      placeholder="Contoh: Tersedia di Koperasi Eco-Hub"
+                      className={fieldInputClass}
+                    />
+                  </FormField>
+                </div>
+                <FormField id="reward-desc" label="Deskripsi Manfaat">
+                  <textarea
+                    id="reward-desc"
+                    rows={2}
+                    required
+                    value={rewardDesc}
+                    onChange={(e) => setRewardDesc(e.target.value)}
+                    placeholder="Jelaskan manfaat atau isi paket reward untuk kontributor."
+                    className={fieldInputClass}
+                  />
+                </FormField>
+                <div className="flex justify-end gap-2">
+                  <SecondaryButton
+                    size="sm"
+                    onClick={() => setShowAddReward(false)}
+                  >
+                    Batal
+                  </SecondaryButton>
+                  <PrimaryButton size="sm" type="submit" disabled={rewardSaving}>
+                    <span>
+                      {rewardSaving ? 'Menyimpan...' : 'Simpan Item Reward'}
+                    </span>
+                  </PrimaryButton>
+                </div>
+              </form>
+            )}
+
+            {state.rewards.length === 0 ? (
+              <div className="rounded-md border border-[#E3E8E4] bg-white p-6 text-center text-xs text-[#6B756F]">
+                Belum ada item reward aktif di katalog Firestore `traceco-prod`.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {state.rewards.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-md border border-[#E3E8E4] bg-white p-4 space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-[11px] font-medium text-[#4F8A68]">
+                          {item.category}
+                        </p>
+                        <h3 className="font-display text-sm font-semibold text-[#252B28]">
+                          {item.title}
+                        </h3>
+                      </div>
+                      <span className="font-mono text-xs font-semibold text-[#245C45] tabular-nums whitespace-nowrap">
+                        {item.pointsCost} GP
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#6B756F]">{item.description}</p>
+                    <p className="border-t border-[#EEF2EF] pt-2 text-[11px] text-[#6B756F]">
+                      {item.stockNote}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       )}

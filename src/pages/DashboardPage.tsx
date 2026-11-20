@@ -1,4 +1,5 @@
-import { ArrowRight, Eye } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight, Database, Eye } from 'lucide-react';
 import type { AppPageId, TracecoState } from '../types/traceco';
 import {
   POINTS_PER_ECOBRICK,
@@ -24,6 +25,7 @@ interface DashboardPageProps {
   onNavigate: (page: AppPageId, subTab?: string) => void;
   onInspectTarget: (targetId: string) => void;
   onOpenTraceDetail: (targetId: string) => void;
+  onInitializeMasterCatalog?: () => Promise<{ error?: string }>;
 }
 
 export function DashboardPage({
@@ -31,7 +33,9 @@ export function DashboardPage({
   onNavigate,
   onInspectTarget,
   onOpenTraceDetail,
+  onInitializeMasterCatalog,
 }: DashboardPageProps) {
+  const [initBusy, setInitBusy] = useState(false);
   const metrics = computePlatformMetrics(state);
   const inventory = computeVerifiedInventory(
     state.ecobrick_batches,
@@ -39,7 +43,7 @@ export function DashboardPage({
     state.contributors
   );
 
-  const actorId = state.activeActorIdByRole[state.activeRole];
+  const actorId = state.currentUserId ?? '';
   const activeActor = state.contributors.find((c) => c.id === actorId);
 
   // 1. KONTRIBUTOR OVERVIEW
@@ -231,8 +235,7 @@ export function DashboardPage({
   if (isMitraRole(state.activeRole)) {
     const availableBatches = inventory.filter((i) => i.availableCount > 0);
     const partnerRequests = state.distribution_requests.filter(
-      (r) =>
-        r.requesterId === actorId || r.requesterType === 'Mitra Pemanfaat'
+      (r) => r.requesterId === actorId
     );
     const activeRequestsCount = partnerRequests.filter(
       (r) => r.status === 'Pending Review' || r.status === 'Approved'
@@ -383,6 +386,47 @@ export function DashboardPage({
           </div>
         }
       />
+
+      {(state.dropoff_points.length === 0 || state.rewards.length === 0) &&
+        onInitializeMasterCatalog && (
+          <section className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-[#C6DBC9] bg-[#E7F0E8]/60 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <Database
+                className="mt-0.5 h-4 w-4 shrink-0 text-[#245C45]"
+                aria-hidden="true"
+              />
+              <div className="space-y-0.5 text-xs">
+                <p className="font-semibold text-[#245C45]">
+                  Siapkan Master Data Pos Serah & Katalog Reward di Firestore
+                </p>
+                <p className="text-[#252B28]">
+                  Database produksi masih kosong ({state.dropoff_points.length}{' '}
+                  pos serah, {state.rewards.length} item reward). Aktifkan pos
+                  & katalog standar Pesantren agar Kontributor bisa langsung
+                  mengirim ecobrick dan menukar poin.
+                </p>
+              </div>
+            </div>
+            <PrimaryButton
+              size="sm"
+              disabled={initBusy}
+              onClick={async () => {
+                setInitBusy(true);
+                try {
+                  await onInitializeMasterCatalog();
+                } finally {
+                  setInitBusy(false);
+                }
+              }}
+            >
+              <span>
+                {initBusy
+                  ? 'Menyiapkan Data...'
+                  : 'Aktifkan Pos & Katalog Standar'}
+              </span>
+            </PrimaryButton>
+          </section>
+        )}
 
       <MetricStrip
         columns={4}

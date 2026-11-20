@@ -34,7 +34,7 @@ export function TransactionsBalancePage({
   onNavigate,
   onOpenTraceDetail,
 }: TransactionsBalancePageProps) {
-  const actorId = state.activeActorIdByRole[state.activeRole];
+  const actorId = state.currentUserId ?? '';
   const balanceSummary = computeContributorPointsBalance(state, actorId);
   const transactions = computeContributorTransactionsWithBalance(state, actorId);
   const myIncentives = state.financial_incentives.filter(
