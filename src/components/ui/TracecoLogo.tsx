@@ -27,8 +27,8 @@ export function TracecoLogo({
       <span
         className={`inline-flex items-center justify-center shrink-0 ${
           tone === 'dark'
-            ? 'border border-[#2D473B] bg-[#1A2C25] text-[#6EE7B7]'
-            : 'border border-[#C6D1CA] bg-[#EBF4EF] text-[#166549]'
+            ? 'border border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43]'
+            : 'border border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43]'
         } ${boxSizes[size]} ${className}`}
         aria-label="Logo TRACECO"
       >
@@ -41,8 +41,8 @@ export function TracecoLogo({
     <span
       className={`inline-flex items-center justify-center overflow-hidden bg-white shrink-0 ${
         tone === 'dark'
-          ? 'border border-[#2D473B]'
-          : 'border border-[#D8DFDA]'
+          ? 'border border-[#D9E0DC]'
+          : 'border border-[#D9E0DC]'
       } ${boxSizes[size]} ${className}`}
     >
       <img

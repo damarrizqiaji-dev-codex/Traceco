@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 export const fieldInputClass =
-  'w-full rounded-md border border-[#C6D1CA] bg-white px-3 py-2 text-[13px] text-[#17201C] placeholder:text-[#7E8C85] transition-[border-color,box-shadow] duration-150 focus:border-[#166549] focus:ring-2 focus:ring-[#166549]/15 focus:outline-none disabled:bg-[#F2F4F2] disabled:text-[#54625B]';
+  'w-full rounded-md border border-[#C5CEC9] bg-white px-3 py-2 text-[13px] text-[#1B231F] placeholder:text-[#78857E] transition-[border-color,box-shadow] duration-150 focus:border-[#1B5E43] focus:ring-2 focus:ring-[#1B5E43]/15 focus:outline-none disabled:bg-[#ECF0ED] disabled:text-[#58655E]';
 
 interface FormFieldProps {
   id: string;
@@ -22,12 +22,12 @@ export function FormField({
     <div className={className}>
       <label
         htmlFor={id}
-        className="mb-1.5 block text-xs font-medium text-[#17201C]"
+        className="mb-1.5 block text-xs font-medium text-[#1B231F]"
       >
         {label}
       </label>
       {children}
-      {hint && <p className="mt-1 text-[11px] text-[#54625B]">{hint}</p>}
+      {hint && <p className="mt-1 text-[11px] text-[#58655E]">{hint}</p>}
     </div>
   );
 }

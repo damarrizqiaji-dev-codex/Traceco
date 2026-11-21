@@ -39,32 +39,32 @@ function getCategoryVisual(category: RewardCatalogItem['category']) {
     case 'Merchandise Ramah Lingkungan':
       return {
         Icon: ShoppingBag,
-        boxClass: 'bg-[#EBF4EF] text-[#166549] border border-[#B5CEC0]',
-        labelClass: 'text-[#166549]',
+        boxClass: 'bg-[#EFF5F2] text-[#1B5E43] border border-[#C5D9CD]',
+        labelClass: 'text-[#1B5E43]',
       };
     case 'Voucher Kegiatan':
       return {
         Icon: Ticket,
-        boxClass: 'bg-[#EAF3F5] text-[#1D6373] border border-[#B2D3DC]',
-        labelClass: 'text-[#1D6373]',
+        boxClass: 'bg-[#F1F6F7] text-[#2B5E6B] border border-[#C4D8DD]',
+        labelClass: 'text-[#2B5E6B]',
       };
     case 'Perlengkapan Belajar':
       return {
         Icon: BookOpen,
-        boxClass: 'bg-[#FEF3C7] text-[#B45309] border border-[#FCD34D]',
-        labelClass: 'text-[#B45309]',
+        boxClass: 'bg-[#F8FAF9] text-[#34403A] border border-[#D9E0DC]',
+        labelClass: 'text-[#58655E]',
       };
     case 'Benefit Komunitas':
       return {
         Icon: Gift,
-        boxClass: 'bg-[#111E19] text-[#6EE7B7] border border-[#243A31]',
-        labelClass: 'text-[#17201C]',
+        boxClass: 'bg-[#EFF5F2] text-[#1B5E43] border border-[#C5D9CD]',
+        labelClass: 'text-[#1B5E43]',
       };
     default:
       return {
         Icon: Award,
-        boxClass: 'bg-[#EBF4EF] text-[#166549] border border-[#B5CEC0]',
-        labelClass: 'text-[#166549]',
+        boxClass: 'bg-[#EFF5F2] text-[#1B5E43] border border-[#C5D9CD]',
+        labelClass: 'text-[#1B5E43]',
       };
   }
 }
@@ -179,18 +179,18 @@ export function GreenMarketplacePage({
         }
       />
 
-      {/* Obsidian GP Wallet Banner */}
-      <section className="rounded-lg border border-[#243A31] bg-[#111E19] p-5 text-[#ECF2EE]">
+      {/* Active GP Wallet Card */}
+      <section className="rounded-lg border border-[#D9E0DC] bg-white p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <p className="font-mono text-xs font-medium text-[#6EE7B7]">
+            <p className="font-mono text-xs font-semibold text-[#1B5E43]">
               Dompet Green Points Aktif
             </p>
             <div className="flex flex-wrap items-baseline gap-3">
-              <p className="font-display text-3xl font-semibold text-white tabular-nums">
+              <p className="font-display text-3xl font-semibold text-[#141B17] tabular-nums">
                 {balanceSummary.balance.toLocaleString('id-ID')} GP
               </p>
-              <span className="text-xs text-[#9EB5AA]">
+              <span className="text-xs text-[#58655E]">
                 {affordableTotal} dari {state.rewards.length} item siap ditukar saat ini
               </span>
             </div>
@@ -205,8 +205,8 @@ export function GreenMarketplacePage({
               }}
               className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-semibold transition-colors duration-150 ${
                 onlyAffordable
-                  ? 'border-[#6EE7B7] bg-[#1F352C] text-[#6EE7B7]'
-                  : 'border-[#2D473B] bg-[#1A2C25] text-[#ECF2EE] hover:border-[#6EE7B7]'
+                  ? 'border-[#1B5E43] bg-[#EFF5F2] text-[#1B5E43]'
+                  : 'border-[#B5CEC0] bg-white text-[#1B5E43] hover:bg-[#EFF5F2] hover:border-[#1B5E43]'
               }`}
             >
               <span>
@@ -257,19 +257,19 @@ export function GreenMarketplacePage({
               />
 
               <div className="flex flex-wrap items-center gap-2.5">
-                <label className="inline-flex items-center gap-2 rounded-md border border-[#D8DFDA] bg-white px-3 py-1.5 text-xs text-[#17201C] cursor-pointer hover:border-[#166549] transition-colors duration-150">
+                <label className="inline-flex items-center gap-2 rounded-md border border-[#D9E0DC] bg-white px-3 py-1.5 text-xs text-[#1B231F] cursor-pointer hover:border-[#1B5E43] transition-colors duration-150">
                   <input
                     type="checkbox"
                     checked={onlyAffordable}
                     onChange={(e) => setOnlyAffordable(e.target.checked)}
-                    className="h-3.5 w-3.5 accent-[#166549]"
+                    className="h-3.5 w-3.5 accent-[#1B5E43]"
                   />
                   <span>Saldo mencukupi saja</span>
                 </label>
 
                 <div className="relative w-full sm:w-56">
                   <Search
-                    className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
+                    className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#58655E]"
                     aria-hidden="true"
                   />
                   <input
@@ -278,15 +278,15 @@ export function GreenMarketplacePage({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Cari reward..."
-                    className="w-full rounded-md border border-[#C6D1CA] bg-white py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] focus:border-[#166549] focus:outline-none"
+                    className="w-full rounded-md border border-[#C5CEC9] bg-white py-1.5 pr-3 pl-8 text-xs text-[#1B231F] placeholder:text-[#78857E] focus:border-[#1B5E43] focus:outline-none"
                   />
                 </div>
               </div>
             </div>
 
             {filteredRewards.length === 0 ? (
-              <div className="rounded-lg border border-[#D8DFDA] bg-white p-8 text-center space-y-2">
-                <p className="text-xs font-medium text-[#17201C]">
+              <div className="rounded-lg border border-[#D9E0DC] bg-white p-8 text-center space-y-2">
+                <p className="text-xs font-medium text-[#1B231F]">
                   Tidak ada item reward yang cocok dengan filter saat ini.
                 </p>
                 <SecondaryButton
@@ -320,7 +320,7 @@ export function GreenMarketplacePage({
                   return (
                     <div
                       key={item.id}
-                      className="group flex flex-col justify-between gap-4 rounded-lg border border-[#D8DFDA] bg-white p-5 transition-colors duration-150 hover:border-[#166549]"
+                      className="group flex flex-col justify-between gap-4 rounded-lg border border-[#D9E0DC] bg-white p-5 transition-colors duration-150 hover:border-[#1B5E43]"
                     >
                       <div className="flex items-start gap-3.5">
                         <div
@@ -336,15 +336,15 @@ export function GreenMarketplacePage({
                               >
                                 {item.category}
                               </p>
-                              <h3 className="font-display text-[15px] font-semibold text-[#17201C]">
+                              <h3 className="font-display text-[15px] font-semibold text-[#141B17]">
                                 {item.title}
                               </h3>
                             </div>
-                            <span className="shrink-0 font-mono text-sm font-semibold text-[#111E19] tabular-nums">
+                            <span className="shrink-0 font-mono text-sm font-semibold text-[#1B5E43] tabular-nums">
                               {item.pointsCost} GP
                             </span>
                           </div>
-                          <p className="text-xs leading-relaxed text-[#54625B]">
+                          <p className="text-xs leading-relaxed text-[#58655E]">
                             {item.description}
                           </p>
                         </div>
@@ -356,22 +356,22 @@ export function GreenMarketplacePage({
                           <span
                             className={
                               enough
-                                ? 'font-semibold text-[#166549]'
-                                : 'text-[#54625B]'
+                                ? 'font-semibold text-[#1B5E43]'
+                                : 'text-[#58655E]'
                             }
                           >
                             {enough
                               ? 'Saldo Anda mencukupi untuk ditukar'
                               : `Kurang ${missingGp} GP (≈ ${unitsNeeded} ecobrick terverifikasi)`}
                           </span>
-                          <span className="font-mono text-[#54625B] tabular-nums">
+                          <span className="font-mono text-[#58655E] tabular-nums">
                             {pct}%
                           </span>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E3E9E5]">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#ECF0ED]">
                           <div
                             className={`h-full rounded-full transition-[width] duration-300 ${
-                              enough ? 'bg-[#166549]' : 'bg-[#1D6373]'
+                              enough ? 'bg-[#1B5E43]' : 'bg-[#A4B8AD]'
                             }`}
                             style={{ width: `${pct}%` }}
                           />
@@ -379,7 +379,7 @@ export function GreenMarketplacePage({
                       </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EAEFEA] pt-3">
-                        <span className="text-[11px] text-[#54625B]">
+                        <span className="text-[11px] text-[#58655E]">
                           {item.stockNote}
                         </span>
                         <PrimaryButton
@@ -405,17 +405,17 @@ export function GreenMarketplacePage({
                 title="Status Penukaran Terbaru Anda"
                 description="Penukaran yang telah dikonfirmasi diproses oleh Admin Eco-Hub."
               />
-              <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+              <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D9E0DC] bg-white">
                 {myRedemptions.slice(0, 5).map((r) => (
                   <div
                     key={r.id}
                     className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
                   >
                     <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-[#17201C]">
+                      <p className="text-xs font-semibold text-[#141B17]">
                         {r.rewardTitle}
                       </p>
-                      <p className="font-mono text-[11px] text-[#54625B]">
+                      <p className="font-mono text-[11px] text-[#58655E]">
                         {r.id} · {r.requestedAt} · -{r.pointsCost} GP
                       </p>
                     </div>
@@ -431,7 +431,7 @@ export function GreenMarketplacePage({
       {currentTab === 'detail' && selectedReward && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
           {/* Selected Reward Detail */}
-          <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 sm:p-6 space-y-5 lg:col-span-7">
+          <section className="rounded-lg border border-[#D9E0DC] bg-white p-5 sm:p-6 space-y-5 lg:col-span-7">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#EAEFEA] pb-4">
               <SecondaryButton
                 size="sm"
@@ -453,7 +453,7 @@ export function GreenMarketplacePage({
                   setRedeemSuccess(null);
                   setRedeemError(null);
                 }}
-                className="rounded-md border border-[#C6D1CA] bg-white px-2.5 py-1.5 text-xs font-medium text-[#17201C] focus:border-[#166549] focus:outline-none"
+                className="rounded-md border border-[#C5CEC9] bg-white px-2.5 py-1.5 text-xs font-medium text-[#1B231F] focus:border-[#1B5E43] focus:outline-none"
               >
                 {state.rewards.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -478,15 +478,15 @@ export function GreenMarketplacePage({
                     <p className={`text-xs font-semibold ${labelClass}`}>
                       {selectedReward.category}
                     </p>
-                    <h2 className="font-display text-lg font-semibold text-[#17201C]">
+                    <h2 className="font-display text-lg font-semibold text-[#141B17]">
                       {selectedReward.title}
                     </h2>
-                    <p className="text-xs leading-relaxed text-[#54625B]">
+                    <p className="text-xs leading-relaxed text-[#58655E]">
                       {selectedReward.description}
                     </p>
-                    <p className="pt-1 text-xs font-medium text-[#17201C]">
+                    <p className="pt-1 text-xs font-medium text-[#1B231F]">
                       Ketersediaan:{' '}
-                      <span className="text-[#166549]">
+                      <span className="text-[#1B5E43]">
                         {selectedReward.stockNote}
                       </span>
                     </p>
@@ -497,7 +497,7 @@ export function GreenMarketplacePage({
           </section>
 
           {/* Confirmation Card */}
-          <section className="rounded-lg border border-[#D8DFDA] bg-white p-5 sm:p-6 space-y-5 lg:col-span-5">
+          <section className="rounded-lg border border-[#D9E0DC] bg-white p-5 sm:p-6 space-y-5 lg:col-span-5">
             <SectionHeader
               title="Konfirmasi Penukaran"
               description="Periksa rincian Green Points Anda sebelum menekan Konfirmasi Penukaran."
@@ -506,7 +506,7 @@ export function GreenMarketplacePage({
             {redeemError && (
               <div
                 role="alert"
-                className="rounded-md border border-[#FECACA] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-medium text-[#B91C1C]"
+                className="rounded-md border border-[#E8C5C5] bg-[#FDF3F3] px-3.5 py-2.5 text-xs font-medium text-[#A62626]"
               >
                 {redeemError}
               </div>
@@ -516,7 +516,7 @@ export function GreenMarketplacePage({
               <div className="space-y-4">
                 <div
                   role="status"
-                  className="flex items-start gap-2.5 rounded-md border border-[#B5CEC0] bg-[#EBF4EF] p-4 text-xs text-[#166549]"
+                  className="flex items-start gap-2.5 rounded-md border border-[#C5D9CD] bg-[#EFF5F2] p-4 text-xs text-[#1B5E43]"
                 >
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
                   <div className="space-y-1">
@@ -552,32 +552,32 @@ export function GreenMarketplacePage({
               </div>
             ) : (
               <div className="space-y-4">
-                <dl className="divide-y divide-[#EAEFEA] border-y border-[#D8DFDA] text-xs">
+                <dl className="divide-y divide-[#EAEFEA] border-y border-[#D9E0DC] text-xs">
                   <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-[#54625B]">Reward</dt>
-                    <dd className="text-right font-semibold text-[#17201C]">
+                    <dt className="text-[#58655E]">Reward</dt>
+                    <dd className="text-right font-semibold text-[#141B17]">
                       {selectedReward.title}
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-[#54625B]">Biaya Poin</dt>
-                    <dd className="font-mono font-semibold text-[#B45309] tabular-nums">
+                    <dt className="text-[#58655E]">Biaya Poin</dt>
+                    <dd className="font-mono font-semibold text-[#34403A] tabular-nums">
                       {selectedReward.pointsCost.toLocaleString('id-ID')} GP
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-[#54625B]">Saldo Saat Ini</dt>
-                    <dd className="font-mono font-semibold text-[#17201C] tabular-nums">
+                    <dt className="text-[#58655E]">Saldo Saat Ini</dt>
+                    <dd className="font-mono font-semibold text-[#141B17] tabular-nums">
                       {balanceSummary.balance.toLocaleString('id-ID')} GP
                     </dd>
                   </div>
                   <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="font-medium text-[#17201C]">
+                    <dt className="font-medium text-[#1B231F]">
                       Saldo Setelah Penukaran
                     </dt>
                     <dd
                       className={`font-mono font-semibold tabular-nums ${
-                        hasEnoughBalance ? 'text-[#166549]' : 'text-[#B91C1C]'
+                        hasEnoughBalance ? 'text-[#1B5E43]' : 'text-[#A62626]'
                       }`}
                     >
                       {hasEnoughBalance

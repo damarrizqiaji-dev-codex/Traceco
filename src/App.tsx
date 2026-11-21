@@ -836,10 +836,10 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#F2F4F2] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#F5F6F5] flex items-center justify-center p-6">
         <div className="text-center space-y-3">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#166549] border-r-transparent" />
-          <p className="text-sm font-medium text-[#54625B]">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#1B5E43] border-r-transparent" />
+          <p className="text-sm font-medium text-[#58655E]">
             Memuat sesi TRACECO...
           </p>
         </div>

@@ -5,31 +5,41 @@
   --font-display: "Outfit", "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-obsidian: #111E19;
-  --color-obsidian-soft: #1A2C25;
-  --color-obsidian-hairline: #243A31;
+  --color-forest: #1B5E43;
+  --color-forest-hover: #144833;
+  --color-eco: #2E6F54;
+  --color-soft-green: #EFF5F2;
+  --color-soft-green-border: #C5D9CD;
 
-  --color-forest: #166549;
-  --color-forest-hover: #0F4C36;
-  --color-eco: #2D8A68;
-  --color-soft-green: #EBF4EF;
+  --color-teal: #2B5E6B;
+  --color-teal-soft: #F1F6F7;
+  --color-teal-border: #C4D8DD;
 
-  --color-teal: #1D6373;
-  --color-teal-soft: #EAF3F5;
+  --color-amber: #A15C17;
+  --color-amber-soft: #FBF6EE;
+  --color-amber-border: #E6D2B5;
 
-  --color-canvas: #F2F4F2;
-  --color-surface-subtle: #F8FAF8;
-  --color-charcoal: #17201C;
-  --color-muted: #54625B;
-  --color-hairline: #D8DFDA;
+  --color-crimson: #A62626;
+  --color-crimson-soft: #FDF3F3;
+  --color-crimson-border: #E8C5C5;
+
+  --color-canvas: #F5F6F5;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F8FAF9;
+  --color-surface-muted: #ECF0ED;
+  --color-ink-strong: #141B17;
+  --color-charcoal: #1B231F;
+  --color-muted: #58655E;
+  --color-hairline: #D9E0DC;
+  --color-hairline-subtle: #EAEFEA;
 }
 
 @layer base {
   html,
   body {
     font-family: var(--font-sans);
-    background-color: #F2F4F2;
-    color: #17201C;
+    background-color: #F5F6F5;
+    color: #1B231F;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -52,7 +62,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid #166549;
+    outline: 2px solid #1B5E43;
     outline-offset: 2px;
   }
 }
@@ -68,14 +78,14 @@
 
 .traceco-card {
   background-color: #FFFFFF;
-  border: 1px solid #D8DFDA;
+  border: 1px solid #D9E0DC;
   border-radius: 0.5rem;
 }
 
-.traceco-obsidian {
-  background-color: #111E19;
-  color: #ECF2EE;
-  border: 1px solid #243A31;
+.traceco-subtle-panel {
+  background-color: #F8FAF9;
+  color: #1B231F;
+  border: 1px solid #D9E0DC;
   border-radius: 0.5rem;
 }
 

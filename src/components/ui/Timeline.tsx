@@ -6,16 +6,16 @@ interface TimelineProps {
 
 export function Timeline({ stages }: TimelineProps) {
   return (
-    <ol className="relative ml-2.5 space-y-0 border-l border-[#D8DFDA]">
+    <ol className="relative ml-2.5 space-y-0 border-l border-[#D9E0DC]">
       {stages.map((stage, idx) => {
         const markerStyles =
           stage.state === 'completed'
-            ? 'border-[#166549] bg-[#166549] text-white'
+            ? 'border-[#1B5E43] bg-[#1B5E43] text-white'
             : stage.state === 'current'
-              ? 'border-[#B45309] bg-[#FEF6E6] text-[#B45309]'
+              ? 'border-[#A15C17] bg-[#FBF6EE] text-[#A15C17]'
               : stage.state === 'rejected'
-                ? 'border-[#B91C1C] bg-[#FEF2F2] text-[#B91C1C]'
-                : 'border-[#C6D1CA] bg-white text-[#54625B]';
+                ? 'border-[#A62626] bg-[#FDF3F3] text-[#A62626]'
+                : 'border-[#C5CEC9] bg-white text-[#58655E]';
 
         const stateLabel =
           stage.state === 'completed'
@@ -36,30 +36,30 @@ export function Timeline({ stages }: TimelineProps) {
             </span>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-[13px] font-semibold text-[#17201C]">
+                <span className="text-[13px] font-semibold text-[#1B231F]">
                   {stage.label}
                 </span>
                 <span
                   className={`text-[11px] font-semibold ${
                     stage.state === 'completed'
-                      ? 'text-[#166549]'
+                      ? 'text-[#1B5E43]'
                       : stage.state === 'current'
-                        ? 'text-[#B45309]'
+                        ? 'text-[#A15C17]'
                         : stage.state === 'rejected'
-                          ? 'text-[#B91C1C]'
-                          : 'text-[#54625B]'
+                          ? 'text-[#A62626]'
+                          : 'text-[#58655E]'
                   }`}
                 >
                   · {stateLabel}
                 </span>
               </div>
               {stage.timestamp && (
-                <span className="font-mono text-[11px] text-[#54625B] tabular-nums">
+                <span className="font-mono text-[11px] text-[#58655E] tabular-nums">
                   {stage.timestamp}
                 </span>
               )}
             </div>
-            <p className="mt-1 text-xs leading-relaxed text-[#54625B]">
+            <p className="mt-1 text-xs leading-relaxed text-[#58655E]">
               {stage.detail}
             </p>
           </li>

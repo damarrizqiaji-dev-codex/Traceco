@@ -97,34 +97,33 @@ export function TransactionsBalancePage({
 
       {currentTab === 'balance' && (
         <div className="space-y-6">
-          {/* Obsidian Active Balance Hero Strip */}
-          <section className="rounded-lg border border-[#243A31] bg-[#111E19] p-5 text-[#ECF2EE] sm:p-6">
+          {/* Active Balance Summary Card */}
+          <section className="rounded-lg border border-[#D9E0DC] bg-white p-5 sm:p-6">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-1.5">
-                <p className="font-mono text-xs font-medium text-[#6EE7B7]">
+                <p className="font-mono text-xs font-semibold text-[#1B5E43]">
                   Saldo Green Points Aktif
                 </p>
                 <div className="flex flex-wrap items-baseline gap-3">
-                  <p className="font-display text-3xl font-semibold tracking-tight text-white tabular-nums">
+                  <p className="font-display text-3xl font-semibold tracking-tight text-[#141B17] tabular-nums">
                     {balanceSummary.balance.toLocaleString('id-ID')} GP
                   </p>
-                  <span className="font-mono text-xs text-[#9EB5AA]">
+                  <span className="font-mono text-xs text-[#58655E]">
                     +{POINTS_PER_ECOBRICK} GP / ecobrick terverifikasi
                   </span>
                 </div>
-                <p className="text-xs text-[#9EB5AA]">
+                <p className="text-xs text-[#58655E]">
                   Sistem poin insentif internal non-kripto · {earnedCount} kali
                   perolehan · {redeemedCount} kali penukaran.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2.5">
-                <button
-                  type="button"
+                <SecondaryButton
+                  size="sm"
                   onClick={() => onChangeSubTab('ledger')}
-                  className="inline-flex min-h-[38px] items-center gap-1.5 rounded-md border border-[#2D473B] bg-[#1A2C25] px-3.5 py-2 text-xs font-semibold text-[#ECF2EE] transition-colors duration-150 hover:border-[#6EE7B7] hover:text-white whitespace-nowrap"
                 >
                   Riwayat Transaksi
-                </button>
+                </SecondaryButton>
                 <PrimaryButton
                   size="sm"
                   onClick={() => onNavigate('marketplace', 'catalog')}
@@ -173,23 +172,23 @@ export function TransactionsBalancePage({
                 </SecondaryButton>
               }
             />
-            <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+            <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D9E0DC] bg-white">
               {transactions.length === 0 ? (
-                <p className="p-6 text-center text-xs text-[#54625B]">
+                <p className="p-6 text-center text-xs text-[#58655E]">
                   Belum ada mutasi Green Points pada akun ini.
                 </p>
               ) : (
                 transactions.slice(0, 5).map((tx) => (
                   <div
                     key={tx.id}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-[#F8FAF8]"
+                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-[#F8FAF9]"
                   >
                     <div className="flex min-w-0 items-start gap-3">
                       <span
                         className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                           tx.type === 'Earned'
-                            ? 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
-                            : 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
+                            ? 'border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43]'
+                            : 'border-[#E8C5C5] bg-[#FDF3F3] text-[#A62626]'
                         }`}
                       >
                         {tx.type === 'Earned' ? (
@@ -199,10 +198,10 @@ export function TransactionsBalancePage({
                         )}
                       </span>
                       <div className="min-w-0 space-y-0.5">
-                        <p className="text-xs font-medium text-[#17201C]">
+                        <p className="text-xs font-medium text-[#1B231F]">
                           {tx.sourceLabel}
                         </p>
-                        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-[#54625B]">
+                        <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-[#58655E]">
                           <span>{tx.date}</span>
                           {tx.submissionId && (
                             <>
@@ -212,7 +211,7 @@ export function TransactionsBalancePage({
                                 onClick={() =>
                                   onOpenTraceDetail(tx.submissionId!)
                                 }
-                                className="font-medium text-[#1D6373] hover:underline"
+                                className="font-medium text-[#2B5E6B] hover:underline"
                               >
                                 {tx.submissionId}
                               </button>
@@ -225,8 +224,8 @@ export function TransactionsBalancePage({
                       <p
                         className={`font-mono text-xs font-semibold tabular-nums ${
                           tx.type === 'Earned'
-                            ? 'text-[#166549]'
-                            : 'text-[#B91C1C]'
+                            ? 'text-[#1B5E43]'
+                            : 'text-[#A62626]'
                         }`}
                       >
                         {tx.signedPoints > 0
@@ -234,7 +233,7 @@ export function TransactionsBalancePage({
                           : tx.signedPoints}{' '}
                         GP
                       </p>
-                      <p className="font-mono text-[11px] text-[#54625B] tabular-nums">
+                      <p className="font-mono text-[11px] text-[#58655E] tabular-nums">
                         Saldo: {tx.balanceAfter.toLocaleString('id-ID')} GP
                       </p>
                     </div>
@@ -247,29 +246,29 @@ export function TransactionsBalancePage({
           {myIncentives.length > 0 && (
             <section className="space-y-3">
               <SectionHeader title="Dukungan Program Insentif Bersyarat" />
-              <div className="flex items-start gap-2.5 rounded-lg border border-[#FCD34D] bg-[#FEF3C7] p-3.5 text-xs text-[#B45309]">
+              <div className="flex items-start gap-2.5 rounded-lg border border-[#C4D8DD] bg-[#F1F6F7] p-3.5 text-xs text-[#2B5E6B]">
                 <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 <span>
                   Dukungan insentif khusus program komunitas &amp; keluarga
                   rentan sesuai ketersediaan dana pesantren.
                 </span>
               </div>
-              <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+              <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D9E0DC] bg-white">
                 {myIncentives.map((fin) => (
                   <div
                     key={fin.id}
                     className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
                   >
                     <div className="space-y-0.5">
-                      <p className="text-xs font-medium text-[#17201C]">
+                      <p className="text-xs font-medium text-[#1B231F]">
                         {fin.fundingSource} · Batch {fin.batchId}
                       </p>
-                      <p className="text-[11px] text-[#54625B]">
+                      <p className="text-[11px] text-[#58655E]">
                         {fin.conditionNote}
                       </p>
                     </div>
                     <div className="flex items-center gap-2.5">
-                      <span className="font-mono text-xs font-semibold text-[#17201C] tabular-nums">
+                      <span className="font-mono text-xs font-semibold text-[#141B17] tabular-nums">
                         Rp {fin.amountIdr.toLocaleString('id-ID')}
                       </span>
                       <StatusTag status={fin.status} />
@@ -289,7 +288,7 @@ export function TransactionsBalancePage({
             description="Menampilkan poin masuk dari verifikasi dan poin keluar dari penukaran reward."
           />
 
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D9E0DC] bg-white px-4 py-3">
             <FilterBar
               ariaLabel="Filter jenis transaksi"
               value={typeFilter}
@@ -311,7 +310,7 @@ export function TransactionsBalancePage({
 
             <div className="relative w-full sm:w-64">
               <Search
-                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#58655E]"
                 aria-hidden="true"
               />
               <input
@@ -320,28 +319,28 @@ export function TransactionsBalancePage({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari keterangan atau ID..."
-                className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] transition-colors focus:border-[#166549] focus:bg-white focus:outline-none"
+                className="w-full rounded-md border border-[#C5CEC9] bg-[#F8FAF9] py-1.5 pr-3 pl-8 text-xs text-[#1B231F] placeholder:text-[#78857E] transition-colors focus:border-[#1B5E43] focus:bg-white focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D9E0DC] bg-white">
             {filteredTransactions.length === 0 ? (
-              <p className="p-6 text-center text-xs text-[#54625B]">
+              <p className="p-6 text-center text-xs text-[#58655E]">
                 Tidak ada transaksi yang cocok dengan filter atau pencarian.
               </p>
             ) : (
               filteredTransactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-[#F8FAF8]"
+                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-[#F8FAF9]"
                 >
                   <div className="flex min-w-0 items-start gap-3">
                     <span
                       className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border ${
                         tx.type === 'Earned'
-                          ? 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
-                          : 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
+                          ? 'border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43]'
+                          : 'border-[#E8C5C5] bg-[#FDF3F3] text-[#A62626]'
                       }`}
                     >
                       {tx.type === 'Earned' ? (
@@ -351,15 +350,15 @@ export function TransactionsBalancePage({
                       )}
                     </span>
                     <div className="min-w-0 space-y-0.5">
-                      <p className="text-xs font-semibold text-[#17201C]">
+                      <p className="text-xs font-semibold text-[#141B17]">
                         {tx.sourceLabel}
                       </p>
-                      <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-[#54625B]">
+                      <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-[#58655E]">
                         <span
                           className={
                             tx.type === 'Earned'
-                              ? 'text-[#166549]'
-                              : 'text-[#B91C1C]'
+                              ? 'text-[#1B5E43]'
+                              : 'text-[#A62626]'
                           }
                         >
                           {tx.type === 'Earned' ? 'Masuk' : 'Keluar'}
@@ -374,7 +373,7 @@ export function TransactionsBalancePage({
                               onClick={() =>
                                 onOpenTraceDetail(tx.submissionId!)
                               }
-                              className="text-[#1D6373] hover:underline"
+                              className="text-[#2B5E6B] hover:underline"
                             >
                               {tx.submissionId}
                             </button>
@@ -394,8 +393,8 @@ export function TransactionsBalancePage({
                     <p
                       className={`font-mono text-sm font-semibold tabular-nums ${
                         tx.type === 'Earned'
-                          ? 'text-[#166549]'
-                          : 'text-[#B91C1C]'
+                          ? 'text-[#1B5E43]'
+                          : 'text-[#A62626]'
                       }`}
                     >
                       {tx.signedPoints > 0
@@ -403,7 +402,7 @@ export function TransactionsBalancePage({
                         : tx.signedPoints}{' '}
                       GP
                     </p>
-                    <p className="font-mono text-[11px] text-[#54625B] tabular-nums">
+                    <p className="font-mono text-[11px] text-[#58655E] tabular-nums">
                       Saldo akhir: {tx.balanceAfter.toLocaleString('id-ID')} GP
                     </p>
                   </div>

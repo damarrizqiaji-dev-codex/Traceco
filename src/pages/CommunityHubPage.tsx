@@ -338,10 +338,10 @@ export function CommunityHubPage({
   const readinessPct = Math.round((readinessPassedCount / 4) * 100);
   const readinessBarColor =
     readinessPassedCount === 4
-      ? 'bg-[#166549]'
+      ? 'bg-[#1B5E43]'
       : readinessPassedCount === 3
-        ? 'bg-[#1D6373]'
-        : 'bg-[#D97706]';
+        ? 'bg-[#2B5E6B]'
+        : 'bg-[#B46B1E]';
 
   const vulnerableParticipants = state.contributors.filter(
     (c) => c.segment === 'Keluarga Rentan'
@@ -458,10 +458,10 @@ export function CommunityHubPage({
       sortValue: (act) => act.title,
       render: (act) => (
         <div className="max-w-[210px] text-xs">
-          <p className="font-semibold leading-snug text-[#17201C]">
+          <p className="font-semibold leading-snug text-[#1B231F]">
             {act.title}
           </p>
-          <p className="text-[11px] font-medium text-[#1D6373]">
+          <p className="text-[11px] font-medium text-[#2B5E6B]">
             {act.category}
           </p>
         </div>
@@ -473,10 +473,10 @@ export function CommunityHubPage({
       sortValue: (act) => act.date,
       render: (act) => (
         <div className="max-w-[175px] space-y-0.5 text-xs">
-          <p className="font-mono text-[11px] font-medium text-[#17201C] tabular-nums whitespace-nowrap">
+          <p className="font-mono text-[11px] font-medium text-[#1B231F] tabular-nums whitespace-nowrap">
             {act.date}
           </p>
-          <p className="leading-snug text-[11px] text-[#54625B]">
+          <p className="leading-snug text-[11px] text-[#58655E]">
             {act.location}
           </p>
         </div>
@@ -492,14 +492,14 @@ export function CommunityHubPage({
           .filter(Boolean);
         return (
           <div className="max-w-[240px] space-y-0.5 text-xs">
-            <p className="leading-snug text-[#17201C]">
+            <p className="leading-snug text-[#1B231F]">
               {act.participantSummary}
             </p>
-            <p className="leading-snug text-[11px] text-[#54625B]">
+            <p className="leading-snug text-[11px] text-[#58655E]">
               {act.inclusiveParticipationNote}
             </p>
             {registeredNames.length > 0 && (
-              <p className="text-[11px] font-medium text-[#166549]">
+              <p className="text-[11px] font-medium text-[#1B5E43]">
                 Terdaftar ({registeredNames.length}):{' '}
                 {registeredNames.slice(0, 2).join(', ')}
                 {registeredNames.length > 2
@@ -543,8 +543,8 @@ export function CommunityHubPage({
                 onClick={() => handleToggleJoin(act.id, act.title)}
                 className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap ${
                   isJoined
-                    ? 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549] hover:bg-[#DDECE4]'
-                    : 'border-[#C6D1CA] bg-white text-[#17201C] hover:border-[#166549] hover:text-[#166549]'
+                    ? 'border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43] hover:bg-[#E3EFE9]'
+                    : 'border-[#C5CEC9] bg-white text-[#1B231F] hover:border-[#1B5E43] hover:text-[#1B5E43]'
                 }`}
               >
                 {isJoined && (
@@ -570,7 +570,7 @@ export function CommunityHubPage({
               </SecondaryButton>
             )}
             {!isHubCoordinator && act.status === 'Selesai' && (
-              <span className="text-[11px] text-[#54625B]">Selesai</span>
+              <span className="text-[11px] text-[#58655E]">Selesai</span>
             )}
           </div>
         );
@@ -590,17 +590,17 @@ export function CommunityHubPage({
             </div>
           }
           footer={
-            <p className="text-xs text-[#54625B]">
+            <p className="text-xs text-[#58655E]">
               Partisipasi ekosistem:{' '}
-              <span className="text-[#17201C]">
+              <span className="text-[#1B231F]">
                 Kontributor (Santri · Warga ·{' '}
-                <strong className="font-medium text-[#166549]">
+                <strong className="font-medium text-[#1B5E43]">
                   Keluarga Rentan
                 </strong>
                 )
               </span>{' '}
-              · <span className="text-[#17201C]">Admin</span> ·{' '}
-              <span className="text-[#17201C]">Mitra</span>
+              · <span className="text-[#1B231F]">Admin</span> ·{' '}
+              <span className="text-[#1B231F]">Mitra</span>
             </p>
           }
         />
@@ -660,8 +660,8 @@ export function CommunityHubPage({
             role={activityFeedback.type === 'error' ? 'alert' : 'status'}
             className={`rounded-md border px-3.5 py-2.5 text-xs font-medium ${
               activityFeedback.type === 'error'
-                ? 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
-                : 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
+                ? 'border-[#E8C5C5] bg-[#FDF3F3] text-[#A62626]'
+                : 'border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43]'
             }`}
           >
             {activityFeedback.text}
@@ -671,14 +671,14 @@ export function CommunityHubPage({
         {isHubCoordinator && showCreateActivity && (
           <form
             onSubmit={handleCreateActivitySubmit}
-            className="space-y-4 rounded-lg border border-[#B5CEC0] bg-white p-5"
+            className="space-y-4 rounded-lg border border-[#C5D9CD] bg-white p-5"
           >
             <div className="flex items-center justify-between gap-2 border-b border-[#EAEFEA] pb-3">
               <div>
-                <h3 className="text-[13px] font-semibold text-[#166549]">
+                <h3 className="text-[13px] font-semibold text-[#1B5E43]">
                   Jadwalkan Agenda Community Hub Baru
                 </h3>
-                <p className="text-xs text-[#54625B]">
+                <p className="text-xs text-[#58655E]">
                   Agenda baru langsung muncul di jadwal komunitas dan ringkasan
                   dashboard.
                 </p>
@@ -787,7 +787,7 @@ export function CommunityHubPage({
         )}
 
         {/* Filter Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D9E0DC] bg-white px-4 py-3">
           <FilterBar
             ariaLabel="Filter status kegiatan"
             value={activityStatusFilter}
@@ -824,7 +824,7 @@ export function CommunityHubPage({
 
           <div className="relative w-full sm:w-64">
             <Search
-              className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
+              className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#58655E]"
               aria-hidden="true"
             />
             <input
@@ -833,7 +833,7 @@ export function CommunityHubPage({
               value={activitySearch}
               onChange={(e) => setActivitySearch(e.target.value)}
               placeholder="Cari kegiatan atau lokasi..."
-              className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] focus:border-[#166549] focus:bg-white focus:outline-none"
+              className="w-full rounded-md border border-[#C5CEC9] bg-[#F8FAF9] py-1.5 pr-3 pl-8 text-xs text-[#1B231F] placeholder:text-[#78857E] focus:border-[#1B5E43] focus:bg-white focus:outline-none"
             />
           </div>
         </div>
@@ -869,8 +869,8 @@ export function CommunityHubPage({
             role={postFeedback.type === 'error' ? 'alert' : 'status'}
             className={`rounded-md border px-3.5 py-2.5 text-xs font-medium ${
               postFeedback.type === 'error'
-                ? 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
-                : 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
+                ? 'border-[#E8C5C5] bg-[#FDF3F3] text-[#A62626]'
+                : 'border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43]'
             }`}
           >
             {postFeedback.text}
@@ -880,14 +880,14 @@ export function CommunityHubPage({
         {showNewPostForm && (
           <form
             onSubmit={handleCreatePostSubmit}
-            className="space-y-4 rounded-lg border border-[#B5CEC0] bg-white p-5"
+            className="space-y-4 rounded-lg border border-[#C5D9CD] bg-white p-5"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#EAEFEA] pb-3">
               <div>
-                <h3 className="text-[13px] font-semibold text-[#166549]">
+                <h3 className="text-[13px] font-semibold text-[#1B5E43]">
                   Buat Topik Diskusi / Koordinasi Baru
                 </h3>
-                <p className="text-xs text-[#54625B]">
+                <p className="text-xs text-[#58655E]">
                   Dikirim atas nama {activeActor?.name ?? state.activeRole} (
                   {state.activeRole}).
                 </p>
@@ -957,7 +957,7 @@ export function CommunityHubPage({
         )}
 
         {/* Forum Filters */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D9E0DC] bg-white px-4 py-3">
           <FilterBar
             ariaLabel="Filter status topik forum"
             value={postStatusFilter}
@@ -980,7 +980,7 @@ export function CommunityHubPage({
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-full sm:w-52">
               <Search
-                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#58655E]"
                 aria-hidden="true"
               />
               <input
@@ -989,14 +989,14 @@ export function CommunityHubPage({
                 value={postSearch}
                 onChange={(e) => setPostSearch(e.target.value)}
                 placeholder="Cari topik atau penulis..."
-                className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1 pr-2.5 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] transition-colors focus:border-[#166549] focus:bg-white focus:outline-none"
+                className="w-full rounded-md border border-[#C5CEC9] bg-[#F8FAF9] py-1 pr-2.5 pl-8 text-xs text-[#1B231F] placeholder:text-[#78857E] transition-colors focus:border-[#1B5E43] focus:bg-white focus:outline-none"
               />
             </div>
 
             <div className="flex items-center gap-2">
               <label
                 htmlFor="forum-filter-category"
-                className="text-xs text-[#54625B] whitespace-nowrap"
+                className="text-xs text-[#58655E] whitespace-nowrap"
               >
                 Kategori:
               </label>
@@ -1008,7 +1008,7 @@ export function CommunityHubPage({
                     e.target.value as 'Semua' | CommunityPostCategory
                   )
                 }
-                className="rounded-md border border-[#C6D1CA] bg-white px-2.5 py-1 text-xs text-[#17201C] focus:border-[#166549] focus:outline-none"
+                className="rounded-md border border-[#C5CEC9] bg-white px-2.5 py-1 text-xs text-[#1B231F] focus:border-[#1B5E43] focus:outline-none"
               >
                 <option value="Semua">Semua Kategori</option>
                 {POST_CATEGORIES.map((cat) => (
@@ -1021,9 +1021,9 @@ export function CommunityHubPage({
           </div>
         </div>
 
-        <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+        <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D9E0DC] bg-white">
           {filteredPosts.length === 0 ? (
-            <div className="p-8 text-center text-xs text-[#54625B]">
+            <div className="p-8 text-center text-xs text-[#58655E]">
               Belum ada topik diskusi untuk filter ini. Klik{' '}
               <strong>Tulis Topik / Tanya</strong> untuk memulai koordinasi.
             </div>
@@ -1037,12 +1037,12 @@ export function CommunityHubPage({
                 <article key={post.id} className="space-y-3 p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#54625B]">
-                        <span className="font-mono font-semibold text-[#166549]">
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#58655E]">
+                        <span className="font-mono font-semibold text-[#1B5E43]">
                           {post.id}
                         </span>
                         <span aria-hidden="true">·</span>
-                        <span className="font-medium text-[#1D6373]">
+                        <span className="font-medium text-[#2B5E6B]">
                           {post.category}
                         </span>
                         <span aria-hidden="true">·</span>
@@ -1053,7 +1053,7 @@ export function CommunityHubPage({
                           {post.timestamp}
                         </span>
                       </div>
-                      <h3 className="text-[14px] font-semibold text-[#17201C]">
+                      <h3 className="text-[14px] font-semibold text-[#141B17]">
                         {post.title}
                       </h3>
                     </div>
@@ -1064,7 +1064,7 @@ export function CommunityHubPage({
                         <button
                           type="button"
                           onClick={() => onTogglePostStatus(post.id)}
-                          className="rounded-md border border-[#C6D1CA] bg-white px-2.5 py-1 text-[11px] font-medium text-[#17201C] transition-colors hover:bg-[#F8FAF8] whitespace-nowrap"
+                          className="rounded-md border border-[#C5CEC9] bg-white px-2.5 py-1 text-[11px] font-medium text-[#1B231F] transition-colors hover:bg-[#F8FAF9] whitespace-nowrap"
                         >
                           {post.status === 'Terbuka'
                             ? 'Tandai Terjawab'
@@ -1074,7 +1074,7 @@ export function CommunityHubPage({
                     </div>
                   </div>
 
-                  <p className="text-xs leading-relaxed text-[#17201C]">
+                  <p className="text-xs leading-relaxed text-[#1B231F]">
                     {post.body}
                   </p>
 
@@ -1082,8 +1082,8 @@ export function CommunityHubPage({
                     <div className="space-y-2 divide-y divide-[#EAEFEA] border-t border-[#EAEFEA] pt-3">
                       {post.replies.map((reply) => (
                         <div key={reply.id} className="space-y-1 pt-2 first:pt-0">
-                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#54625B]">
-                            <span className="font-semibold text-[#17201C]">
+                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#58655E]">
+                            <span className="font-semibold text-[#1B231F]">
                               {reply.authorName}
                             </span>
                             <RoleTag role={reply.authorRole} />
@@ -1092,7 +1092,7 @@ export function CommunityHubPage({
                               {reply.timestamp}
                             </span>
                           </div>
-                          <p className="text-xs leading-relaxed text-[#17201C]">
+                          <p className="text-xs leading-relaxed text-[#1B231F]">
                             {reply.body}
                           </p>
                         </div>
@@ -1120,7 +1120,7 @@ export function CommunityHubPage({
                             ? 'Tulis jawaban resmi Koordinator Hub (otomatis menandai Terjawab)...'
                             : 'Tulis tanggapan atau informasi tambahan...'
                         }
-                        className="flex-1 rounded-md border border-[#C6D1CA] bg-[#F8FAF8] px-3 py-1.5 text-xs text-[#17201C] placeholder:text-[#7D8C84] focus:border-[#166549] focus:bg-white focus:outline-none"
+                        className="flex-1 rounded-md border border-[#C5CEC9] bg-[#F8FAF9] px-3 py-1.5 text-xs text-[#1B231F] placeholder:text-[#78857E] focus:border-[#1B5E43] focus:bg-white focus:outline-none"
                       />
                       <SecondaryButton type="submit" size="sm">
                         <Send className="h-3 w-3" aria-hidden="true" />
@@ -1128,7 +1128,7 @@ export function CommunityHubPage({
                       </SecondaryButton>
                     </div>
                     {replyErr && (
-                      <p className="text-[11px] font-medium text-[#B91C1C]">
+                      <p className="text-[11px] font-medium text-[#A62626]">
                         {replyErr}
                       </p>
                     )}
@@ -1146,7 +1146,7 @@ export function CommunityHubPage({
           title="3. Panduan Standar & Uji Kelayakan Mandiri Ecobrick"
           description="Pelajari standar pembuatan ecobrick dan lakukan simulasi pemeriksaan kelayakan sebelum menyerahkan ke Pos Eco-Hub."
           rightSlot={
-            <span className="font-mono text-xs font-medium text-[#166549] tabular-nums">
+            <span className="font-mono text-xs font-medium text-[#1B5E43] tabular-nums">
               Materi dipahami: {studiedTopicIds.length} /{' '}
               {EDUCATION_TOPICS.length}
             </span>
@@ -1155,8 +1155,8 @@ export function CommunityHubPage({
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
           {/* Interactive Topic Explorer */}
-          <div className="overflow-hidden rounded-lg border border-[#D8DFDA] bg-white lg:col-span-7">
-            <div className="grid grid-cols-2 border-b border-[#D8DFDA] bg-[#F8FAF8] sm:grid-cols-4">
+          <div className="overflow-hidden rounded-lg border border-[#D9E0DC] bg-white lg:col-span-7">
+            <div className="grid grid-cols-2 border-b border-[#D9E0DC] bg-[#F8FAF9] sm:grid-cols-4">
               {EDUCATION_TOPICS.map((topic) => {
                 const isSelected = topic.id === selectedTopic.id;
                 const isStudied = studiedTopicIds.includes(topic.id);
@@ -1167,8 +1167,8 @@ export function CommunityHubPage({
                     onClick={() => setSelectedTopicId(topic.id)}
                     className={`flex items-center justify-between gap-1.5 border-b-2 px-3 py-2.5 text-left text-xs font-medium transition-colors duration-150 ${
                       isSelected
-                        ? 'border-[#111E19] bg-[#111E19] text-white'
-                        : 'border-transparent text-[#54625B] hover:bg-white hover:text-[#17201C]'
+                        ? 'border-[#1B5E43] bg-[#EFF5F2] text-[#1B5E43]'
+                        : 'border-transparent text-[#58655E] hover:bg-white hover:text-[#1B231F]'
                     }`}
                   >
                     <span className="whitespace-nowrap">
@@ -1176,9 +1176,7 @@ export function CommunityHubPage({
                     </span>
                     {isStudied && (
                       <CheckCircle2
-                        className={`h-3.5 w-3.5 shrink-0 ${
-                          isSelected ? 'text-[#6EE7B7]' : 'text-[#166549]'
-                        }`}
+                        className="h-3.5 w-3.5 shrink-0 text-[#1B5E43]"
                         aria-hidden="true"
                       />
                     )}
@@ -1190,10 +1188,10 @@ export function CommunityHubPage({
             <div className="space-y-4 p-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <span className="font-mono text-[11px] font-medium text-[#1D6373]">
+                  <span className="font-mono text-[11px] font-medium text-[#2B5E6B]">
                     Materi {selectedTopic.index}
                   </span>
-                  <h3 className="font-display text-base font-semibold text-[#17201C]">
+                  <h3 className="font-display text-base font-semibold text-[#141B17]">
                     {selectedTopic.title}
                   </h3>
                 </div>
@@ -1210,16 +1208,16 @@ export function CommunityHubPage({
                 </SecondaryButton>
               </div>
 
-              <p className="text-xs leading-relaxed text-[#54625B]">
+              <p className="text-xs leading-relaxed text-[#58655E]">
                 {selectedTopic.summary}
               </p>
 
               <div className="grid grid-cols-1 gap-4 border-t border-[#EAEFEA] pt-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-[#166549]">
+                  <p className="text-xs font-semibold text-[#1B5E43]">
                     Ketentuan yang Diterima
                   </p>
-                  <ul className="list-disc space-y-1.5 pl-4 text-xs text-[#17201C]">
+                  <ul className="list-disc space-y-1.5 pl-4 text-xs text-[#1B231F]">
                     {selectedTopic.acceptedItems.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
@@ -1227,10 +1225,10 @@ export function CommunityHubPage({
                 </div>
 
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-[#B91C1C]">
+                  <p className="text-xs font-semibold text-[#A62626]">
                     Yang Menyebabkan Penolakan
                   </p>
-                  <ul className="list-disc space-y-1.5 pl-4 text-xs text-[#54625B]">
+                  <ul className="list-disc space-y-1.5 pl-4 text-xs text-[#58655E]">
                     {selectedTopic.rejectedItems.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
@@ -1238,30 +1236,30 @@ export function CommunityHubPage({
                 </div>
               </div>
 
-              <p className="rounded-md border border-[#B2D3DC] bg-[#EAF3F5] px-3 py-2 text-[11px] font-medium text-[#1D6373]">
+              <p className="rounded-md border border-[#C4D8DD] bg-[#F1F6F7] px-3 py-2 text-[11px] font-medium text-[#2B5E6B]">
                 Catatan praktis: {selectedTopic.targetAction}
               </p>
             </div>
           </div>
 
           {/* Pre-Submission Ecobrick Readiness Checker */}
-          <div className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5 lg:col-span-5">
+          <div className="space-y-4 rounded-lg border border-[#D9E0DC] bg-white p-5 lg:col-span-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-display text-sm font-semibold text-[#17201C]">
+                <h3 className="font-display text-sm font-semibold text-[#141B17]">
                   Uji Kelayakan Mandiri Sebelum Ke Pos
                 </h3>
-                <p className="mt-0.5 text-xs text-[#54625B]">
+                <p className="mt-0.5 text-xs text-[#58655E]">
                   Periksa berat dan kondisi fisik ecobrick Anda agar lolos
                   verifikasi pada percobaan pertama.
                 </p>
               </div>
-              <span className="font-mono text-xs font-semibold text-[#166549] tabular-nums whitespace-nowrap">
+              <span className="font-mono text-xs font-semibold text-[#1B5E43] tabular-nums whitespace-nowrap">
                 {readinessPassedCount}/4
               </span>
             </div>
 
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E3E9E5]">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#ECF0ED]">
               <div
                 className={`h-full rounded-full transition-[width] duration-200 ${readinessBarColor}`}
                 style={{ width: `${readinessPct}%` }}
@@ -1304,30 +1302,30 @@ export function CommunityHubPage({
             </div>
 
             <div className="space-y-2 border-t border-[#EAEFEA] pt-3">
-              <label className="flex cursor-pointer items-start gap-2 text-xs text-[#17201C]">
+              <label className="flex cursor-pointer items-start gap-2 text-xs text-[#1B231F]">
                 <input
                   type="checkbox"
                   checked={checkCleanDry}
                   onChange={(e) => setCheckCleanDry(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[#166549]"
+                  className="mt-0.5 h-4 w-4 accent-[#1B5E43]"
                 />
                 <span>Isi plastik bersih dari minyak dan kering total</span>
               </label>
-              <label className="flex cursor-pointer items-start gap-2 text-xs text-[#17201C]">
+              <label className="flex cursor-pointer items-start gap-2 text-xs text-[#1B231F]">
                 <input
                   type="checkbox"
                   checked={checkDense}
                   onChange={(e) => setCheckDense(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[#166549]"
+                  className="mt-0.5 h-4 w-4 accent-[#1B5E43]"
                 />
                 <span>Kompaksi padat merata (tidak kempes saat ditekan)</span>
               </label>
-              <label className="flex cursor-pointer items-start gap-2 text-xs text-[#17201C]">
+              <label className="flex cursor-pointer items-start gap-2 text-xs text-[#1B231F]">
                 <input
                   type="checkbox"
                   checked={checkCapTight}
                   onChange={(e) => setCheckCapTight(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-[#166549]"
+                  className="mt-0.5 h-4 w-4 accent-[#1B5E43]"
                 />
                 <span>Botol utuh dan tutup botol terpasang rapat</span>
               </label>
@@ -1337,8 +1335,8 @@ export function CommunityHubPage({
               role="status"
               className={`space-y-1.5 rounded-md border p-3.5 text-xs ${
                 isEcobrickReady
-                  ? 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
-                  : 'border-[#FCD34D] bg-[#FEF3C7] text-[#B45309]'
+                  ? 'border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43]'
+                  : 'border-[#E6D2B5] bg-[#FBF6EE] text-[#A15C17]'
               }`}
             >
               <p className="font-semibold">
@@ -1381,9 +1379,9 @@ export function CommunityHubPage({
             title="4. Partisipasi Aktif Keluarga Rentan"
             description="Jejak kontribusi terverifikasi, keikutsertaan kegiatan, dan dukungan program secara setara."
           />
-          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D9E0DC] bg-white">
             {vulnerableParticipants.length === 0 ? (
-              <p className="p-6 text-center text-xs text-[#54625B]">
+              <p className="p-6 text-center text-xs text-[#58655E]">
                 Belum ada akun segmen Keluarga Rentan yang terdaftar di
                 database.
               </p>
@@ -1406,20 +1404,20 @@ export function CommunityHubPage({
                 return (
                   <div key={person.id} className="space-y-2 p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-[13px] font-semibold text-[#17201C]">
+                      <span className="text-[13px] font-semibold text-[#1B231F]">
                         {person.name}
                       </span>
                       <RoleTag role={person.role} segment={person.segment} />
                     </div>
-                    <p className="text-xs text-[#54625B]">
+                    <p className="text-xs text-[#58655E]">
                       {person.unitOrAddress}
                     </p>
                     {person.participationRole && (
-                      <p className="text-xs font-medium text-[#166549]">
+                      <p className="text-xs font-medium text-[#1B5E43]">
                         Peran ekosistem: {person.participationRole}
                       </p>
                     )}
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#EAEFEA] pt-2 font-mono text-[11px] text-[#54625B] tabular-nums">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[#EAEFEA] pt-2 font-mono text-[11px] text-[#58655E] tabular-nums">
                       <span>{verifiedUnits} unit verified</span>
                       <span aria-hidden="true">·</span>
                       <span>{joinedActivities} agenda diikuti</span>
@@ -1459,8 +1457,8 @@ export function CommunityHubPage({
               role={collabFeedback.type === 'error' ? 'alert' : 'status'}
               className={`rounded-md border px-3.5 py-2.5 text-xs font-medium ${
                 collabFeedback.type === 'error'
-                  ? 'border-[#FECACA] bg-[#FEF2F2] text-[#B91C1C]'
-                  : 'border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]'
+                  ? 'border-[#E8C5C5] bg-[#FDF3F3] text-[#A62626]'
+                  : 'border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43]'
               }`}
             >
               {collabFeedback.text}
@@ -1470,7 +1468,7 @@ export function CommunityHubPage({
           {canProposeCollab && showCollabForm && (
             <form
               onSubmit={handleCreateCollaborationSubmit}
-              className="space-y-3 rounded-lg border border-[#B5CEC0] bg-white p-4"
+              className="space-y-3 rounded-lg border border-[#C5D9CD] bg-white p-4"
             >
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <FormField id="collab-partner-name" label="Nama Mitra / Lembaga">
@@ -1527,9 +1525,9 @@ export function CommunityHubPage({
             </form>
           )}
 
-          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+          <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D9E0DC] bg-white">
             {state.collaborations.length === 0 ? (
-              <p className="p-6 text-center text-xs text-[#54625B]">
+              <p className="p-6 text-center text-xs text-[#58655E]">
                 Belum ada kolaborasi mitra tercatat.
               </p>
             ) : (
@@ -1537,10 +1535,10 @@ export function CommunityHubPage({
                 <div key={colb.id} className="space-y-2 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="space-y-0.5">
-                      <span className="text-[13px] font-semibold text-[#17201C]">
+                      <span className="text-[13px] font-semibold text-[#1B231F]">
                         {colb.partnerName}
                       </span>
-                      <p className="text-xs font-medium text-[#1D6373]">
+                      <p className="text-xs font-medium text-[#2B5E6B]">
                         {colb.collaborationType}
                       </p>
                     </div>
@@ -1569,7 +1567,7 @@ export function CommunityHubPage({
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-[#54625B]">{colb.activity}</p>
+                  <p className="text-xs text-[#58655E]">{colb.activity}</p>
                 </div>
               ))
             )}

@@ -53,7 +53,7 @@ export function DataTable<T>({
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-lg border border-[#D8DFDA] bg-white px-4 py-8 text-center text-xs text-[#54625B]">
+      <div className="rounded-lg border border-[#D9E0DC] bg-white px-4 py-8 text-center text-xs text-[#58655E]">
         {emptyMessage}
       </div>
     );
@@ -68,10 +68,10 @@ export function DataTable<T>({
   };
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-[#D8DFDA] bg-white">
+    <div className="overflow-x-auto rounded-lg border border-[#D9E0DC] bg-white">
       <table className="w-full border-collapse text-left text-[13px]">
         <thead>
-          <tr className="border-b border-[#D8DFDA] bg-[#F8FAF8] text-xs font-medium text-[#47544D]">
+          <tr className="border-b border-[#D9E0DC] bg-[#F8FAF9] text-xs font-medium text-[#34403A]">
             {columns.map((col) => {
               const isSorted = sortState?.key === col.key;
               return (
@@ -85,8 +85,8 @@ export function DataTable<T>({
                     <button
                       type="button"
                       onClick={() => toggleSort(col.key)}
-                      className={`inline-flex items-center gap-1 hover:text-[#166549] transition-colors duration-150 ${
-                        isSorted ? 'font-semibold text-[#166549]' : ''
+                      className={`inline-flex items-center gap-1 hover:text-[#1B5E43] transition-colors duration-150 ${
+                        isSorted ? 'font-semibold text-[#1B5E43]' : ''
                       }`}
                     >
                       <span>{col.header}</span>
@@ -122,10 +122,10 @@ export function DataTable<T>({
                   onRowClick ? 'cursor-pointer' : ''
                 } ${
                   isSelected
-                    ? 'bg-[#EBF4EF]'
+                    ? 'bg-[#EFF5F2]'
                     : onRowClick
-                      ? 'even:bg-[#FAFBF9]/60 hover:bg-[#EBF4EF]/55'
-                      : 'even:bg-[#FAFBF9]/60 hover:bg-[#F8FAF8]'
+                      ? 'even:bg-[#F8FAF9]/65 hover:bg-[#EFF5F2]/65'
+                      : 'even:bg-[#F8FAF9]/65 hover:bg-[#F8FAF9]'
                 }`}
               >
                 {columns.map((col) => (
@@ -141,7 +141,7 @@ export function DataTable<T>({
                 {onRowClick && (
                   <td className="w-7 px-2 py-3 text-right align-middle">
                     <ChevronRight
-                      className="h-3.5 w-3.5 text-[#84928B] opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0.5 group-hover:opacity-100 group-hover:text-[#166549]"
+                      className="h-3.5 w-3.5 text-[#78857E] opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0.5 group-hover:opacity-100 group-hover:text-[#1B5E43]"
                       aria-hidden="true"
                     />
                   </td>

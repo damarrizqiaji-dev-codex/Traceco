@@ -37,8 +37,8 @@ export function StatusTag({ status }: { status: string }) {
     normalized === 'available'
   ) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#166549] whitespace-nowrap shrink-0">
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#166549]" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1B5E43] whitespace-nowrap shrink-0">
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#1B5E43]" aria-hidden="true" />
         <span>{displayLabel}</span>
       </span>
     );
@@ -50,8 +50,8 @@ export function StatusTag({ status }: { status: string }) {
     normalized === 'distributed'
   ) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D6373] whitespace-nowrap shrink-0">
-        <Layers className="h-3.5 w-3.5 shrink-0 text-[#1D6373]" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#2B5E6B] whitespace-nowrap shrink-0">
+        <Layers className="h-3.5 w-3.5 shrink-0 text-[#2B5E6B]" aria-hidden="true" />
         <span>{displayLabel}</span>
       </span>
     );
@@ -59,13 +59,12 @@ export function StatusTag({ status }: { status: string }) {
 
   if (
     normalized === 'approved' ||
-    normalized === 'reserved' ||
     normalized === 'berlangsung' ||
     normalized === 'partially verified'
   ) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1D6373] whitespace-nowrap shrink-0">
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#1D6373]" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#2B5E6B] whitespace-nowrap shrink-0">
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#2B5E6B]" aria-hidden="true" />
         <span>{displayLabel}</span>
       </span>
     );
@@ -73,16 +72,16 @@ export function StatusTag({ status }: { status: string }) {
 
   if (normalized === 'rejected') {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B91C1C] whitespace-nowrap shrink-0">
-        <XCircle className="h-3.5 w-3.5 shrink-0 text-[#B91C1C]" aria-hidden="true" />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A62626] whitespace-nowrap shrink-0">
+        <XCircle className="h-3.5 w-3.5 shrink-0 text-[#A62626]" aria-hidden="true" />
         <span>{displayLabel}</span>
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B45309] whitespace-nowrap shrink-0">
-      <Clock className="h-3.5 w-3.5 shrink-0 text-[#B45309]" aria-hidden="true" />
+    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#A15C17] whitespace-nowrap shrink-0">
+      <Clock className="h-3.5 w-3.5 shrink-0 text-[#A15C17]" aria-hidden="true" />
       <span>{displayLabel}</span>
     </span>
   );
@@ -102,12 +101,12 @@ export function RoleTag({
 
   const toneClass =
     role === 'Admin'
-      ? 'text-[#111E19] font-semibold'
+      ? 'text-[#141B17] font-semibold'
       : role === 'Mitra'
-        ? 'text-[#1D6373] font-medium'
+        ? 'text-[#2B5E6B] font-medium'
         : role === 'Keluarga Rentan'
-          ? 'text-[#1D6373] font-medium'
-          : 'text-[#54625B] font-medium';
+          ? 'text-[#2B5E6B] font-medium'
+          : 'text-[#58655E] font-medium';
 
   if (variant === 'badge') {
     return (

@@ -17,7 +17,7 @@ export function PrimaryButton({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-md bg-[#166549] font-medium text-white shadow-2xs hover:bg-[#0F4C36] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 transition-[background-color,transform,box-shadow] duration-150 whitespace-nowrap shrink-0 ${sizing} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-md bg-[#1B5E43] font-medium text-white shadow-2xs hover:bg-[#144833] active:scale-[0.985] disabled:cursor-not-allowed disabled:bg-[#ECF0ED] disabled:text-[#78857E] disabled:shadow-none disabled:active:scale-100 transition-[background-color,color,transform,box-shadow] duration-150 whitespace-nowrap shrink-0 ${sizing} ${className}`}
       {...props}
     >
       {children}
@@ -37,7 +37,7 @@ export function SecondaryButton({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-[#C6D1CA] bg-white font-medium text-[#17201C] hover:border-[#166549]/45 hover:bg-[#F8FAF8] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 transition-[background-color,border-color,transform] duration-150 whitespace-nowrap shrink-0 ${sizing} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-[#B5CEC0] bg-white font-medium text-[#1B5E43] hover:border-[#1B5E43] hover:bg-[#EFF5F2] active:scale-[0.985] disabled:cursor-not-allowed disabled:border-[#D9E0DC] disabled:bg-[#F5F6F5] disabled:text-[#78857E] disabled:active:scale-100 transition-[background-color,border-color,color,transform] duration-150 whitespace-nowrap shrink-0 ${sizing} ${className}`}
       {...props}
     >
       {children}
@@ -57,7 +57,7 @@ export function DangerButton({
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-[#E5B8B8] bg-white font-medium text-[#B91C1C] hover:bg-[#FEF2F2] hover:border-[#B91C1C] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 transition-[background-color,border-color,transform] duration-150 whitespace-nowrap shrink-0 ${sizing} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-[#DFB8B8] bg-white font-medium text-[#A62626] hover:bg-[#FDF3F3] hover:border-[#A62626] active:scale-[0.985] disabled:cursor-not-allowed disabled:border-[#D9E0DC] disabled:bg-[#F5F6F5] disabled:text-[#78857E] disabled:active:scale-100 transition-[background-color,border-color,color,transform] duration-150 whitespace-nowrap shrink-0 ${sizing} ${className}`}
       {...props}
     >
       {children}

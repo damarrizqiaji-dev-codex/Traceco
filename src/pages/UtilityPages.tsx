@@ -142,24 +142,24 @@ export function ProfilePage({
         }
       />
 
-      {/* Obsidian Identity Strip */}
-      <section className="rounded-lg border border-[#243A31] bg-[#111E19] p-5 text-[#ECF2EE]">
+      {/* Identity Summary Card */}
+      <section className="rounded-lg border border-[#D9E0DC] bg-[#F8FAF9] p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <p className="font-mono text-xs font-medium text-[#6EE7B7]">
+            <p className="font-mono text-xs font-semibold text-[#1B5E43]">
               Identitas Terverifikasi Cloud Firestore
             </p>
-            <h2 className="font-display text-lg font-semibold text-white">
+            <h2 className="font-display text-lg font-semibold text-[#141B17]">
               {actorProfile.name}
             </h2>
-            <p className="text-xs text-[#9EB5AA]">
+            <p className="text-xs text-[#58655E]">
               {actorProfile.unitOrAddress} ·{' '}
               <span className="font-mono">{currentUser.email}</span>
             </p>
           </div>
           <div className="text-left sm:text-right">
-            <p className="text-[11px] text-[#9EB5AA]">Peran Aktif</p>
-            <p className="font-display text-base font-semibold text-[#ECF2EE]">
+            <p className="text-[11px] text-[#58655E]">Peran Aktif</p>
+            <p className="font-display text-base font-semibold text-[#141B17]">
               {state.activeRole}
               {actorSegment ? ` · ${actorSegment}` : ''}
             </p>
@@ -260,7 +260,7 @@ export function ProfilePage({
             />
           )}
 
-          <section className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5">
+          <section className="space-y-4 rounded-lg border border-[#D9E0DC] bg-white p-5">
             <SectionHeader
               title="Informasi Akun"
               description="Detail identitas akun dan unit komunitas yang terdaftar pada platform."
@@ -268,27 +268,27 @@ export function ProfilePage({
 
             <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t border-[#EAEFEA] pt-4 text-xs sm:grid-cols-2">
               <div className="space-y-1 border-b border-[#EAEFEA] pb-3 sm:border-b-0 sm:pb-0">
-                <dt className="text-[11px] font-medium text-[#54625B]">
+                <dt className="text-[11px] font-medium text-[#58655E]">
                   Nama Lengkap / Lembaga
                 </dt>
-                <dd className="font-semibold text-[#17201C]">
+                <dd className="font-semibold text-[#141B17]">
                   {actorProfile.name}
                 </dd>
               </div>
               <div className="space-y-1 border-b border-[#EAEFEA] pb-3 sm:border-b-0 sm:pb-0">
-                <dt className="text-[11px] font-medium text-[#54625B]">
+                <dt className="text-[11px] font-medium text-[#58655E]">
                   Email Akun Login
                 </dt>
-                <dd className="font-mono text-[#17201C]">{currentUser.email}</dd>
+                <dd className="font-mono text-[#1B231F]">{currentUser.email}</dd>
               </div>
               <div className="space-y-1 border-b border-[#EAEFEA] pb-3 sm:border-b-0 sm:pb-0">
-                <dt className="text-[11px] font-medium text-[#54625B]">
+                <dt className="text-[11px] font-medium text-[#58655E]">
                   Unit / Alamat
                 </dt>
-                <dd className="text-[#17201C]">{actorProfile.unitOrAddress}</dd>
+                <dd className="text-[#1B231F]">{actorProfile.unitOrAddress}</dd>
               </div>
               <div className="space-y-1">
-                <dt className="text-[11px] font-medium text-[#54625B]">
+                <dt className="text-[11px] font-medium text-[#58655E]">
                   Peran Terdaftar
                 </dt>
                 <dd>
@@ -367,9 +367,9 @@ export function NotificationsPage({
         }
       />
 
-      <section className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+      <section className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D9E0DC] bg-white">
         {state.notifications.length === 0 ? (
-          <p className="p-8 text-center text-xs text-[#54625B]">
+          <p className="p-8 text-center text-xs text-[#58655E]">
             Belum ada notifikasi ekosistem untuk akun Anda.
           </p>
         ) : (
@@ -378,23 +378,23 @@ export function NotificationsPage({
               key={notif.id}
               className={`flex flex-wrap items-start justify-between gap-4 p-4 transition-colors duration-150 sm:px-5 ${
                 notif.read
-                  ? 'bg-white hover:bg-[#F8FAF8]'
-                  : 'bg-[#EBF4EF]/45 hover:bg-[#EBF4EF]/65'
+                  ? 'bg-white hover:bg-[#F8FAF9]'
+                  : 'bg-[#EFF5F2]/75 hover:bg-[#EFF5F2]'
               }`}
             >
               <div className="max-w-2xl space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   {!notif.read && (
-                    <span className="font-mono text-[11px] font-semibold text-[#166549]">
+                    <span className="font-mono text-[11px] font-semibold text-[#1B5E43]">
                       Baru ·
                     </span>
                   )}
-                  <span className="text-[13px] font-semibold text-[#17201C]">
+                  <span className="text-[13px] font-semibold text-[#141B17]">
                     {notif.title}
                   </span>
                 </div>
-                <p className="text-xs text-[#54625B]">{notif.detail}</p>
-                <p className="font-mono text-[11px] text-[#54625B] tabular-nums">
+                <p className="text-xs text-[#58655E]">{notif.detail}</p>
+                <p className="font-mono text-[11px] text-[#58655E] tabular-nums">
                   {notif.timestamp} · {notif.category}
                 </p>
               </div>
@@ -502,8 +502,8 @@ export function SettingsPage({
       sortValue: (u) => u.name,
       render: (u) => (
         <div className="text-xs">
-          <p className="font-medium text-[#17201C]">{u.name}</p>
-          <p className="font-mono text-[11px] text-[#54625B]">{u.email}</p>
+          <p className="font-medium text-[#141B17]">{u.name}</p>
+          <p className="font-mono text-[11px] text-[#58655E]">{u.email}</p>
         </div>
       ),
     },
@@ -518,7 +518,7 @@ export function SettingsPage({
       header: 'Unit / Alamat',
       sortValue: (u) => u.unitOrAddress,
       render: (u) => (
-        <span className="text-xs text-[#54625B]">{u.unitOrAddress}</span>
+        <span className="text-xs text-[#58655E]">{u.unitOrAddress}</span>
       ),
     },
     {
@@ -531,11 +531,11 @@ export function SettingsPage({
           : -1,
       render: (u) => {
         if (!isPenyerahRole(u.role)) {
-          return <span className="text-xs text-[#54625B]">-</span>;
+          return <span className="text-xs text-[#58655E]">-</span>;
         }
         const bal = computeContributorPointsBalance(state, u.id);
         return (
-          <span className="font-mono text-xs font-semibold text-[#166549] tabular-nums">
+          <span className="font-mono text-xs font-semibold text-[#1B5E43] tabular-nums">
             {bal.balance.toLocaleString('id-ID')} GP
           </span>
         );
@@ -576,7 +576,7 @@ export function SettingsPage({
             description="Daftar Kontributor (Santri, Warga, Keluarga Rentan), Admin Pesantren, dan Mitra Pemanfaat."
           />
 
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D9E0DC] bg-white px-4 py-3">
             <FilterBar
               ariaLabel="Filter peran akun"
               value={roleFilter}
@@ -606,7 +606,7 @@ export function SettingsPage({
 
             <div className="relative w-full sm:w-64">
               <Search
-                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#58655E]"
                 aria-hidden="true"
               />
               <input
@@ -615,7 +615,7 @@ export function SettingsPage({
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
                 placeholder="Cari nama, email, atau unit..."
-                className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] transition-colors focus:border-[#166549] focus:bg-white focus:outline-none"
+                className="w-full rounded-md border border-[#C5CEC9] bg-[#F8FAF9] py-1.5 pr-3 pl-8 text-xs text-[#1B231F] placeholder:text-[#78857E] transition-colors focus:border-[#1B5E43] focus:bg-white focus:outline-none"
               />
             </div>
           </div>
@@ -629,23 +629,23 @@ export function SettingsPage({
               return (
                 <div
                   key={u.id}
-                  className="space-y-2 rounded-lg border border-[#D8DFDA] bg-white p-4"
+                  className="space-y-2 rounded-lg border border-[#D9E0DC] bg-white p-4"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-xs font-semibold text-[#17201C]">
+                      <p className="text-xs font-semibold text-[#141B17]">
                         {u.name}
                       </p>
-                      <p className="font-mono text-[11px] text-[#54625B]">
+                      <p className="font-mono text-[11px] text-[#58655E]">
                         {u.email}
                       </p>
                     </div>
                     <RoleTag role={u.role} segment={u.segment} />
                   </div>
-                  <div className="flex items-center justify-between border-t border-[#EAEFEA] pt-2 text-[11px] text-[#54625B]">
+                  <div className="flex items-center justify-between border-t border-[#EAEFEA] pt-2 text-[11px] text-[#58655E]">
                     <span>{u.unitOrAddress}</span>
                     {bal && (
-                      <span className="font-mono font-semibold text-[#166549]">
+                      <span className="font-mono font-semibold text-[#1B5E43]">
                         {bal.balance.toLocaleString('id-ID')} GP
                       </span>
                     )}
@@ -668,12 +668,12 @@ export function SettingsPage({
 
       {currentTab === 'hub' && (
         <div className="space-y-6">
-          <section className="space-y-2 rounded-lg border border-[#243A31] bg-[#111E19] p-5 text-[#ECF2EE]">
-            <div className="flex items-center gap-2 font-display text-sm font-semibold text-[#6EE7B7]">
+          <section className="space-y-2 rounded-lg border border-[#D9E0DC] bg-[#F8FAF9] p-5">
+            <div className="flex items-center gap-2 font-display text-sm font-semibold text-[#1B5E43]">
               <Building2 className="h-4 w-4" aria-hidden="true" />
               <span>Pesantren Al-Amanah · Community Hub</span>
             </div>
-            <p className="text-xs leading-relaxed text-[#C8D8D0]">
+            <p className="text-xs leading-relaxed text-[#34403A]">
               Pusat penerimaan ecobrick jadi dari santri, warga sekitar, dan
               keluarga rentan, sekaligus koordinator verifikasi fisik, inventori
               terverifikasi, edukasi komunitas, dan penyaluran pemanfaatan.
@@ -724,7 +724,7 @@ export function SettingsPage({
             {showAddDropoff && onCreateDropOffPoint && (
               <form
                 onSubmit={handleAddDropoffSubmit}
-                className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5"
+                className="space-y-4 rounded-lg border border-[#D9E0DC] bg-white p-5"
               >
                 <SectionHeader
                   title="Tambah Pos Serah Baru ke Firestore"
@@ -733,7 +733,7 @@ export function SettingsPage({
                 {dpError && (
                   <div
                     role="alert"
-                    className="rounded-md border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#B91C1C]"
+                    className="rounded-md border border-[#E8C5C5] bg-[#FDF3F3] p-3 text-xs font-medium text-[#A62626]"
                   >
                     {dpError}
                   </div>
@@ -799,7 +799,7 @@ export function SettingsPage({
             )}
 
             {state.dropoff_points.length === 0 ? (
-              <div className="rounded-lg border border-[#D8DFDA] bg-white p-6 text-center text-xs text-[#54625B]">
+              <div className="rounded-lg border border-[#D9E0DC] bg-white p-6 text-center text-xs text-[#58655E]">
                 Belum ada Pos Serah Ecobrick tersimpan di database `traceco-prod`.
                 Klik "Muat Pos Standar" atau "Tambah Pos Serah" untuk memulai.
               </div>
@@ -808,30 +808,30 @@ export function SettingsPage({
                 {state.dropoff_points.map((dp) => (
                   <div
                     key={dp.id}
-                    className="space-y-2 rounded-lg border border-[#D8DFDA] bg-white p-4"
+                    className="space-y-2 rounded-lg border border-[#D9E0DC] bg-white p-4"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-start gap-2">
                         <MapPin
-                          className="mt-0.5 h-4 w-4 shrink-0 text-[#1D6373]"
+                          className="mt-0.5 h-4 w-4 shrink-0 text-[#2B5E6B]"
                           aria-hidden="true"
                         />
                         <div>
-                          <p className="text-xs font-semibold text-[#17201C]">
+                          <p className="text-xs font-semibold text-[#141B17]">
                             {dp.name}
                           </p>
-                          <p className="text-[11px] text-[#54625B]">
+                          <p className="text-[11px] text-[#58655E]">
                             {dp.area}
                           </p>
                         </div>
                       </div>
-                      <span className="font-mono text-[10px] text-[#54625B]">
+                      <span className="font-mono text-[10px] text-[#58655E]">
                         {dp.id}
                       </span>
                     </div>
-                    <div className="border-t border-[#EAEFEA] pt-2 text-[11px] text-[#54625B]">
+                    <div className="border-t border-[#EAEFEA] pt-2 text-[11px] text-[#58655E]">
                       <p>Koordinator: {dp.coordinator}</p>
-                      <p className="font-mono text-[#166549]">{dp.schedule}</p>
+                      <p className="font-mono text-[#1B5E43]">{dp.schedule}</p>
                     </div>
                   </div>
                 ))}
@@ -841,9 +841,9 @@ export function SettingsPage({
 
           <section className="space-y-3">
             <SectionHeader title="Kemitraan Terdaftar" />
-            <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D8DFDA] bg-white">
+            <div className="divide-y divide-[#EAEFEA] rounded-lg border border-[#D9E0DC] bg-white">
               {state.collaborations.length === 0 ? (
-                <p className="p-6 text-center text-xs text-[#54625B]">
+                <p className="p-6 text-center text-xs text-[#58655E]">
                   Belum ada usulan kemitraan tercatat.
                 </p>
               ) : (
@@ -853,13 +853,13 @@ export function SettingsPage({
                     className="flex flex-wrap items-start justify-between gap-3 p-4"
                   >
                     <div className="space-y-0.5">
-                      <p className="text-xs font-semibold text-[#17201C]">
+                      <p className="text-xs font-semibold text-[#141B17]">
                         {colb.partnerName}
                       </p>
-                      <p className="text-[11px] font-medium text-[#1D6373]">
+                      <p className="text-[11px] font-medium text-[#2B5E6B]">
                         {colb.collaborationType}
                       </p>
-                      <p className="text-xs text-[#54625B]">{colb.activity}</p>
+                      <p className="text-xs text-[#58655E]">{colb.activity}</p>
                     </div>
                     <StatusTag status={colb.status} />
                   </div>
@@ -872,7 +872,7 @@ export function SettingsPage({
 
       {currentTab === 'system' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <section className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5">
+          <section className="space-y-4 rounded-lg border border-[#D9E0DC] bg-white p-5">
             <SectionHeader
               title="Akun & Isolasi Peran Tunggal"
               description="Setiap akun Google terikat secara permanen pada satu peran di Cloud Firestore."
@@ -881,10 +881,10 @@ export function SettingsPage({
             <div className="space-y-2.5 border-y border-[#EAEFEA] py-3.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="text-xs font-semibold text-[#17201C]">
+                  <p className="text-xs font-semibold text-[#141B17]">
                     {currentUser.name}
                   </p>
-                  <p className="font-mono text-[11px] text-[#54625B]">
+                  <p className="font-mono text-[11px] text-[#58655E]">
                     {currentUser.email}
                   </p>
                 </div>
@@ -893,9 +893,9 @@ export function SettingsPage({
                   segment={currentUser.segment}
                 />
               </div>
-              <div className="flex items-start gap-2 text-[11px] text-[#54625B]">
+              <div className="flex items-start gap-2 text-[11px] text-[#58655E]">
                 <Lock
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#166549]"
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#1B5E43]"
                   aria-hidden="true"
                 />
                 <span>
@@ -906,7 +906,7 @@ export function SettingsPage({
               </div>
             </div>
 
-            <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-xs text-[#17201C]">
+            <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-xs text-[#1B231F]">
               <span>
                 Tampilkan notifikasi perubahan status submission &amp; batch
               </span>
@@ -914,7 +914,7 @@ export function SettingsPage({
                 type="checkbox"
                 checked={notifEnabled}
                 onChange={(e) => setNotifEnabled(e.target.checked)}
-                className="h-4 w-4 accent-[#166549]"
+                className="h-4 w-4 accent-[#1B5E43]"
               />
             </label>
 
@@ -926,7 +926,7 @@ export function SettingsPage({
             </div>
           </section>
 
-          <section className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5">
+          <section className="space-y-4 rounded-lg border border-[#D9E0DC] bg-white p-5">
             <SectionHeader
               title="Kesiapan Database Cloud Firestore"
               description="Status master data operasional pada database traceco-prod."
@@ -934,24 +934,24 @@ export function SettingsPage({
 
             <dl className="divide-y divide-[#EAEFEA] border-y border-[#EAEFEA] text-xs">
               <div className="flex items-center justify-between py-2.5">
-                <dt className="text-[#54625B]">
+                <dt className="text-[#58655E]">
                   Pos Serah Aktif (dropoff_points)
                 </dt>
-                <dd className="font-mono font-semibold text-[#17201C]">
+                <dd className="font-mono font-semibold text-[#141B17]">
                   {state.dropoff_points.length} pos
                 </dd>
               </div>
               <div className="flex items-center justify-between py-2.5">
-                <dt className="text-[#54625B]">Katalog Reward (rewards)</dt>
-                <dd className="font-mono font-semibold text-[#17201C]">
+                <dt className="text-[#58655E]">Katalog Reward (rewards)</dt>
+                <dd className="font-mono font-semibold text-[#141B17]">
                   {state.rewards.length} item
                 </dd>
               </div>
               <div className="flex items-center justify-between py-2.5">
-                <dt className="text-[#54625B]">
+                <dt className="text-[#58655E]">
                   Akun Terdaftar (users_public)
                 </dt>
-                <dd className="font-mono font-semibold text-[#17201C]">
+                <dd className="font-mono font-semibold text-[#141B17]">
                   {state.accounts.length} akun
                 </dd>
               </div>
@@ -979,7 +979,7 @@ export function SettingsPage({
                 </span>
               </PrimaryButton>
             ) : (
-              <p className="text-xs font-medium text-[#166549]">
+              <p className="text-xs font-medium text-[#1B5E43]">
                 Master data pos serah dan katalog reward telah siap digunakan.
               </p>
             )}

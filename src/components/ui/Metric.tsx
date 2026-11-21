@@ -18,45 +18,33 @@ export function Metric({
   onClick,
   className = '',
 }: MetricItem & { className?: string }) {
-  const isObsidian = accent === 'obsidian';
+  const isFocal = accent === 'obsidian';
 
-  const valueColor = isObsidian
-    ? 'text-white'
-    : accent === 'primary'
-      ? 'text-[#166549]'
+  const valueColor =
+    isFocal || accent === 'primary'
+      ? 'text-[#1B5E43]'
       : accent === 'teal'
-        ? 'text-[#1D6373]'
+        ? 'text-[#2B5E6B]'
         : accent === 'amber'
-          ? 'text-[#B45309]'
+          ? 'text-[#A15C17]'
           : accent === 'muted'
-            ? 'text-[#54625B]'
-            : 'text-[#17201C]';
+            ? 'text-[#58655E]'
+            : 'text-[#141B17]';
 
-  const barColor = isObsidian
-    ? 'bg-[#34D399]'
-    : accent === 'teal'
-      ? 'bg-[#1D6373]'
+  const barColor =
+    accent === 'teal'
+      ? 'bg-[#2B5E6B]'
       : accent === 'amber'
-        ? 'bg-[#D97706]'
-        : 'bg-[#166549]';
+        ? 'bg-[#B46B1E]'
+        : 'bg-[#1B5E43]';
 
   const content = (
     <>
       <div className="flex items-center justify-between gap-2">
-        <p
-          className={`text-xs font-medium ${
-            isObsidian ? 'text-[#9EB5AA]' : 'text-[#54625B]'
-          }`}
-        >
-          {label}
-        </p>
+        <p className="text-xs font-medium text-[#58655E]">{label}</p>
         {onClick && (
           <ArrowUpRight
-            className={`h-3.5 w-3.5 shrink-0 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
-              isObsidian
-                ? 'text-[#9EB5AA] group-hover:text-white'
-                : 'text-[#84928B] group-hover:text-[#166549]'
-            }`}
+            className="h-3.5 w-3.5 shrink-0 text-[#78857E] transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#1B5E43]"
             aria-hidden="true"
           />
         )}
@@ -69,11 +57,7 @@ export function Metric({
       </p>
 
       {progressPercent !== undefined && (
-        <div
-          className={`mt-2.5 h-1 w-full overflow-hidden rounded-full ${
-            isObsidian ? 'bg-[#243A31]' : 'bg-[#E6ECE8]'
-          }`}
-        >
+        <div className="mt-2.5 h-1 w-full overflow-hidden rounded-full bg-[#EAEFEA]">
           <div
             className={`h-full rounded-full transition-[width] duration-300 ${barColor}`}
             style={{
@@ -83,15 +67,7 @@ export function Metric({
         </div>
       )}
 
-      {hint && (
-        <p
-          className={`mt-1.5 text-[11px] ${
-            isObsidian ? 'text-[#89A296]' : 'text-[#54625B]'
-          }`}
-        >
-          {hint}
-        </p>
-      )}
+      {hint && <p className="mt-1.5 text-[11px] text-[#58655E]">{hint}</p>}
     </>
   );
 
@@ -101,9 +77,9 @@ export function Metric({
         type="button"
         onClick={onClick}
         className={`group px-4 py-3.5 text-left transition-colors duration-150 sm:px-5 sm:py-4 ${
-          isObsidian
-            ? 'bg-[#111E19] hover:bg-[#162720]'
-            : 'bg-white hover:bg-[#F8FAF8]'
+          isFocal
+            ? 'bg-[#F8FAF9] hover:bg-[#EFF5F2]'
+            : 'bg-white hover:bg-[#F8FAF9]'
         } ${className}`}
       >
         {content}
@@ -114,7 +90,7 @@ export function Metric({
   return (
     <div
       className={`px-4 py-3.5 sm:px-5 sm:py-4 ${
-        isObsidian ? 'bg-[#111E19]' : 'bg-white'
+        isFocal ? 'bg-[#F8FAF9]' : 'bg-white'
       } ${className}`}
     >
       {content}
@@ -138,7 +114,7 @@ export function MetricStrip({
 
   return (
     <div
-      className={`grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-[#D8DFDA] bg-[#D8DFDA] ${gridCols}`}
+      className={`grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-[#D9E0DC] bg-[#D9E0DC] ${gridCols}`}
     >
       {items.map((item, idx) => (
         <Metric

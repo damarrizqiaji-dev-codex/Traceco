@@ -329,7 +329,7 @@ export function GreenRewardPage({
       header: 'ID',
       sortValue: (r) => r.id,
       render: (r) => (
-        <span className="font-mono text-xs font-semibold text-[#166549]">
+        <span className="font-mono text-xs font-semibold text-[#1B5E43]">
           {r.id}
         </span>
       ),
@@ -342,7 +342,7 @@ export function GreenRewardPage({
         const ctr = contributorMap.get(r.contributorId);
         return (
           <div className="space-y-0.5 text-xs">
-            <p className="font-medium text-[#17201C]">{ctr?.name ?? '-'}</p>
+            <p className="font-medium text-[#1B231F]">{ctr?.name ?? '-'}</p>
             {ctr && <RoleTag role={ctr.role} segment={ctr.segment} />}
           </div>
         );
@@ -353,7 +353,7 @@ export function GreenRewardPage({
       header: 'Item Reward',
       sortValue: (r) => r.rewardTitle,
       render: (r) => (
-        <span className="text-xs text-[#17201C]">{r.rewardTitle}</span>
+        <span className="text-xs text-[#1B231F]">{r.rewardTitle}</span>
       ),
     },
     {
@@ -362,7 +362,7 @@ export function GreenRewardPage({
       align: 'right',
       sortValue: (r) => r.pointsCost,
       render: (r) => (
-        <span className="font-mono text-xs font-semibold text-[#111E19] tabular-nums whitespace-nowrap">
+        <span className="font-mono text-xs font-semibold text-[#141B17] tabular-nums whitespace-nowrap">
           {r.pointsCost} GP
         </span>
       ),
@@ -372,7 +372,7 @@ export function GreenRewardPage({
       header: 'Tanggal',
       sortValue: (r) => r.requestedAt,
       render: (r) => (
-        <span className="font-mono text-xs text-[#54625B] tabular-nums whitespace-nowrap">
+        <span className="font-mono text-xs text-[#58655E] tabular-nums whitespace-nowrap">
           {r.requestedAt}
         </span>
       ),
@@ -408,7 +408,7 @@ export function GreenRewardPage({
                   </PrimaryButton>
                 )}
                 {r.status === 'Completed' && (
-                  <span className="text-[11px] text-[#54625B]">Selesai</span>
+                  <span className="text-[11px] text-[#58655E]">Selesai</span>
                 )}
               </div>
             ),
@@ -423,7 +423,7 @@ export function GreenRewardPage({
       header: 'Tanggal',
       sortValue: (g) => g.date,
       render: (g) => (
-        <span className="font-mono text-xs text-[#54625B] tabular-nums whitespace-nowrap">
+        <span className="font-mono text-xs text-[#58655E] tabular-nums whitespace-nowrap">
           {g.date}
         </span>
       ),
@@ -436,7 +436,7 @@ export function GreenRewardPage({
         const ctr = contributorMap.get(g.contributorId);
         return (
           <div className="space-y-0.5 text-xs">
-            <p className="font-medium text-[#17201C]">{ctr?.name ?? '-'}</p>
+            <p className="font-medium text-[#1B231F]">{ctr?.name ?? '-'}</p>
             {ctr && <RoleTag role={ctr.role} segment={ctr.segment} />}
           </div>
         );
@@ -448,9 +448,9 @@ export function GreenRewardPage({
       sortValue: (g) => g.sourceLabel,
       render: (g) => (
         <div className="text-xs">
-          <p className="text-[#17201C]">{g.sourceLabel}</p>
+          <p className="text-[#1B231F]">{g.sourceLabel}</p>
           {g.submissionId && (
-            <p className="font-mono text-[11px] text-[#54625B]">
+            <p className="font-mono text-[11px] text-[#58655E]">
               {g.submissionId}
               {g.batchId ? ` · ${g.batchId}` : ''}
             </p>
@@ -466,7 +466,7 @@ export function GreenRewardPage({
       render: (g) => (
         <span
           className={`font-mono text-xs font-semibold tabular-nums whitespace-nowrap ${
-            g.type === 'Earned' ? 'text-[#166549]' : 'text-[#B91C1C]'
+            g.type === 'Earned' ? 'text-[#1B5E43]' : 'text-[#A62626]'
           }`}
         >
           {g.type === 'Earned' ? `+${g.points}` : `-${g.points}`} GP
@@ -481,7 +481,7 @@ export function GreenRewardPage({
       header: 'ID',
       sortValue: (f) => f.id,
       render: (f) => (
-        <span className="font-mono text-xs font-semibold text-[#166549]">
+        <span className="font-mono text-xs font-semibold text-[#1B5E43]">
           {f.id}
         </span>
       ),
@@ -494,7 +494,7 @@ export function GreenRewardPage({
         const ctr = contributorMap.get(f.contributorId);
         return (
           <div className="space-y-0.5 text-xs">
-            <p className="font-medium text-[#17201C]">{ctr?.name ?? '-'}</p>
+            <p className="font-medium text-[#1B231F]">{ctr?.name ?? '-'}</p>
             {ctr && <RoleTag role={ctr.role} segment={ctr.segment} />}
           </div>
         );
@@ -505,7 +505,7 @@ export function GreenRewardPage({
       header: 'Batch',
       sortValue: (f) => f.batchId,
       render: (f) => (
-        <span className="font-mono text-xs text-[#1D6373]">{f.batchId}</span>
+        <span className="font-mono text-xs text-[#2B5E6B]">{f.batchId}</span>
       ),
     },
     {
@@ -514,8 +514,8 @@ export function GreenRewardPage({
       sortValue: (f) => f.fundingSource,
       render: (f) => (
         <div className="max-w-sm text-xs">
-          <p className="font-medium text-[#17201C]">{f.fundingSource}</p>
-          <p className="text-[11px] text-[#54625B]">{f.conditionNote}</p>
+          <p className="font-medium text-[#1B231F]">{f.fundingSource}</p>
+          <p className="text-[11px] text-[#58655E]">{f.conditionNote}</p>
         </div>
       ),
     },
@@ -561,7 +561,7 @@ export function GreenRewardPage({
                   </PrimaryButton>
                 )}
                 {f.status === 'Paid' && (
-                  <span className="text-[11px] text-[#54625B]">Selesai</span>
+                  <span className="text-[11px] text-[#58655E]">Selesai</span>
                 )}
               </div>
             ),
@@ -614,7 +614,7 @@ export function GreenRewardPage({
       {statusFeedback && (
         <div
           role="status"
-          className="flex items-start gap-2 rounded-lg border border-[#B5CEC0] bg-[#EBF4EF] px-4 py-3 text-xs font-medium text-[#166549]"
+          className="flex items-start gap-2 rounded-lg border border-[#C5D9CD] bg-[#EFF5F2] px-4 py-3 text-xs font-medium text-[#1B5E43]"
         >
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{statusFeedback}</span>
@@ -652,8 +652,8 @@ export function GreenRewardPage({
             ]}
           />
 
-          {/* Inspect Contributor Balance (White Header + Deep Obsidian Stats Strip) */}
-          <section className="overflow-hidden rounded-lg border border-[#D8DFDA] bg-white">
+          {/* Inspect Contributor Balance */}
+          <section className="overflow-hidden rounded-lg border border-[#D9E0DC] bg-white">
             <div className="flex flex-wrap items-end justify-between gap-4 p-5">
               <div>
                 <SectionHeader
@@ -682,28 +682,28 @@ export function GreenRewardPage({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 divide-y divide-[#243A31] border-t border-[#243A31] bg-[#111E19] text-[#ECF2EE] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <div className="grid grid-cols-1 divide-y divide-[#D9E0DC] border-t border-[#D9E0DC] bg-[#F8FAF9] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
               <div className="p-5">
-                <p className="text-[11px] font-medium text-[#9EB5AA]">
+                <p className="text-[11px] font-medium text-[#58655E]">
                   Saldo Tersedia ({activeContributor?.name ?? '-'})
                 </p>
-                <p className="mt-1 font-display text-2xl font-semibold text-[#6EE7B7] tabular-nums">
+                <p className="mt-1 font-display text-2xl font-semibold text-[#1B5E43] tabular-nums">
                   {selectedBalance.balance.toLocaleString('id-ID')} GP
                 </p>
               </div>
               <div className="p-5">
-                <p className="text-[11px] font-medium text-[#9EB5AA]">
+                <p className="text-[11px] font-medium text-[#58655E]">
                   Total Diperoleh
                 </p>
-                <p className="mt-1 font-display text-2xl font-semibold text-white tabular-nums">
+                <p className="mt-1 font-display text-2xl font-semibold text-[#141B17] tabular-nums">
                   +{selectedBalance.earned.toLocaleString('id-ID')} GP
                 </p>
               </div>
               <div className="p-5">
-                <p className="text-[11px] font-medium text-[#9EB5AA]">
+                <p className="text-[11px] font-medium text-[#58655E]">
                   Total Ditukar
                 </p>
-                <p className="mt-1 font-display text-2xl font-semibold text-[#FCD34D] tabular-nums">
+                <p className="mt-1 font-display text-2xl font-semibold text-[#A15C17] tabular-nums">
                   -{selectedBalance.redeemed.toLocaleString('id-ID')} GP
                 </p>
               </div>
@@ -717,7 +717,7 @@ export function GreenRewardPage({
               description="Setujui atau selesaikan permintaan penukaran reward dari kontributor."
             />
 
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D9E0DC] bg-white px-4 py-3">
               <FilterBar
                 ariaLabel="Filter status penukaran"
                 value={redemptionFilter}
@@ -754,7 +754,7 @@ export function GreenRewardPage({
 
               <div className="relative w-full sm:w-64">
                 <Search
-                  className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
+                  className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#58655E]"
                   aria-hidden="true"
                 />
                 <input
@@ -763,7 +763,7 @@ export function GreenRewardPage({
                   value={redemptionSearch}
                   onChange={(e) => setRedemptionSearch(e.target.value)}
                   placeholder="Cari nama, ID, atau item..."
-                  className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] transition-colors focus:border-[#166549] focus:bg-white focus:outline-none"
+                  className="w-full rounded-md border border-[#C5CEC9] bg-[#F8FAF9] py-1.5 pr-3 pl-8 text-xs text-[#1B231F] placeholder:text-[#78857E] transition-colors focus:border-[#1B5E43] focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
@@ -771,7 +771,7 @@ export function GreenRewardPage({
             {/* Mobile Cards (< md) */}
             <div className="space-y-3 md:hidden">
               {filteredRedemptions.length === 0 ? (
-                <div className="rounded-lg border border-[#D8DFDA] bg-white p-6 text-center text-xs text-[#54625B]">
+                <div className="rounded-lg border border-[#D9E0DC] bg-white p-6 text-center text-xs text-[#58655E]">
                   Tidak ada permintaan penukaran yang cocok.
                 </div>
               ) : (
@@ -780,24 +780,24 @@ export function GreenRewardPage({
                   return (
                     <div
                       key={r.id}
-                      className="space-y-2.5 rounded-lg border border-[#D8DFDA] bg-white p-4"
+                      className="space-y-2.5 rounded-lg border border-[#D9E0DC] bg-white p-4"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="font-mono text-xs font-semibold text-[#166549]">
+                          <p className="font-mono text-xs font-semibold text-[#1B5E43]">
                             {r.id}
                           </p>
-                          <p className="text-xs font-medium text-[#17201C]">
+                          <p className="text-xs font-medium text-[#1B231F]">
                             {r.rewardTitle}
                           </p>
-                          <p className="text-[11px] text-[#54625B]">
+                          <p className="text-[11px] text-[#58655E]">
                             {ctr?.name ?? '-'} · {r.requestedAt}
                           </p>
                         </div>
                         <StatusTag status={r.status} />
                       </div>
                       <div className="flex items-center justify-between border-t border-[#EAEFEA] pt-2">
-                        <span className="font-mono text-xs font-semibold text-[#17201C]">
+                        <span className="font-mono text-xs font-semibold text-[#1B231F]">
                           {r.pointsCost} GP
                         </span>
                         {canManageRewards && r.status === 'Pending' && (
@@ -841,7 +841,7 @@ export function GreenRewardPage({
           {/* Conditional Financial Incentives */}
           <section className="space-y-3">
             <SectionHeader title="Insentif Finansial Bersyarat" />
-            <div className="flex items-start gap-2.5 rounded-lg border border-[#FCD34D] bg-[#FEF3C7] p-3.5 text-xs text-[#B45309]">
+            <div className="flex items-start gap-2.5 rounded-lg border border-[#C4D8DD] bg-[#F1F6F7] p-3.5 text-xs text-[#2B5E6B]">
               <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <p>
                 Insentif finansial bersifat bersyarat dan selektif (terutama
@@ -862,16 +862,16 @@ export function GreenRewardPage({
       {currentTab === 'policy' && (
         <div className="space-y-6">
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div className="space-y-3 rounded-lg border border-[#D8DFDA] bg-white p-5">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#166549]">
+            <div className="space-y-3 rounded-lg border border-[#D9E0DC] bg-white p-5">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#1B5E43]">
                 <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                 <span>Aturan Perolehan Green Points</span>
               </div>
-              <ul className="divide-y divide-[#EAEFEA] border-t border-[#EAEFEA] text-xs text-[#17201C]">
+              <ul className="divide-y divide-[#EAEFEA] border-t border-[#EAEFEA] text-xs text-[#1B231F]">
                 <li className="py-2.5">
                   Setiap <strong>1 ecobrick terverifikasi fisik</strong>{' '}
                   menghasilkan{' '}
-                  <strong className="font-mono text-[#166549]">
+                  <strong className="font-mono text-[#1B5E43]">
                     +{POINTS_PER_ECOBRICK} GP
                   </strong>{' '}
                   secara otomatis.
@@ -887,8 +887,8 @@ export function GreenRewardPage({
               </ul>
             </div>
 
-            <div className="space-y-3 rounded-lg border border-[#D8DFDA] bg-white p-5">
-              <div className="flex items-center gap-2 text-xs font-semibold text-[#1D6373]">
+            <div className="space-y-3 rounded-lg border border-[#D9E0DC] bg-white p-5">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#2B5E6B]">
                 <Award className="h-4 w-4" aria-hidden="true" />
                 <span>Standar Kelayakan Berat per Ukuran Botol</span>
               </div>
@@ -898,10 +898,10 @@ export function GreenRewardPage({
                     key={std.label}
                     className="flex items-center justify-between py-2.5 text-xs"
                   >
-                    <span className="font-medium text-[#17201C]">
+                    <span className="font-medium text-[#1B231F]">
                       {std.label}
                     </span>
-                    <span className="font-mono text-[#1D6373] tabular-nums">
+                    <span className="font-mono text-[#2B5E6B] tabular-nums">
                       Min {std.minUnitKg} kg · Target {std.targetUnitKg} kg
                     </span>
                   </div>
@@ -957,21 +957,21 @@ export function GreenRewardPage({
             </div>
 
             {state.rewards.length > 0 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white px-4 py-3">
-                <p className="text-xs text-[#54625B]">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#D9E0DC] bg-white px-4 py-3">
+                <p className="text-xs text-[#58655E]">
                   Menampilkan{' '}
-                  <span className="font-mono font-semibold text-[#17201C] tabular-nums">
+                  <span className="font-mono font-semibold text-[#1B231F] tabular-nums">
                     {filteredCatalogRewards.length}
                   </span>{' '}
                   dari{' '}
-                  <span className="font-mono font-semibold text-[#17201C] tabular-nums">
+                  <span className="font-mono font-semibold text-[#1B231F] tabular-nums">
                     {state.rewards.length}
                   </span>{' '}
                   barang terbit di Green Marketplace.
                 </p>
                 <div className="relative w-full sm:w-64">
                   <Search
-                    className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
+                    className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#58655E]"
                     aria-hidden="true"
                   />
                   <input
@@ -980,7 +980,7 @@ export function GreenRewardPage({
                     value={catalogSearch}
                     onChange={(e) => setCatalogSearch(e.target.value)}
                     placeholder="Cari nama barang atau kategori..."
-                    className="w-full rounded-md border border-[#C6D1CA] bg-[#F8FAF8] py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] transition-colors focus:border-[#166549] focus:bg-white focus:outline-none"
+                    className="w-full rounded-md border border-[#C5CEC9] bg-[#F8FAF9] py-1.5 pr-3 pl-8 text-xs text-[#1B231F] placeholder:text-[#78857E] transition-colors focus:border-[#1B5E43] focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
@@ -989,7 +989,7 @@ export function GreenRewardPage({
             {showAddReward && canManageRewards && onCreateRewardItem && (
               <form
                 onSubmit={handleAddRewardSubmit}
-                className="space-y-4 rounded-lg border border-[#D8DFDA] bg-white p-5"
+                className="space-y-4 rounded-lg border border-[#D9E0DC] bg-white p-5"
               >
                 <SectionHeader
                   title="Tambah Item Green Marketplace"
@@ -998,7 +998,7 @@ export function GreenRewardPage({
                 {rewardFormError && (
                   <div
                     role="alert"
-                    className="rounded-md border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#B91C1C]"
+                    className="rounded-md border border-[#E8C5C5] bg-[#FDF3F3] p-3 text-xs font-medium text-[#A62626]"
                   >
                     {rewardFormError}
                   </div>
@@ -1089,11 +1089,11 @@ export function GreenRewardPage({
             )}
 
             {state.rewards.length === 0 ? (
-              <div className="rounded-lg border border-[#D8DFDA] bg-white p-6 text-center text-xs text-[#54625B]">
+              <div className="rounded-lg border border-[#D9E0DC] bg-white p-6 text-center text-xs text-[#58655E]">
                 Belum ada item reward aktif di katalog Firestore `traceco-prod`.
               </div>
             ) : filteredCatalogRewards.length === 0 ? (
-              <div className="rounded-lg border border-[#D8DFDA] bg-white p-6 text-center text-xs text-[#54625B]">
+              <div className="rounded-lg border border-[#D9E0DC] bg-white p-6 text-center text-xs text-[#58655E]">
                 Tidak ada barang Green Marketplace yang cocok dengan kata kunci{' '}
                 <strong>"{catalogSearch}"</strong>.
               </div>
@@ -1102,29 +1102,29 @@ export function GreenRewardPage({
                 {filteredCatalogRewards.map((item) => (
                   <article
                     key={item.id}
-                    className="flex flex-col justify-between gap-3 rounded-lg border border-[#D8DFDA] bg-white p-4 transition-colors hover:border-[#B5CEC0]"
+                    className="flex flex-col justify-between gap-3 rounded-lg border border-[#D9E0DC] bg-white p-4 transition-colors hover:border-[#C5D9CD]"
                   >
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="text-[11px] font-semibold text-[#1D6373]">
+                          <p className="text-[11px] font-semibold text-[#2B5E6B]">
                             {item.category}
                           </p>
-                          <h3 className="font-display text-sm font-semibold text-[#17201C]">
+                          <h3 className="font-display text-sm font-semibold text-[#141B17]">
                             {item.title}
                           </h3>
                         </div>
-                        <span className="rounded-md border border-[#B5CEC0] bg-[#EBF4EF] px-2.5 py-1 font-mono text-xs font-semibold text-[#166549] tabular-nums whitespace-nowrap">
+                        <span className="rounded-md border border-[#C5D9CD] bg-[#EFF5F2] px-2.5 py-1 font-mono text-xs font-semibold text-[#1B5E43] tabular-nums whitespace-nowrap">
                           {item.pointsCost.toLocaleString('id-ID')} GP
                         </span>
                       </div>
-                      <p className="text-xs leading-relaxed text-[#54625B]">
+                      <p className="text-xs leading-relaxed text-[#58655E]">
                         {item.description}
                       </p>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#EAEFEA] pt-3">
-                      <p className="text-[11px] text-[#54625B]">
+                      <p className="text-[11px] text-[#58655E]">
                         {item.stockNote}
                       </p>
                       {canManageRewards && (
@@ -1176,7 +1176,7 @@ export function GreenRewardPage({
             />
             <div className="relative w-full sm:w-64">
               <Search
-                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#54625B]"
+                className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#58655E]"
                 aria-hidden="true"
               />
               <input
@@ -1185,7 +1185,7 @@ export function GreenRewardPage({
                 value={ledgerSearch}
                 onChange={(e) => setLedgerSearch(e.target.value)}
                 placeholder="Cari kontributor, batch, atau keterangan..."
-                className="w-full rounded-md border border-[#C6D1CA] bg-white py-1.5 pr-3 pl-8 text-xs text-[#17201C] placeholder:text-[#7D8C84] transition-colors focus:border-[#166549] focus:outline-none"
+                className="w-full rounded-md border border-[#C5CEC9] bg-white py-1.5 pr-3 pl-8 text-xs text-[#1B231F] placeholder:text-[#78857E] transition-colors focus:border-[#1B5E43] focus:outline-none"
               />
             </div>
           </div>
@@ -1197,22 +1197,22 @@ export function GreenRewardPage({
               return (
                 <div
                   key={g.id}
-                  className="space-y-1.5 rounded-lg border border-[#D8DFDA] bg-white p-4"
+                  className="space-y-1.5 rounded-lg border border-[#D9E0DC] bg-white p-4"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-xs font-medium text-[#17201C]">
+                      <p className="text-xs font-medium text-[#1B231F]">
                         {g.sourceLabel}
                       </p>
-                      <p className="text-[11px] text-[#54625B]">
+                      <p className="text-[11px] text-[#58655E]">
                         {ctr?.name ?? '-'} · {g.date}
                       </p>
                     </div>
                     <span
                       className={`font-mono text-xs font-semibold whitespace-nowrap ${
                         g.type === 'Earned'
-                          ? 'text-[#166549]'
-                          : 'text-[#B91C1C]'
+                          ? 'text-[#1B5E43]'
+                          : 'text-[#A62626]'
                       }`}
                     >
                       {g.type === 'Earned' ? `+${g.points}` : `-${g.points}`} GP
@@ -1244,14 +1244,14 @@ export function GreenRewardPage({
         maxWidthClass="max-w-xl"
         titleId="edit-reward-modal-title"
         leadingIcon={
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#B5CEC0] bg-[#EBF4EF] text-[#166549]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#C5D9CD] bg-[#EFF5F2] text-[#1B5E43]">
             <Pencil className="h-4 w-4" aria-hidden="true" />
           </div>
         }
         title={
           <h2
             id="edit-reward-modal-title"
-            className="font-display text-base font-semibold text-[#17201C]"
+            className="font-display text-base font-semibold text-[#141B17]"
           >
             Atur Harga &amp; Detail Barang
           </h2>
@@ -1262,21 +1262,21 @@ export function GreenRewardPage({
           {editError && (
             <div
               role="alert"
-              className="rounded-md border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#B91C1C]"
+              className="rounded-md border border-[#E8C5C5] bg-[#FDF3F3] p-3 text-xs font-medium text-[#A62626]"
             >
               {editError}
             </div>
           )}
 
-          <div className="space-y-2 rounded-lg border border-[#D8DFDA] bg-[#F8FAF8] p-4">
+          <div className="space-y-2 rounded-lg border border-[#D9E0DC] bg-[#F8FAF9] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <label
                 htmlFor="edit-reward-cost"
-                className="text-xs font-semibold text-[#17201C]"
+                className="text-xs font-semibold text-[#1B231F]"
               >
                 Harga Penukaran (Green Points)
               </label>
-              <span className="font-mono text-xs text-[#54625B] tabular-nums">
+              <span className="font-mono text-xs text-[#58655E] tabular-nums">
                 Sebelumnya: {editingReward?.pointsCost.toLocaleString('id-ID')}{' '}
                 GP
               </span>
@@ -1299,7 +1299,7 @@ export function GreenRewardPage({
                     key={delta}
                     type="button"
                     onClick={() => adjustEditPrice(delta)}
-                    className="rounded-md border border-[#C6D1CA] bg-white px-2.5 py-1.5 font-mono text-[11px] font-semibold text-[#17201C] tabular-nums transition-colors hover:border-[#166549] hover:bg-[#EBF4EF] hover:text-[#166549]"
+                    className="rounded-md border border-[#C5CEC9] bg-white px-2.5 py-1.5 font-mono text-[11px] font-semibold text-[#1B231F] tabular-nums transition-colors hover:border-[#1B5E43] hover:bg-[#EFF5F2] hover:text-[#1B5E43]"
                   >
                     {delta > 0 ? `+${delta}` : delta} GP
                   </button>
@@ -1388,14 +1388,14 @@ export function GreenRewardPage({
         maxWidthClass="max-w-md"
         titleId="delete-reward-modal-title"
         leadingIcon={
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#E5B8B8] bg-[#FEF2F2] text-[#B91C1C]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-[#E8C5C5] bg-[#FDF3F3] text-[#A62626]">
             <Trash2 className="h-4 w-4" aria-hidden="true" />
           </div>
         }
         title={
           <h2
             id="delete-reward-modal-title"
-            className="font-display text-base font-semibold text-[#17201C]"
+            className="font-display text-base font-semibold text-[#141B17]"
           >
             Hapus Barang dari Green Marketplace?
           </h2>
@@ -1406,32 +1406,32 @@ export function GreenRewardPage({
           {deleteError && (
             <div
               role="alert"
-              className="rounded-md border border-[#FECACA] bg-[#FEF2F2] p-3 text-xs font-medium text-[#B91C1C]"
+              className="rounded-md border border-[#E8C5C5] bg-[#FDF3F3] p-3 text-xs font-medium text-[#A62626]"
             >
               {deleteError}
             </div>
           )}
 
           {deletingReward && (
-            <div className="space-y-1.5 rounded-lg border border-[#D8DFDA] bg-[#F8FAF8] p-4">
+            <div className="space-y-1.5 rounded-lg border border-[#D9E0DC] bg-[#F8FAF9] p-4">
               <div className="flex items-start justify-between gap-2">
-                <p className="font-display text-sm font-semibold text-[#17201C]">
+                <p className="font-display text-sm font-semibold text-[#141B17]">
                   {deletingReward.title}
                 </p>
-                <span className="font-mono text-xs font-semibold text-[#166549] tabular-nums whitespace-nowrap">
+                <span className="font-mono text-xs font-semibold text-[#1B5E43] tabular-nums whitespace-nowrap">
                   {deletingReward.pointsCost.toLocaleString('id-ID')} GP
                 </span>
               </div>
-              <p className="text-[11px] font-medium text-[#1D6373]">
+              <p className="text-[11px] font-medium text-[#2B5E6B]">
                 {deletingReward.category}
               </p>
-              <p className="text-xs text-[#54625B]">
+              <p className="text-xs text-[#58655E]">
                 {deletingReward.stockNote}
               </p>
             </div>
           )}
 
-          <p className="text-xs leading-relaxed text-[#54625B]">
+          <p className="text-xs leading-relaxed text-[#58655E]">
             Kontributor tidak akan lagi melihat barang ini untuk ditukar.
             Riwayat penukaran (<em>redemption</em>) yang sudah tercatat
             sebelumnya tetap aman tersimpan di buku besar.
@@ -1449,7 +1449,7 @@ export function GreenRewardPage({
               type="button"
               disabled={deleteBusy}
               onClick={handleConfirmDeleteReward}
-              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[#B91C1C] px-3 py-1.5 text-xs font-medium text-white shadow-2xs transition-colors hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-45 whitespace-nowrap"
+              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[#A62626] px-3 py-1.5 text-xs font-medium text-white shadow-2xs transition-colors hover:bg-[#8B1E1E] disabled:cursor-not-allowed disabled:opacity-45 whitespace-nowrap"
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{deleteBusy ? 'Menghapus...' : 'Hapus Permanen'}</span>

@@ -91,17 +91,17 @@ export function ContributionTrendChart({
     <div className="space-y-3.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="font-display text-[15px] font-semibold text-[#111E19]">
+          <h3 className="font-display text-[15px] font-semibold text-[#141B17]">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-[11px] text-[#54625B]">{subtitle}</p>
+            <p className="text-[11px] text-[#58655E]">{subtitle}</p>
           )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className="inline-flex rounded-md border border-[#D8DFDA] bg-[#F2F4F2] p-0.5 text-[11px]"
+            className="inline-flex rounded-md border border-[#D9E0DC] bg-[#ECF0ED] p-0.5 text-[11px]"
             role="tablist"
             aria-label="Rentang waktu grafik"
           >
@@ -118,8 +118,8 @@ export function ContributionTrendChart({
                 }}
                 className={`rounded px-2 py-1 font-medium transition-[background-color,color] duration-150 whitespace-nowrap ${
                   range === opt.id
-                    ? 'bg-[#111E19] text-white'
-                    : 'text-[#54625B] hover:text-[#17201C]'
+                    ? 'bg-white text-[#1B5E43] font-semibold shadow-2xs'
+                    : 'text-[#58655E] hover:text-[#141B17]'
                 }`}
               >
                 {opt.label}
@@ -127,14 +127,14 @@ export function ContributionTrendChart({
             ))}
           </div>
 
-          <div className="inline-flex rounded-md border border-[#D8DFDA] bg-[#F2F4F2] p-0.5 text-[11px]">
+          <div className="inline-flex rounded-md border border-[#D9E0DC] bg-[#ECF0ED] p-0.5 text-[11px]">
             <button
               type="button"
               onClick={() => setChartType('bar')}
               className={`rounded px-2 py-1 font-medium transition-[background-color,color] duration-150 ${
                 chartType === 'bar'
-                  ? 'bg-white text-[#111E19] shadow-2xs'
-                  : 'text-[#54625B] hover:text-[#17201C]'
+                  ? 'bg-white text-[#141B17] shadow-2xs'
+                  : 'text-[#58655E] hover:text-[#141B17]'
               }`}
             >
               Bar
@@ -144,8 +144,8 @@ export function ContributionTrendChart({
               onClick={() => setChartType('line')}
               className={`rounded px-2 py-1 font-medium transition-[background-color,color] duration-150 ${
                 chartType === 'line'
-                  ? 'bg-white text-[#111E19] shadow-2xs'
-                  : 'text-[#54625B] hover:text-[#17201C]'
+                  ? 'bg-white text-[#141B17] shadow-2xs'
+                  : 'text-[#58655E] hover:text-[#141B17]'
               }`}
             >
               Line
@@ -158,14 +158,14 @@ export function ContributionTrendChart({
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-[#EAEFEA] py-2 text-xs">
         <div className="flex flex-wrap items-center gap-4">
           <span>
-            <span className="text-[#54625B]">Diserahkan: </span>
-            <strong className="font-mono text-[#1D6373] tabular-nums">
+            <span className="text-[#58655E]">Diserahkan: </span>
+            <strong className="font-mono text-[#34403A] tabular-nums">
               {series.totalSubmittedInPeriod} unit
             </strong>
           </span>
           <span>
-            <span className="text-[#54625B]">Terverifikasi: </span>
-            <strong className="font-mono text-[#166549] tabular-nums">
+            <span className="text-[#58655E]">Terverifikasi: </span>
+            <strong className="font-mono text-[#1B5E43] tabular-nums">
               {series.totalVerifiedInPeriod} unit
             </strong>
           </span>
@@ -174,10 +174,10 @@ export function ContributionTrendChart({
         <span
           className={`font-mono text-[11px] font-medium tabular-nums ${
             series.percentChange === null
-              ? 'text-[#54625B]'
+              ? 'text-[#58655E]'
               : series.percentChange >= 0
-                ? 'text-[#166549]'
-                : 'text-[#B45309]'
+                ? 'text-[#1B5E43]'
+                : 'text-[#A15C17]'
           }`}
         >
           {series.percentChange === null
@@ -186,27 +186,27 @@ export function ContributionTrendChart({
         </span>
       </div>
 
-      {/* Interactive SVG Chart with Floating Obsidian Tooltip */}
+      {/* Interactive SVG Chart with Floating Crisp Tooltip */}
       <div className="relative w-full overflow-x-auto">
         {activePoint && (
           <div
             role="status"
             style={tooltipStyle}
-            className="pointer-events-none absolute top-0 z-10 rounded-md border border-[#243A31] bg-[#111E19] px-3 py-1.5 shadow-md text-[11px] text-white whitespace-nowrap animate-traceco-enter"
+            className="pointer-events-none absolute top-0 z-10 rounded-md border border-[#D9E0DC] bg-white px-3 py-1.5 shadow-md text-[11px] text-[#1B231F] whitespace-nowrap animate-traceco-enter"
           >
-            <div className="flex items-center gap-2 font-medium text-[#ECF2EE]">
+            <div className="flex items-center gap-2 font-semibold text-[#141B17]">
               <span>{activePoint.label}</span>
               {activePassRate !== null && (
-                <span className="font-mono text-[10px] text-[#6EE7B7]">
+                <span className="font-mono text-[10px] text-[#1B5E43]">
                   ({activePassRate}% lolos)
                 </span>
               )}
             </div>
             <div className="mt-0.5 flex items-center gap-3 font-mono text-[11px] tabular-nums">
-              <span className="text-[#7DD3FC]">
+              <span className="text-[#58655E]">
                 Masuk: {activePoint.submitted}
               </span>
-              <span className="text-[#6EE7B7] font-semibold">
+              <span className="text-[#1B5E43] font-semibold">
                 Lolos: {activePoint.verified}
               </span>
             </div>
@@ -228,7 +228,7 @@ export function ContributionTrendChart({
                   y1={y}
                   x2={chartW - padR}
                   y2={y}
-                  stroke="#D8DFDA"
+                  stroke="#D9E0DC"
                   strokeDasharray={tick === 0 ? undefined : '3 3'}
                   strokeWidth={1}
                 />
@@ -236,7 +236,7 @@ export function ContributionTrendChart({
                   x={padL - 6}
                   y={y + 3}
                   textAnchor="end"
-                  className="fill-[#54625B] text-[9px] font-mono"
+                  className="fill-[#58655E] text-[9px] font-mono"
                 >
                   {tick}
                 </text>
@@ -277,7 +277,7 @@ export function ContributionTrendChart({
                     y={padT}
                     width={Math.max(4, slotW - 4)}
                     height={innerH}
-                    fill={isHighlighted ? '#EBF4EF' : 'transparent'}
+                    fill={isHighlighted ? '#EFF5F2' : 'transparent'}
                     rx={2}
                   />
                   {showSubmitted && (
@@ -290,7 +290,7 @@ export function ContributionTrendChart({
                       y={padT + innerH - subH}
                       width={singleBarW}
                       height={Math.max(b.submitted > 0 ? 2 : 0, subH)}
-                      fill={isHighlighted ? '#1D6373' : '#5E98A6'}
+                      fill={isHighlighted ? '#7C9387' : '#A4B8AD'}
                       rx={1.5}
                       className="transition-[fill,opacity] duration-150"
                     />
@@ -305,7 +305,7 @@ export function ContributionTrendChart({
                       y={padT + innerH - verH}
                       width={singleBarW}
                       height={Math.max(b.verified > 0 ? 2 : 0, verH)}
-                      fill={isHighlighted ? '#0F4C36' : '#166549'}
+                      fill={isHighlighted ? '#144833' : '#1B5E43'}
                       rx={1.5}
                       className="transition-[fill,opacity] duration-150"
                     />
@@ -317,8 +317,8 @@ export function ContributionTrendChart({
                       textAnchor="middle"
                       className={`text-[9px] ${
                         isHighlighted
-                          ? 'fill-[#111E19] font-semibold'
-                          : 'fill-[#54625B]'
+                          ? 'fill-[#141B17] font-semibold'
+                          : 'fill-[#58655E]'
                       }`}
                     >
                       {b.label}
@@ -335,8 +335,8 @@ export function ContributionTrendChart({
                   y1={padT}
                   x2={pointsSubmitted[activeIdx].x}
                   y2={padT + innerH}
-                  stroke="#111E19"
-                  strokeOpacity={0.25}
+                  stroke="#1B231F"
+                  strokeOpacity={0.22}
                   strokeDasharray="3 3"
                   strokeWidth={1.25}
                 />
@@ -344,7 +344,7 @@ export function ContributionTrendChart({
               {showSubmitted && (
                 <polyline
                   fill="none"
-                  stroke="#1D6373"
+                  stroke="#8AA195"
                   strokeWidth={2}
                   points={pointsSubmitted.map((p) => `${p.x},${p.y}`).join(' ')}
                 />
@@ -352,7 +352,7 @@ export function ContributionTrendChart({
               {showVerified && (
                 <polyline
                   fill="none"
-                  stroke="#166549"
+                  stroke="#1B5E43"
                   strokeWidth={2.25}
                   points={pointsVerified.map((p) => `${p.x},${p.y}`).join(' ')}
                 />
@@ -387,7 +387,7 @@ export function ContributionTrendChart({
                         cx={p.x}
                         cy={p.y}
                         r={isHighlighted ? 4.5 : 3}
-                        fill="#1D6373"
+                        fill="#8AA195"
                         stroke="#FFFFFF"
                         strokeWidth={1.2}
                       />
@@ -397,7 +397,7 @@ export function ContributionTrendChart({
                         cx={vp.x}
                         cy={vp.y}
                         r={isHighlighted ? 5 : 3.2}
-                        fill="#166549"
+                        fill="#1B5E43"
                         stroke="#FFFFFF"
                         strokeWidth={1.2}
                       />
@@ -411,8 +411,8 @@ export function ContributionTrendChart({
                         textAnchor="middle"
                         className={`text-[9px] ${
                           isHighlighted
-                            ? 'fill-[#111E19] font-semibold'
-                            : 'fill-[#54625B]'
+                            ? 'fill-[#141B17] font-semibold'
+                            : 'fill-[#58655E]'
                         }`}
                       >
                         {p.label}
@@ -427,7 +427,7 @@ export function ContributionTrendChart({
       </div>
 
       {/* Interactive Legend Toggles */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#54625B]">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-[#58655E]">
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
@@ -436,11 +436,11 @@ export function ContributionTrendChart({
               setShowSubmitted((v) => !v);
             }}
             aria-pressed={showSubmitted}
-            className={`inline-flex items-center gap-1.5 rounded px-2 py-0.5 transition-opacity duration-150 hover:bg-[#F2F4F2] ${
-              showSubmitted ? 'opacity-100 text-[#17201C]' : 'opacity-45'
+            className={`inline-flex items-center gap-1.5 rounded px-2 py-0.5 transition-opacity duration-150 hover:bg-[#ECF0ED] ${
+              showSubmitted ? 'opacity-100 text-[#1B231F]' : 'opacity-45'
             }`}
           >
-            <span className="h-2.5 w-2.5 rounded-xs bg-[#1D6373]" />
+            <span className="h-2.5 w-2.5 rounded-xs bg-[#A4B8AD]" />
             <span>Diserahkan (Submitted)</span>
           </button>
           <button
@@ -450,15 +450,15 @@ export function ContributionTrendChart({
               setShowVerified((v) => !v);
             }}
             aria-pressed={showVerified}
-            className={`inline-flex items-center gap-1.5 rounded px-2 py-0.5 transition-opacity duration-150 hover:bg-[#F2F4F2] ${
-              showVerified ? 'opacity-100 text-[#17201C]' : 'opacity-45'
+            className={`inline-flex items-center gap-1.5 rounded px-2 py-0.5 transition-opacity duration-150 hover:bg-[#ECF0ED] ${
+              showVerified ? 'opacity-100 text-[#1B231F]' : 'opacity-45'
             }`}
           >
-            <span className="h-2.5 w-2.5 rounded-xs bg-[#166549]" />
+            <span className="h-2.5 w-2.5 rounded-xs bg-[#1B5E43]" />
             <span>Lolos Verifikasi (Verified)</span>
           </button>
         </div>
-        <span className="text-[11px] text-[#54625B]">
+        <span className="text-[11px] text-[#58655E]">
           Klik atau arahkan kursor untuk mengunci rincian
         </span>
       </div>
@@ -487,19 +487,19 @@ export function VerificationOutcomeBar({
       label: 'Ecobrick Terverifikasi',
       unit: metrics.ecobricksVerifiedCount,
       pct: verPct,
-      colorClass: 'bg-[#166549]',
+      colorClass: 'bg-[#1B5E43]',
     },
     {
       label: 'Menunggu Pemeriksaan',
       unit: metrics.ecobricksPendingCount,
       pct: pendPct,
-      colorClass: 'bg-[#D97706]',
+      colorClass: 'bg-[#B46B1E]',
     },
     {
       label: 'Ditolak',
       unit: metrics.ecobricksRejectedCount,
       pct: rejPct,
-      colorClass: 'bg-[#B91C1C]',
+      colorClass: 'bg-[#A62626]',
     },
   ];
 
@@ -527,14 +527,14 @@ export function VerificationOutcomeBar({
             onMouseEnter={() => setActiveSeg(seg.label)}
             onMouseLeave={() => setActiveSeg(null)}
             className={`flex items-center justify-between gap-3 py-2 text-xs transition-colors duration-150 ${
-              activeSeg === seg.label ? 'bg-[#F2F4F2] px-2 rounded' : ''
+              activeSeg === seg.label ? 'bg-[#F5F6F5] px-2 rounded' : ''
             }`}
           >
-            <span className="flex items-center gap-2 text-[#17201C]">
+            <span className="flex items-center gap-2 text-[#1B231F]">
               <span className={`h-2 w-2 rounded-xs shrink-0 ${seg.colorClass}`} />
               <span>{seg.label}</span>
             </span>
-            <span className="font-mono font-medium text-[#17201C] tabular-nums whitespace-nowrap">
+            <span className="font-mono font-medium text-[#1B231F] tabular-nums whitespace-nowrap">
               {seg.unit} unit · {seg.pct}%
             </span>
           </div>
@@ -554,22 +554,22 @@ export function VerificationStatusChart({
     {
       label: 'Lolos Penuh',
       count: metrics.verifiedSubmissionsCount,
-      color: 'bg-[#166549]',
+      color: 'bg-[#1B5E43]',
     },
     {
       label: 'Lolos Sebagian',
       count: metrics.partialSubmissionsCount,
-      color: 'bg-[#1D6373]',
+      color: 'bg-[#2B5E6B]',
     },
     {
       label: 'Menunggu',
       count: metrics.pendingSubmissionsCount,
-      color: 'bg-[#D97706]',
+      color: 'bg-[#B46B1E]',
     },
     {
       label: 'Ditolak',
       count: metrics.rejectedSubmissionsCount,
-      color: 'bg-[#B91C1C]',
+      color: 'bg-[#A62626]',
     },
   ];
 
@@ -577,14 +577,14 @@ export function VerificationStatusChart({
     <div className="space-y-3">
       <div className="flex items-baseline justify-between">
         <div>
-          <p className="font-display text-[15px] font-semibold text-[#111E19]">
+          <p className="font-display text-[15px] font-semibold text-[#141B17]">
             Status Verifikasi
           </p>
-          <p className="text-[11px] text-[#54625B]">
+          <p className="text-[11px] text-[#58655E]">
             Rasio lolos pemeriksaan fisik: {metrics.verificationRatePercent}%
           </p>
         </div>
-        <span className="font-mono text-xs font-semibold text-[#166549] tabular-nums">
+        <span className="font-mono text-xs font-semibold text-[#1B5E43] tabular-nums">
           {metrics.totalSubmissionsCount} submission
         </span>
       </div>
@@ -597,11 +597,11 @@ export function VerificationStatusChart({
             key={r.label}
             className="flex items-center justify-between gap-2 py-0.5"
           >
-            <span className="flex items-center gap-1.5 text-[#54625B] truncate">
+            <span className="flex items-center gap-1.5 text-[#58655E] truncate">
               <span className={`h-2 w-2 rounded-xs shrink-0 ${r.color}`} />
               <span className="truncate">{r.label}</span>
             </span>
-            <span className="font-mono font-semibold text-[#17201C] tabular-nums">
+            <span className="font-mono font-semibold text-[#1B231F] tabular-nums">
               {r.count} ({Math.round((r.count / totalSubs) * 100)}%)
             </span>
           </div>
@@ -622,14 +622,14 @@ export function ActiveContributorsChart({
     <div className="space-y-3">
       <div className="flex items-baseline justify-between">
         <div>
-          <p className="font-display text-[15px] font-semibold text-[#111E19]">
+          <p className="font-display text-[15px] font-semibold text-[#141B17]">
             Kontributor Aktif per Segmen
           </p>
-          <p className="text-[11px] text-[#54625B]">
+          <p className="text-[11px] text-[#58655E]">
             Santri, Warga, dan Keluarga Rentan penyerah ecobrick
           </p>
         </div>
-        <span className="font-mono text-xs font-semibold text-[#166549] tabular-nums">
+        <span className="font-mono text-xs font-semibold text-[#1B5E43] tabular-nums">
           {breakdown.reduce((s, b) => s + b.activeCount, 0)} aktif
         </span>
       </div>
@@ -648,23 +648,23 @@ export function ActiveContributorsChart({
           return (
             <div key={item.segment} className="space-y-1">
               <div className="flex items-baseline justify-between gap-2 text-xs">
-                <span className="font-medium text-[#17201C]">
+                <span className="font-medium text-[#1B231F]">
                   {item.segment}{' '}
-                  <span className="text-[11px] font-normal text-[#54625B]">
+                  <span className="text-[11px] font-normal text-[#58655E]">
                     ({item.activeCount}/{item.registeredCount} orang aktif)
                   </span>
                 </span>
-                <span className="font-mono text-[11px] font-semibold text-[#17201C] tabular-nums">
+                <span className="font-mono text-[11px] font-semibold text-[#1B231F] tabular-nums">
                   {item.verifiedUnits}/{item.submittedUnits} unit
                 </span>
               </div>
               <div className="relative h-2.5 w-full overflow-hidden rounded bg-[#EAEFEA]">
                 <div
-                  className="absolute inset-y-0 left-0 rounded bg-[#5E98A6]"
+                  className="absolute inset-y-0 left-0 rounded bg-[#A4B8AD]"
                   style={{ width: `${pct}%` }}
                 />
                 <div
-                  className="absolute inset-y-0 left-0 rounded bg-[#166549]"
+                  className="absolute inset-y-0 left-0 rounded bg-[#1B5E43]"
                   style={{ width: `${verifiedPct}%` }}
                 />
               </div>
@@ -673,13 +673,13 @@ export function ActiveContributorsChart({
         })}
       </div>
 
-      <div className="flex items-center gap-4 pt-1 text-[11px] text-[#54625B]">
+      <div className="flex items-center gap-4 pt-1 text-[11px] text-[#58655E]">
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-xs bg-[#166549]" />
+          <span className="h-2 w-2 rounded-xs bg-[#1B5E43]" />
           <span>Terverifikasi</span>
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-xs bg-[#5E98A6]" />
+          <span className="h-2 w-2 rounded-xs bg-[#A4B8AD]" />
           <span>Total Diserahkan</span>
         </span>
       </div>
@@ -701,22 +701,22 @@ export function DistributionUtilizationChart({
     {
       label: 'Tersedia di Hub',
       value: metrics.inventoryAvailableCount,
-      color: '#166549',
+      color: '#1B5E43',
     },
     {
       label: 'Direservasi Mitra',
       value: metrics.ecobricksReservedCount,
-      color: '#D97706',
+      color: '#B46B1E',
     },
     {
       label: 'Diserahterimakan (Dalam Proses)',
       value: handedOverOnly,
-      color: '#1D6373',
+      color: '#2B5E6B',
     },
     {
       label: 'Dimanfaatkan Nyata',
       value: metrics.ecobricksUtilizedCount,
-      color: '#111E19',
+      color: '#5E907B',
     },
   ];
   const totalVerified = Math.max(metrics.ecobricksVerifiedCount, 1);
@@ -725,14 +725,14 @@ export function DistributionUtilizationChart({
     <div className="space-y-3">
       <div className="flex items-baseline justify-between">
         <div>
-          <p className="font-display text-[15px] font-semibold text-[#111E19]">
+          <p className="font-display text-[15px] font-semibold text-[#141B17]">
             Distribusi & Pemanfaatan Inventori
           </p>
-          <p className="text-[11px] text-[#54625B]">
+          <p className="text-[11px] text-[#58655E]">
             Hanya menghitung unit ecobrick terverifikasi
           </p>
         </div>
-        <span className="font-mono text-xs font-semibold text-[#17201C] tabular-nums">
+        <span className="font-mono text-xs font-semibold text-[#1B231F] tabular-nums">
           {metrics.ecobricksVerifiedCount} unit batch
         </span>
       </div>
@@ -763,17 +763,17 @@ export function DistributionUtilizationChart({
             onMouseEnter={() => setHoverLabel(r.label)}
             onMouseLeave={() => setHoverLabel(null)}
             className={`flex items-center justify-between gap-2 py-2 text-xs transition-colors duration-150 ${
-              hoverLabel === r.label ? 'bg-[#F2F4F2] px-2 rounded' : ''
+              hoverLabel === r.label ? 'bg-[#F5F6F5] px-2 rounded' : ''
             }`}
           >
-            <span className="flex items-center gap-2 text-[#17201C]">
+            <span className="flex items-center gap-2 text-[#1B231F]">
               <span
                 className="h-2 w-2 rounded-xs shrink-0"
                 style={{ backgroundColor: r.color }}
               />
               <span>{r.label}</span>
             </span>
-            <span className="font-mono font-semibold text-[#17201C] tabular-nums">
+            <span className="font-mono font-semibold text-[#1B231F] tabular-nums">
               {r.value} unit
             </span>
           </div>
@@ -793,31 +793,31 @@ export function EcobrickPipelineComparisonChart({
       label: 'Diserahkan (Submitted)',
       sublabel: 'Total ecobrick yang diserahkan kontributor ke pos TRACECO',
       value: metrics.ecobricksSubmittedCount,
-      color: '#5E98A6',
+      color: '#A4B8AD',
     },
     {
       label: 'Terverifikasi (Verified)',
       sublabel: 'Lolos pemeriksaan fisik 8 kriteria dan masuk batch',
       value: metrics.ecobricksVerifiedCount,
-      color: '#166549',
+      color: '#5E907B',
     },
     {
       label: 'Stok Tersedia (Available)',
       sublabel: 'Stok terverifikasi yang tersedia untuk permintaan pemanfaatan',
       value: metrics.inventoryAvailableCount,
-      color: '#54625B',
+      color: '#73827A',
     },
     {
       label: 'Disalurkan (Distributed)',
       sublabel: 'Sudah diserahterimakan ke pesantren, komunitas, atau mitra',
       value: metrics.ecobricksDistributedCount,
-      color: '#1D6373',
+      color: '#2B5E6B',
     },
     {
       label: 'Dimanfaatkan (Utilized)',
       sublabel: 'Terkonfirmasi telah dimanfaatkan menjadi modul atau fasilitas',
       value: metrics.ecobricksUtilizedCount,
-      color: '#111E19',
+      color: '#1B5E43',
     },
   ];
 
@@ -831,10 +831,10 @@ export function EcobrickPipelineComparisonChart({
           <div key={row.label} className="space-y-1">
             <div className="flex items-baseline justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-xs font-medium text-[#17201C]">{row.label}</p>
-                <p className="text-[11px] text-[#54625B]">{row.sublabel}</p>
+                <p className="text-xs font-medium text-[#1B231F]">{row.label}</p>
+                <p className="text-[11px] text-[#58655E]">{row.sublabel}</p>
               </div>
-              <span className="font-mono text-xs font-semibold text-[#17201C] tabular-nums shrink-0">
+              <span className="font-mono text-xs font-semibold text-[#1B231F] tabular-nums shrink-0">
                 {row.value} unit
               </span>
             </div>
